@@ -79,7 +79,7 @@ impl SourceCrawler for RemoteOkCrawler {
 
                 let raw_desc = item["description"].as_str().unwrap_or("");
                 // Strip HTML tags for a plain-text description
-                let description = strip_html(raw_desc);
+                let description = strip_tag_cloud(&strip_html(raw_desc));
 
                 let url = item["url"]
                     .as_str()
@@ -211,6 +211,48 @@ fn strip_html(html: &str) -> String {
     }
 
     cleaned.trim().to_string()
+}
+
+/// Strip tag-cloud sections from Remote OK descriptions.
+///
+/// Remote OK's `description` field often contains a comma-separated tag cloud
+/// with every tech keyword the platform associates with the job. This makes
+/// the matcher think a "Senior Vice President" job requires "ai, angular, c#,
+/// python, react, rust..." — because those tags appear in the description.
+///
+/// We detect common tag-cloud markers and truncate at that point, keeping
+/// only the actual job description text.
+///
+/// Markers we strip (case-insensitive):
+/// - "Tags: ..."
+/// - "Technologies: ..."
+/// - "Tech Stack: ..."
+/// - "Skills: ..."
+/// - "Requirements: ..." (only if followed by a list, not paragraphs)
+/// - Any trailing line that is just comma-separated tech keywords
+fn strip_tag_cloud(text: &str) -> String {
+    let lower = text.to_lowercase();
+    let markers = ["tags:", "technologies:", "tech stack:", "skills:"];
+
+    // Find the earliest marker and truncate before it
+    let mut earliest = None;
+    for marker in &markers {
+        if let Some(pos) = lower.find(marker) {
+            match earliest {
+                None => earliest = Some(pos),
+                Some(current) if pos < current => earliest = Some(pos),
+                _ => {}
+            }
+        }
+    }
+
+    match earliest {
+        Some(pos) => {
+            let truncated = &text[..pos].trim();
+            truncated.to_string()
+        }
+        None => text.to_string(),
+    }
 }
 
 /// Format a salary range for display.

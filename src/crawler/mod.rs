@@ -171,19 +171,30 @@ impl CrawlerCoordinator {
             }
         }
 
-        // Post-filter: throw out jobs that don't mention any search keyword.
+        // Post-filter: remove jobs that don't match search keywords.
+        // Uses a two-pass approach:
+        //   1. TITLE-GATE — at least one keyword MUST appear in the job TITLE.
+        //      This eliminates "Senior Vice President" when searching
+        //      "senior software engineer" (title lacks "software" or "engineer").
+        //   2. SOFT-AND — of the remaining, require N of K keywords in full text.
         if !config.keywords.is_empty() {
             let before = all_posts.len();
             let kw_count = config.keywords.len();
-            // Soft-AND: require at least N keywords to match based on query length.
-            // This prevents "senior software engineer" matching a janitor job
-            // that only mentions "engineer" in passing.
+            let kw_lower: Vec<String> = config.keywords.iter().map(|k| k.to_lowercase()).collect();
+
+            // Pass 1: Title-gate — at least one keyword must be in the TITLE.
+            all_posts.retain(|job| {
+                let title_lower = job.title.to_lowercase();
+                kw_lower.iter().any(|kw| title_lower.contains(kw.as_str()))
+            });
+
+            // Pass 2: Soft-AND — require N/K keywords in full text.
             let min_required = if kw_count == 1 {
                 1
             } else if kw_count <= 3 {
                 kw_count - 1 // 2 of 2, 2 of 3
             } else {
-                kw_count / 2  // half for longer queries
+                kw_count / 2
             };
 
             all_posts.retain(|job| {
@@ -195,21 +206,16 @@ impl CrawlerCoordinator {
                     job.tags.join(" ")
                 )
                 .to_lowercase();
-                let matches = config
-                    .keywords
-                    .iter()
-                    .filter(|kw| text.contains(&kw.to_lowercase()))
-                    .count();
+                let matches = kw_lower.iter().filter(|kw| text.contains(kw.as_str())).count();
                 matches >= min_required
             });
+
             let removed = before - all_posts.len();
             if removed > 0 {
                 eprintln!(
-                    "  {} {} posts filtered out (didn't match enough keywords, needed {}/{})",
+                    "  {} {} posts filtered out (keyword not in title or insufficient matches)",
                     "-".yellow(),
-                    removed,
-                    min_required,
-                    kw_count
+                    removed
                 );
             }
         }
