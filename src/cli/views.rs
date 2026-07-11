@@ -8,7 +8,7 @@ use anyhow::Result;
 use colored::Colorize;
 use console::Term;
 
-use crate::models::{MatchResult, Resume, ScanRecord};
+use crate::models::{CompanyDatabase, MatchResult, Resume, ScanRecord};
 
 // ─── OSC 8 Hyperlink ───────────────────────────────────────────────────────
 
@@ -362,19 +362,66 @@ pub fn show_scan_history(records: &[ScanRecord]) {
 
 // ─── CLI Help ──────────────────────────────────────────────────────────────
 
-/// Print the CLI usage help text with all keybindings documented.
+/// Display the list of cached companies in a formatted table.
+pub fn show_companies_list(db: &CompanyDatabase) {
+    if db.companies.is_empty() {
+        println!("  No companies cached yet. They are auto-discovered from job posts.");
+        println!("  Use --add-company or the interactive menu to add manually.");
+        return;
+    }
+
+    let failed = &db.failed;
+    println!();
+    println!(
+        "  {} companies in cache ({} failed last crawl)",
+        db.companies.len(),
+        failed.len()
+    );
+    println!("  {}", "─".repeat(60).dimmed());
+
+    for (i, company) in db.companies.iter().enumerate() {
+        let status = match company.last_crawled {
+            Some(_) => "✓".green().to_string(),
+            None => "—".dimmed().to_string(),
+        };
+        let fail_note = if failed.contains_key(&company.name) {
+            format!(" {}", "⚠ failed".red())
+        } else {
+            String::new()
+        };
+        println!(
+            "  {:>3}. {} {} {}{}",
+            i + 1,
+            status,
+            company.name.bright_white(),
+            clickable(&company.careers_url, &company.careers_url).dimmed(),
+            fail_note,
+        );
+    }
+    println!();
+}
+
+/// Print the CLI usage help text with all commands and keybindings documented.
 pub fn print_help() {
     println!();
     println!("  Usage: jobsense-parker [COMMAND]");
     println!();
     println!("  Commands:");
-    println!("    (no args)     Start interactive menu");
-    println!("    --help        Show this help");
-    println!("    --scan        Scan all sources with loaded resume");
-    println!("    --search <q>  Search with a custom query");
-    println!("    --resume <p>  Set resume file path (PDF, JSON, YAML, TXT)");
-    println!("    --results     View last cached results");
-    println!("    --history     Show scan history");
+    println!("    (no args)               Start interactive menu");
+    println!("    --help, -h              Show this help");
+    println!("    --scan, -s              Scan all sources + company career sites");
+    println!("    --search <query>        Search with a custom query");
+    println!("    --resume, -r <file>     Set resume file path (PDF, JSON, YAML, TXT)");
+    println!("    --results               View last cached results");
+    println!("    --history               Show scan history");
+    println!("    --companies             List all cached companies & career sites");
+    println!("    --add-company <name> <url>  Add a company career site");
+    println!("    --remove-company <name> Remove a company from the cache");
+    println!();
+    println!("  Examples:");
+    println!("    jobsense-parker --search \"rust engineer\"");
+    println!("    jobsense-parker --add-company \"Tesla\" \"https://www.tesla.com/careers\"");
+    println!("    jobsense-parker --companies");
     println!();
     println!("  Interactive Menu Keybindings:");
     println!("    ↑/↓           Navigate menu items");
@@ -391,6 +438,12 @@ pub fn print_help() {
     println!("    Enter / o     Open job URL in browser");
     println!("    q / Esc       Back to menu");
     println!("    ?             Toggle keybinding help overlay");
+    println!();
+    println!("  Company Career Sites:");
+    println!("    On first run, 80+ major tech companies are pre-seeded.");
+    println!("    New companies are auto-discovered from job posts during scans.");
+    println!("    Company career pages are crawled alongside job boards during scans.");
+    println!("    Career-site job listings appear in results just like board posts.");
     println!();
     println!("  URLs are clickable (Cmd+click on macOS, Ctrl+click elsewhere).");
     println!();

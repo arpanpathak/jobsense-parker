@@ -7,9 +7,10 @@ use dialoguer::{FuzzySelect, Input, Select};
 use indicatif::{ProgressBar, ProgressStyle};
 use uuid::Uuid;
 
+use crate::crawler::company::CompanyCrawler;
 use crate::crawler::CrawlerCoordinator;
 use crate::matcher::Matcher;
-use crate::models::{Command, MatchResult, Resume, ScanRecord, SearchConfig};
+use crate::models::{Command, CompanyDatabase, JobPost, MatchResult, Resume, ScanRecord, SearchConfig};
 use crate::storage;
 
 pub use views::{banner, print_help, show_scan_history};
@@ -21,6 +22,8 @@ pub struct App {
     results: Vec<MatchResult>,
     config: SearchConfig,
     scan_history: Vec<ScanRecord>,
+    /// Local cache of known companies with careers-page URLs.
+    company_db: CompanyDatabase,
 }
 
 impl App {
@@ -30,6 +33,7 @@ impl App {
         let resume = storage::load_resume().unwrap_or(None);
         let last_results = storage::load_last_results().unwrap_or_default();
         let scan_history = storage::load_scan_history().unwrap_or_default();
+        let company_db = storage::load_company_database().unwrap_or_default();
 
         let mut matcher = Matcher::new();
         if let Some(r) = &resume {
@@ -51,6 +55,7 @@ impl App {
             results: last_results,
             config,
             scan_history,
+            company_db,
         }
     }
 
@@ -73,6 +78,9 @@ impl App {
                 Command::Search(query) => self.cmd_search(&query).await,
                 Command::ViewResults => self.cmd_view_results(),
                 Command::FilterResults => self.cmd_filter_results(),
+                Command::ListCompanies => self.cmd_list_companies(),
+                Command::AddCompany(name, url) => self.cmd_add_company(&name, &url),
+                Command::RemoveCompany(name) => self.cmd_remove_company(&name),
             }
         }
     }
@@ -100,6 +108,21 @@ impl App {
     /// Load a resume from a file path.
     pub fn load_resume_file(&mut self, path: &str) {
         self.cmd_load_resume(path);
+    }
+
+    /// Print all cached companies (used by --companies flag).
+    pub fn show_companies(&self) {
+        views::show_companies_list(&self.company_db);
+    }
+
+    /// Add a company from CLI args (used by --add-company flag).
+    pub fn add_company_cli(&mut self, name: &str, url: &str) {
+        self.cmd_add_company(name, url);
+    }
+
+    /// Remove a company from CLI args (used by --remove-company flag).
+    pub fn remove_company_cli(&mut self, name: &str) {
+        self.cmd_remove_company(name);
     }
 
     /// Print a summary of cached results to stdout.
@@ -157,10 +180,14 @@ impl App {
             format!("{} results", self.results.len()).cyan().to_string()
         };
 
+        let company_count = self.company_db.companies.len();
+        let company_status = format!("{} companies cached", company_count).cyan().to_string();
+
         let items = vec![
-            format!("Scan jobs (all sources)"),
+            format!("Scan jobs (all sources + career sites)"),
             format!("Search with custom query"),
             format!("View results ({result_count})"),
+            format!("Company career sites ({company_status})"),
             format!("Load resume ({resume_status})"),
             format!("Show current resume"),
             format!("Filter / sort results"),
@@ -173,8 +200,8 @@ impl App {
             .items(&items)
             .default(0)
             .interact_opt()
-            .unwrap_or(Some(7))
-            .unwrap_or(7);
+            .unwrap_or(Some(8))
+            .unwrap_or(8);
 
         match selection {
             0 => Command::Scan,
@@ -187,6 +214,30 @@ impl App {
             }
             2 => Command::ViewResults,
             3 => {
+                // Company management sub-menu
+                self.cmd_list_companies();
+                println!("  Add a company? Enter name and careers URL, or just press Enter to skip.");
+                let name: String = Input::with_theme(&dialoguer::theme::ColorfulTheme::default())
+                    .with_prompt("Company name (or blank to skip)")
+                    .allow_empty(true)
+                    .interact_text()
+                    .unwrap_or_default();
+                if !name.trim().is_empty() {
+                    let url: String = Input::with_theme(&dialoguer::theme::ColorfulTheme::default())
+                        .with_prompt("Careers URL")
+                        .interact_text()
+                        .unwrap_or_default();
+                    if !url.trim().is_empty() {
+                        Command::AddCompany(name.trim().to_string(), url.trim().to_string())
+                    } else {
+                        println!("  No URL given. Skipping.");
+                        Command::ShowResume // no-op
+                    }
+                } else {
+                    Command::ShowResume // no-op
+                }
+            }
+            4 => {
                 match pick_resume_file() {
                     Some(p) => Command::LoadResume(p),
                     None => {
@@ -195,13 +246,13 @@ impl App {
                     }
                 }
             }
-            4 => Command::ShowResume,
-            5 => Command::FilterResults,
-            6 => {
+            5 => Command::ShowResume,
+            6 => Command::FilterResults,
+            7 => {
                 show_scan_history(&self.scan_history);
                 Command::ShowResume // no-op
             }
-            7 | _ => Command::Quit,
+            8 | _ => Command::Quit,
         }
     }
 
@@ -318,6 +369,7 @@ impl App {
     // ─── Shared crawl + spinner logic ─────────────────────────────────
 
     /// Run a crawl with a progress spinner showing status in real-time.
+    /// Also crawls company career sites and auto-discovers new companies.
     async fn run_with_spinner(&mut self, action: &str, keywords: &[String], save_query: bool) {
         let kw_display = keywords
             .iter()
@@ -325,7 +377,7 @@ impl App {
             .collect::<Vec<_>>()
             .join(", ");
 
-        // Set up a spinner that shows what's happening
+        // ── Phase 1: Job board crawl ─────────────────────────────────
         let pb = ProgressBar::new_spinner();
         pb.set_style(
             ProgressStyle::default_spinner()
@@ -338,10 +390,51 @@ impl App {
         ));
         pb.enable_steady_tick(std::time::Duration::from_millis(100));
 
-        let jobs = self.coordinator.crawl_all(&self.config).await;
-
+        let mut jobs = self.coordinator.crawl_all(&self.config).await;
         pb.finish_and_clear();
 
+        // ── Auto-discover companies from job posts ───────────────────
+        let discovered = self.auto_discover_companies(&jobs);
+        if discovered > 0 {
+            eprintln!(
+                "  {} Auto-discovered {} new {}",
+                "🔍".to_string(),
+                discovered,
+                if discovered == 1 { "company" } else { "companies" }
+            );
+        }
+
+        // ── Phase 2: Company career site crawl ───────────────────────
+        if !self.company_db.companies.is_empty() {
+            let pb2 = ProgressBar::new_spinner();
+            pb2.set_style(
+                ProgressStyle::default_spinner()
+                    .template("{spinner:.green} {msg}")
+                    .unwrap(),
+            );
+            pb2.set_message(format!(
+                "Crawling {} company career sites...",
+                self.company_db.companies.len()
+            ));
+            pb2.enable_steady_tick(std::time::Duration::from_millis(100));
+
+            let company_jobs = CompanyCrawler::crawl_all(&mut self.company_db, &self.config).await;
+            pb2.finish_and_clear();
+
+            if !company_jobs.is_empty() {
+                eprintln!(
+                    "  {} {} jobs from company career sites",
+                    "+".green(),
+                    company_jobs.len()
+                );
+                jobs.extend(company_jobs);
+            }
+
+            // Persist updated company DB (with crawl timestamps)
+            let _ = storage::save_company_database(&self.company_db);
+        }
+
+        // ── Process results ──────────────────────────────────────────
         let raw_count = jobs.len();
 
         if jobs.is_empty() {
@@ -405,6 +498,121 @@ impl App {
             self.show_results();
         } else {
             println!("  No matches above threshold.\n");
+        }
+    }
+
+    // ─── Company Management ─────────────────────────────────────────────
+
+    /// Extract company names from job posts and add them to the local cache.
+    /// Returns the number of newly discovered companies.
+    fn auto_discover_companies(&mut self, jobs: &[JobPost]) -> usize {
+        let mut count = 0usize;
+
+        // If there are already 100+ companies, skip auto-discovery to avoid bloat.
+        if self.company_db.companies.len() >= 100 {
+            return 0;
+        }
+
+        for job in jobs {
+            if let Some(ref name) = job.company {
+                // Skip very short or generic names
+                let trimmed = name.trim();
+                if trimmed.len() < 2 {
+                    continue;
+                }
+                // Skip generic company-like words that aren't actual companies
+                let generic = [
+                    "remote", "inc", "llc", "corp", "ltd", "gmbh", "co", "company",
+                    "startup", "client", "company name", "confidential", "private",
+                ];
+                if generic.iter().any(|g| trimmed.eq_ignore_ascii_case(g)) {
+                    continue;
+                }
+                // Skip if already in DB
+                if self.company_db.companies.iter().any(|c| c.name.eq_ignore_ascii_case(trimmed)) {
+                    continue;
+                }
+
+                // Guess the careers URL from the company name
+                let url = storage::guess_careers_url(trimmed);
+                if url.is_empty() {
+                    continue;
+                }
+
+                if self.company_db.add(trimmed, &url) {
+                    count += 1;
+                }
+            }
+        }
+
+        if count > 0 {
+            let _ = storage::save_company_database(&self.company_db);
+        }
+
+        count
+    }
+
+    /// Show all cached companies in a paginated list.
+    fn cmd_list_companies(&self) {
+        if self.company_db.companies.is_empty() {
+            println!("  No companies cached yet. They are auto-discovered from job posts.");
+            return;
+        }
+
+        let failed = &self.company_db.failed;
+        println!();
+        println!(
+            "  {} companies in cache ({} failed last crawl)",
+            self.company_db.companies.len(),
+            failed.len()
+        );
+        println!("  {}", "─".repeat(60).dimmed());
+
+        for (i, company) in self.company_db.companies.iter().enumerate() {
+            let status = match company.last_crawled {
+                Some(_) => "✓".green().to_string(),
+                None => "—".dimmed().to_string(),
+            };
+            let fail_note = if failed.contains_key(&company.name) {
+                format!(" {}", "⚠ failed".red())
+            } else {
+                String::new()
+            };
+            println!(
+                "  {:>3}. {} {} {}{}",
+                i + 1,
+                status,
+                company.name.bright_white(),
+                company.careers_url.dimmed(),
+                fail_note,
+            );
+        }
+        println!();
+        println!("  Use menu option 'Company career sites' to add more.");
+        println!();
+    }
+
+    /// Add a company to the cache.
+    fn cmd_add_company(&mut self, name: &str, url: &str) {
+        if name.trim().is_empty() || url.trim().is_empty() {
+            println!("  Both name and URL are required.");
+            return;
+        }
+        if self.company_db.add(name.trim(), url.trim()) {
+            let _ = storage::save_company_database(&self.company_db);
+            println!("  Added: {} → {}", name.trim().green(), url.trim().dimmed());
+        } else {
+            println!("  '{}' is already in the cache.", name);
+        }
+    }
+
+    /// Remove a company from the cache.
+    fn cmd_remove_company(&mut self, name: &str) {
+        if self.company_db.remove(name.trim()) {
+            let _ = storage::save_company_database(&self.company_db);
+            println!("  Removed: {}", name.trim().green());
+        } else {
+            println!("  '{}' not found in cache.", name);
         }
     }
 

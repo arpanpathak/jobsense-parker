@@ -8,6 +8,7 @@
 use chrono::{DateTime, Utc};
 use regex::Regex;
 use serde::{Deserialize, Serialize};
+use std::collections::HashMap;
 
 /// Where a job posting was discovered.
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
@@ -310,6 +311,12 @@ pub enum Command {
     ShowResume,
     /// Filter/sort the current results.
     FilterResults,
+    /// List all cached companies.
+    ListCompanies,
+    /// Add a company to the cache manually.
+    AddCompany(String, String),
+    /// Remove a company from the cache.
+    RemoveCompany(String),
     /// Exit the application.
     Quit,
 }
@@ -342,5 +349,73 @@ impl Default for UserPreferences {
             ],
             max_results: 50,
         }
+    }
+}
+
+// ─── Company / Career-Site Crawling ───────────────────────────────────────
+
+/// A company whose career site we track and crawl.
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct Company {
+    /// Display name (e.g. "Google").
+    pub name: String,
+    /// URL to the careers / jobs page.
+    pub careers_url: String,
+    /// When this company was first discovered.
+    pub added_at: DateTime<Utc>,
+    /// Last time we successfully crawled their career page.
+    pub last_crawled: Option<DateTime<Utc>>,
+}
+
+/// The persisted cache of known companies.
+#[derive(Debug, Clone, Serialize, Deserialize, Default)]
+pub struct CompanyDatabase {
+    pub companies: Vec<Company>,
+    /// Companies that failed on last crawl attempt (name → error).
+    pub failed: HashMap<String, String>,
+}
+
+impl CompanyDatabase {
+    pub fn new() -> Self {
+        Self {
+            companies: Vec::new(),
+            failed: HashMap::new(),
+        }
+    }
+
+    /// Add a company (no-op if already present by name).
+    pub fn add(&mut self, name: &str, careers_url: &str) -> bool {
+        if self.companies.iter().any(|c| c.name.eq_ignore_ascii_case(name)) {
+            return false;
+        }
+        self.companies.push(Company {
+            name: name.to_string(),
+            careers_url: careers_url.to_string(),
+            added_at: Utc::now(),
+            last_crawled: None,
+        });
+        self.failed.remove(name);
+        true
+    }
+
+    /// Remove a company by name. Returns true if removed.
+    pub fn remove(&mut self, name: &str) -> bool {
+        let before = self.companies.len();
+        self.companies.retain(|c| !c.name.eq_ignore_ascii_case(name));
+        self.failed.remove(name);
+        before != self.companies.len()
+    }
+
+    /// Mark a company crawl as successful.
+    pub fn mark_crawled(&mut self, name: &str) {
+        self.failed.remove(name);
+        if let Some(c) = self.companies.iter_mut().find(|c| c.name.eq_ignore_ascii_case(name)) {
+            c.last_crawled = Some(Utc::now());
+        }
+    }
+
+    /// Mark a company crawl as failed.
+    pub fn mark_failed(&mut self, name: &str, error: &str) {
+        self.failed.insert(name.to_string(), error.to_string());
     }
 }

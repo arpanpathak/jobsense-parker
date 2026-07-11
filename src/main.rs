@@ -1,7 +1,7 @@
 //! CLI entry point for jobsense-parker.
 //!
 //! Supports two modes:
-//! * **Non-interactive** — pass flags like `--resume`, `--scan`, `--search`, `--results`, `--history`
+//! * **Non-interactive** — pass flags like `--resume`, `--scan`, `--search`, `--results`, `--history`, `--companies`
 //! * **Interactive** — run without arguments to open the terminal menu
 
 use std::env;
@@ -54,6 +54,31 @@ async fn main() {
                     match storage::load_scan_history() {
                         Ok(records) => cli::show_scan_history(&records),
                         Err(e) => eprintln!("  Failed to load history: {e}"),
+                    }
+                }
+                "--companies" | "--list-companies" => {
+                    app.show_companies();
+                }
+                "--add-company" => {
+                    i += 1;
+                    if i + 1 < args.len() {
+                        let name = &args[i];
+                        i += 1;
+                        let url = &args[i];
+                        app.add_company_cli(name, url);
+                    } else {
+                        eprintln!("  --add-company requires NAME and URL arguments");
+                        eprintln!("  Example: --add-company \"My Corp\" \"https://mycorp.com/careers\"");
+                        return;
+                    }
+                }
+                "--remove-company" => {
+                    i += 1;
+                    if i < args.len() {
+                        app.remove_company_cli(&args[i]);
+                    } else {
+                        eprintln!("  --remove-company requires a company name argument");
+                        return;
                     }
                 }
                 other => {

@@ -4,6 +4,7 @@
 //! [`CrawlerCoordinator`] manages all registered crawlers and dispatches
 //! searches to the applicable ones based on [`SearchConfig`].
 
+pub mod company;
 pub mod fetcher;
 pub mod remoteok;
 pub mod reddit;

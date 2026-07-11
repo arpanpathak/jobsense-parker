@@ -4,7 +4,7 @@
 use anyhow::{Context, Result};
 use std::path::PathBuf;
 
-use crate::models::{MatchResult, Resume, ScanRecord, UserPreferences};
+use crate::models::{CompanyDatabase, MatchResult, Resume, ScanRecord, UserPreferences};
 
 /// Directory name under `$HOME` for storing app data.
 const DATA_DIR: &str = ".jobsense-parker";
@@ -151,4 +151,145 @@ pub fn load_last_results() -> Result<Vec<MatchResult>> {
     }
     let json = std::fs::read_to_string(&path).context("Failed to read last_results.json")?;
     serde_json::from_str(&json).context("Failed to parse last_results.json")
+}
+
+// ─── Company Database ──────────────────────────────────────────────────────
+
+/// Persist the company database to `~/.jobsense-parker/companies.json`.
+pub fn save_company_database(db: &CompanyDatabase) -> Result<()> {
+    let dir = ensure_dir()?;
+    let path = dir.join("companies.json");
+    let json = serde_json::to_string_pretty(db)?;
+    std::fs::write(&path, json).context("Failed to write companies.json")
+}
+
+/// Load the company database.
+///
+/// On first run the file won't exist, so we seed it with a curated list of
+/// well-known tech companies and their careers-page URLs.
+pub fn load_company_database() -> Result<CompanyDatabase> {
+    let dir = data_dir()?;
+    let path = dir.join("companies.json");
+    if !path.exists() {
+        let mut db = CompanyDatabase::new();
+        seed_companies(&mut db);
+        save_company_database(&db)?;
+        eprintln!("  + Seeded {} companies into database.", db.companies.len());
+        return Ok(db);
+    }
+    let json = std::fs::read_to_string(&path).context("Failed to read companies.json")?;
+    serde_json::from_str(&json).context("Failed to parse companies.json")
+}
+
+/// Guess a careers-page URL from a company name (used for auto-discovery).
+pub fn guess_careers_url(name: &str) -> String {
+    let slug = name
+        .to_lowercase()
+        .replace(|c: char| !c.is_alphanumeric() && c != '.', "")
+        .trim()
+        .to_string();
+    if slug.is_empty() {
+        return String::new();
+    }
+    // Try the most common pattern
+    format!("https://careers.{slug}.com/")
+}
+
+/// Seed the database with a curated list of major companies.
+fn seed_companies(db: &mut CompanyDatabase) {
+    let entries: &[(&str, &str)] = &[
+        // ── Big Tech ───────────────────────────────────────────────────
+        ("Google", "https://careers.google.com/jobs"),
+        ("Meta", "https://www.metacareers.com/jobs"),
+        ("Apple", "https://jobs.apple.com/en-us"),
+        ("Amazon", "https://www.amazon.jobs/en"),
+        ("Microsoft", "https://careers.microsoft.com/us/en"),
+        ("Netflix", "https://jobs.netflix.com"),
+        ("Spotify", "https://www.lifeatspotify.com/jobs"),
+        ("Stripe", "https://stripe.com/jobs"),
+        ("Shopify", "https://www.shopify.com/careers"),
+        ("GitLab", "https://about.gitlab.com/jobs"),
+        ("Uber", "https://www.uber.com/us/en/careers"),
+        ("Airbnb", "https://www.airbnb.com/careers"),
+        ("Twitter/X", "https://about.twitter.com/en/careers"),
+        ("LinkedIn", "https://careers.linkedin.com"),
+        ("Pinterest", "https://www.pinterestcareers.com"),
+        ("Square", "https://squareup.com/us/en/careers"),
+        ("Slack", "https://slack.com/careers"),
+        ("Dropbox", "https://www.dropbox.com/jobs"),
+        ("Salesforce", "https://www.salesforce.com/company/careers"),
+        ("Adobe", "https://www.adobe.com/careers"),
+        ("Atlassian", "https://www.atlassian.com/company/careers"),
+        ("Reddit", "https://www.redditinc.com/careers"),
+        ("Discord", "https://discord.com/jobs"),
+        ("Figma", "https://www.figma.com/careers"),
+        ("Notion", "https://www.notion.so/careers"),
+        ("Canva", "https://www.canva.com/careers"),
+        ("Palantir", "https://www.palantir.com/careers"),
+        ("Datadog", "https://www.datadoghq.com/careers"),
+        ("Snowflake", "https://www.snowflake.com/careers"),
+        ("Cloudflare", "https://www.cloudflare.com/careers"),
+        ("Cisco", "https://jobs.cisco.com"),
+        ("Oracle", "https://www.oracle.com/careers"),
+        ("IBM", "https://www.ibm.com/careers"),
+        ("Intel", "https://www.intel.com/content/www/us/en/jobs"),
+        ("AMD", "https://www.amd.com/en/corporate/careers"),
+        ("NVIDIA", "https://nvidia.wd5.myworkdayjobs.com/NVIDIAExternalSite"),
+        ("Tesla", "https://www.tesla.com/careers"),
+        ("SpaceX", "https://www.spacex.com/careers"),
+        // ── Finance / Fintech ──────────────────────────────────────────
+        ("Goldman Sachs", "https://www.goldmansachs.com/careers"),
+        ("JPMorgan Chase", "https://jpmc.fa.oraclecloud.com/careers"),
+        ("Morgan Stanley", "https://www.morganstanley.com/careers"),
+        ("Citadel", "https://www.citadel.com/careers"),
+        ("Jane Street", "https://www.janestreet.com/join-jane-street"),
+        ("Two Sigma", "https://www.twosigma.com/careers"),
+        ("Bridgewater", "https://www.bridgewater.com/careers"),
+        ("Coinbase", "https://www.coinbase.com/careers"),
+        ("Robinhood", "https://careers.robinhood.com"),
+        ("Chime", "https://www.chime.com/careers"),
+        ("Plaid", "https://plaid.com/careers"),
+        ("Brex", "https://www.brex.com/careers"),
+        ("Rippling", "https://www.rippling.com/careers"),
+        ("Deel", "https://www.deel.com/careers"),
+        // ── Enterprise / Cloud ─────────────────────────────────────────
+        ("VMware", "https://careers.vmware.com"),
+        ("ServiceNow", "https://www.servicenow.com/careers"),
+        ("Workday", "https://www.workday.com/en-us/careers.html"),
+        ("SAP", "https://www.sap.com/careers"),
+        ("Databricks", "https://www.databricks.com/careers"),
+        ("Confluent", "https://www.confluent.io/careers"),
+        ("Elastic", "https://www.elastic.co/about/careers"),
+        ("MongoDB", "https://www.mongodb.com/careers"),
+        ("Redis", "https://redis.com/company/careers"),
+        ("HashiCorp", "https://www.hashicorp.com/careers"),
+        ("New Relic", "https://newrelic.com/about/careers"),
+        ("Splunk", "https://www.splunk.com/en_us/careers.html"),
+        // ── E-commerce / Retail ────────────────────────────────────────
+        ("Shopify", "https://www.shopify.com/careers"),
+        ("eBay", "https://www.ebayinc.com/careers"),
+        ("Walmart", "https://careers.walmart.com"),
+        ("Target", "https://corporate.target.com/careers"),
+        ("Wayfair", "https://www.wayfair.com/careers"),
+        ("Doordash", "https://careers.doordash.com"),
+        ("Instacart", "https://instacart.careers"),
+        // ── Gaming ─────────────────────────────────────────────────────
+        ("Riot Games", "https://www.riotgames.com/en/work-with-us"),
+        ("Blizzard", "https://www.blizzard.com/en-us/careers"),
+        ("Epic Games", "https://www.epicgames.com/site/en-US/careers"),
+        ("Unity", "https://careers.unity.com"),
+        ("Roblox", "https://corp.roblox.com/careers"),
+        ("Electronic Arts", "https://www.ea.com/careers"),
+        // ── Other notable ──────────────────────────────────────────────
+        ("Palantir", "https://www.palantir.com/careers"),
+        ("Samsara", "https://www.samsara.com/careers"),
+        ("Vercel", "https://vercel.com/careers"),
+        ("Netlify", "https://www.netlify.com/careers"),
+        ("Railway", "https://railway.app/careers"),
+        ("Supabase", "https://supabase.com/careers"),
+        ("Fly.io", "https://fly.io/jobs"),
+    ];
+    for (name, url) in entries {
+        db.add(name, url);
+    }
 }
