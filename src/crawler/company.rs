@@ -7,6 +7,8 @@
 use anyhow::Result;
 use chrono::{DateTime, Utc};
 use colored::Colorize;
+use futures::pin_mut;
+use futures::stream::StreamExt;
 use scraper::{Html, Selector};
 use uuid::Uuid;
 
@@ -35,25 +37,24 @@ impl CompanyCrawler {
             return Vec::new();
         }
 
-        // Fetch all company career pages concurrently
-        let futures: Vec<_> = companies
-            .iter()
-            .map(|company| {
-                let company = company.clone();
-                let config = config.clone();
-                async move {
-                    let result = Self::crawl_company(&company, &config).await;
-                    (company, result)
-                }
-            })
-            .collect();
+        // Fetch company pages concurrently, but limited to 10 at a time.
+        // 126 concurrent requests at once overloads the network stack and
+        // causes timeouts, hangs, and rate limiting.
+        let stream = futures::stream::iter(companies.into_iter().map(|company| {
+            let config = config.clone();
+            async move {
+                let result = Self::crawl_company(&company, &config).await;
+                (company, result)
+            }
+        }))
+        .buffer_unordered(10);
 
-        let results = futures::future::join_all(futures).await;
         let mut all_posts = Vec::new();
         let mut ok_count = 0usize;
         let mut err_count = 0usize;
 
-        for (company, result) in results {
+        pin_mut!(stream);
+        while let Some((company, result)) = stream.next().await {
             match result {
                 Ok(posts) => {
                     ok_count += 1;
