@@ -21,59 +21,20 @@ impl SourceCrawler for RemoteOkCrawler {
     async fn crawl(&self, config: &SearchConfig) -> Result<Vec<JobPost>> {
         let fetcher = Fetcher::new()?;
 
-        // Remote OK has tag-based pages. Try each keyword to get relevant results.
-        // First element in each response is metadata, rest are job posts.
-        let keywords = if config.keywords.is_empty() {
-            vec!["software".to_string()]
-        } else {
-            config.keywords.clone()
-        };
+        // Use the main Remote OK API endpoint which returns ALL active job posts.
+        // Previously we used tag-based pages (remote-{keyword}-jobs.json) but those
+        // return every job with that tag, including completely unrelated roles
+        // (a "Senior Vice President" job tagged "software" because the company
+        // makes software). Client-side filtering via the coordinator is more accurate.
+        let body = fetcher.fetch("https://remoteok.com/api").await?;
+        let parsed: Vec<serde_json::Value> = serde_json::from_str(&body)?;
 
-        let mut seen = std::collections::HashSet::new();
-        let mut posts = Vec::new();
+        // First element is metadata, rest are jobs
+        let mut posts: Vec<JobPost> = parsed.iter().skip(1).filter_map(Self::parse_item).collect();
 
-        for kw in &keywords {
-            let kw_lower = kw.to_lowercase().trim().to_string();
-            if kw_lower.is_empty() {
-                continue;
-            }
-
-            let url = format!(
-                "https://remoteok.com/remote-{}-jobs.json",
-                urlencode(&kw_lower)
-            );
-
-            let body = match fetcher.fetch(&url).await {
-                Ok(b) => b,
-                Err(_) => continue,
-            };
-
-            let parsed: Vec<serde_json::Value> = match serde_json::from_str(&body) {
-                Ok(v) => v,
-                Err(_) => continue,
-            };
-
-            for item in parsed.iter().skip(1) {
-                let slug = item["slug"].as_str().unwrap_or("");
-                if slug.is_empty() || seen.contains(slug) {
-                    continue;
-                }
-                seen.insert(slug.to_string());
-                if let Some(post) = Self::parse_item(item) {
-                    posts.push(post);
-                    if posts.len() >= config.max_results {
-                        break;
-                    }
-                }
-            }
-            if posts.len() >= config.max_results {
-                break;
-            }
-        }
-
-        // De-duplicate by keeping unique jobs sorted by date (newest first)
+        // Sort by date (newest first), then cap with room for keyword filtering
         posts.sort_by(|a, b| b.crawled_at.cmp(&a.crawled_at));
-        posts.truncate(config.max_results);
+        posts.truncate(config.max_results * 2);
 
         Ok(posts)
     }

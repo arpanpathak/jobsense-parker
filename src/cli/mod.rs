@@ -490,6 +490,16 @@ impl App {
             self.score_jobs_by_keywords(jobs)
         };
 
+        // Sort by score DESC, then by date DESC (newest first) as tiebreaker.
+        // This ensures fresh, relevant jobs appear at the top.
+        self.results.sort_by(|a, b| {
+            let score_cmp = b.score.partial_cmp(&a.score).unwrap_or(std::cmp::Ordering::Equal);
+            if score_cmp != std::cmp::Ordering::Equal {
+                return score_cmp;
+            }
+            b.job.crawled_at.cmp(&a.job.crawled_at)
+        });
+
         // Save query to history
         if save_query {
             let _ = storage::push_query(&keywords.join(" "));
