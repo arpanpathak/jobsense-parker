@@ -182,13 +182,7 @@ impl CrawlerCoordinator {
             let kw_count = config.keywords.len();
             let kw_lower: Vec<String> = config.keywords.iter().map(|k| k.to_lowercase()).collect();
 
-            // Pass 1: Title-gate — at least one keyword must be in the TITLE.
-            all_posts.retain(|job| {
-                let title_lower = job.title.to_lowercase();
-                kw_lower.iter().any(|kw| title_lower.contains(kw.as_str()))
-            });
-
-            // Pass 2: Soft-AND — require N/K keywords in full text.
+            // Minimum keywords required: 1 of 1, 2 of 2, 2 of 3, half of 4+
             let min_required = if kw_count == 1 {
                 1
             } else if kw_count <= 3 {
@@ -197,13 +191,24 @@ impl CrawlerCoordinator {
                 kw_count / 2
             };
 
+            // Pass 1: Title-gate — the same min_required keywords must appear
+            // in the TITLE alone. This eliminates "Senior Vice President"
+            // when searching "senior software engineer" because the title
+            // only has "senior" (1 of 3, needs 2).
+            all_posts.retain(|job| {
+                let title_lower = job.title.to_lowercase();
+                let title_matches = kw_lower.iter().filter(|kw| title_lower.contains(kw.as_str())).count();
+                title_matches >= min_required
+            });
+
+            // Pass 2: Soft-AND on full text (NOT including tags — they
+            // contain platform-level tag dumps that pollute matching).
             all_posts.retain(|job| {
                 let text = format!(
-                    "{} {} {} {}",
+                    "{} {} {}",
                     job.title,
                     job.description,
                     job.company.as_deref().unwrap_or(""),
-                    job.tags.join(" ")
                 )
                 .to_lowercase();
                 let matches = kw_lower.iter().filter(|kw| text.contains(kw.as_str())).count();

@@ -10,7 +10,7 @@ use uuid::Uuid;
 use crate::crawler::company::CompanyCrawler;
 use crate::crawler::CrawlerCoordinator;
 use crate::matcher::Matcher;
-use crate::models::{Command, CompanyDatabase, JobPost, MatchResult, Resume, ScanRecord, SearchConfig};
+use crate::models::{Command, CompanyDatabase, JobPost, JobSource, MatchResult, Resume, ScanRecord, SearchConfig};
 use crate::storage;
 
 pub use views::{banner, print_help, show_scan_history};
@@ -667,48 +667,96 @@ impl App {
         }
 
         let items = vec![
-            "Sort by score (high -> low)".to_string(),
-            "Sort by score (low -> high)".to_string(),
-            "Show only high matches (>70%)".to_string(),
-            "Show only medium matches (40-70%)".to_string(),
-            "Show only low matches (<40%)".to_string(),
-            "Reset filters".to_string(),
+            "Sort by score (high → low)".to_string(),
+            "Sort by score (low → high)".to_string(),
+            "Sort by date (newest first)".to_string(),
+            "Sort by date (oldest first)".to_string(),
+            "Filter: only Remote OK".to_string(),
+            "Filter: only Reddit".to_string(),
+            "Filter: only Hacker News".to_string(),
+            "Filter: only Company career sites".to_string(),
+            "Score: only high (>70%)".to_string(),
+            "Score: only medium (40-70%)".to_string(),
+            "Score: only low (<40%)".to_string(),
+            "Reset all filters".to_string(),
             "Back".to_string(),
         ];
 
         let selection = Select::with_theme(&dialoguer::theme::ColorfulTheme::default())
-            .with_prompt("Filter results")
+            .with_prompt("Filter / sort results")
             .items(&items)
             .default(0)
             .interact_opt()
-            .unwrap_or(Some(6))
-            .unwrap_or(6);
+            .unwrap_or(Some(items.len() - 1))
+            .unwrap_or(items.len() - 1);
 
         match selection {
+            // ── Sort by score ──────────────────────────────────────────
             0 => {
                 self.results
                     .sort_by(|a, b| b.score.partial_cmp(&a.score).unwrap_or(std::cmp::Ordering::Equal));
-                println!("  Sorted by score (descending).");
+                println!("  ✓ Sorted by score (high → low).");
             }
             1 => {
                 self.results
                     .sort_by(|a, b| a.score.partial_cmp(&b.score).unwrap_or(std::cmp::Ordering::Equal));
-                println!("  Sorted by score (ascending).");
+                println!("  ✓ Sorted by score (low → high).");
             }
+            // ── Sort by date ───────────────────────────────────────────
             2 => {
-                self.results.retain(|r| r.score >= 0.7);
-                println!("  Filtered to {} high-match results.", self.results.len());
+                self.results
+                    .sort_by(|a, b| b.job.crawled_at.cmp(&a.job.crawled_at));
+                println!("  ✓ Sorted by date (newest first).");
             }
             3 => {
-                self.results.retain(|r| r.score >= 0.4 && r.score < 0.7);
-                println!("  Filtered to {} medium-match results.", self.results.len());
+                self.results
+                    .sort_by(|a, b| a.job.crawled_at.cmp(&b.job.crawled_at));
+                println!("  ✓ Sorted by date (oldest first).");
             }
+            // ── Filter by source ───────────────────────────────────────
             4 => {
-                self.results.retain(|r| r.score < 0.4);
-                println!("  Filtered to {} low-match results.", self.results.len());
+                let before = self.results.len();
+                self.results.retain(|r| matches!(r.job.source, JobSource::RemoteOk));
+                println!("  ✓ Filtered to {} Remote OK results (was {}).", self.results.len(), before);
             }
             5 => {
-                println!("  Re-run a scan to get fresh results.");
+                let before = self.results.len();
+                self.results.retain(|r| matches!(r.job.source, JobSource::Reddit));
+                println!("  ✓ Filtered to {} Reddit results (was {}).", self.results.len(), before);
+            }
+            6 => {
+                let before = self.results.len();
+                self.results.retain(|r| matches!(r.job.source, JobSource::HackerNews));
+                println!("  ✓ Filtered to {} HN results (was {}).", self.results.len(), before);
+            }
+            7 => {
+                let before = self.results.len();
+                self.results.retain(|r| matches!(r.job.source, JobSource::Custom(_)));
+                println!("  ✓ Filtered to {} company career-site results (was {}).", self.results.len(), before);
+            }
+            // ── Filter by score range ──────────────────────────────────
+            8 => {
+                self.results.retain(|r| r.score >= 0.7);
+                println!("  ✓ Filtered to {} high-match results (>70%).", self.results.len());
+            }
+            9 => {
+                self.results.retain(|r| r.score >= 0.4 && r.score < 0.7);
+                println!("  ✓ Filtered to {} medium-match results (40-70%).", self.results.len());
+            }
+            10 => {
+                self.results.retain(|r| r.score < 0.4);
+                println!("  ✓ Filtered to {} low-match results (<40%).", self.results.len());
+            }
+            // ── Reset ──────────────────────────────────────────────────
+            11 => {
+                // Reload from storage to undo all filters
+                if let Ok(saved) = storage::load_last_results() {
+                    let count_before = self.results.len();
+                    self.results = saved;
+                    println!("  ✓ Reset filters. Back to {} results (was {}).", self.results.len(), count_before);
+                } else {
+                    println!("  No cached results to restore. Re-run a scan.");
+                }
             }
             _ => {}
         }

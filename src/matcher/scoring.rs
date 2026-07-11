@@ -152,11 +152,15 @@ pub fn fuzzy_match(keyword: &str, text: &str) -> bool {
     })
 }
 
-/// Concatenate all relevant fields of a job post into a single searchable string.
+/// Concatenate relevant fields of a job post into a single searchable string.
 ///
 /// Combines `title`, `description`, `company`, `location`, `salary`,
-/// `job_type`, and `tags` into one space-separated string. This is what
-/// the matcher scans for skill/keyword presence.
+/// and `job_type` into one space-separated string for skill matching.
+///
+/// **`tags` are deliberately excluded** because job boards like Remote OK
+/// dump platform-level tag clouds onto every job listing. A "Senior Vice
+/// President" role can match "ai, angular, c#, python, react, rust..." purely
+/// from tags, making skill matching meaningless.
 ///
 /// # Example output
 ///
@@ -177,6 +181,5 @@ pub fn build_job_text(job: &JobPost) -> String {
     if let Some(jt) = &job.job_type {
         parts.push(jt.clone());
     }
-    parts.extend(job.tags.clone());
-    parts.join(" ")
+    parts.join(" ").trim().to_string()
 }
