@@ -400,69 +400,55 @@ impl App {
 
         let page_size = 10;
         let total_pages = (self.results.len() + page_size - 1) / page_size;
-        let mut current_page = 0;
+        let mut page = 0usize;
 
         loop {
-            views::show_results_page(&self.results, current_page, total_pages);
+            views::show_results_page(&self.results, page, total_pages);
 
-            let nav_items = if total_pages <= 1 {
-                vec!["Back to main menu".to_string()]
-            } else if current_page == 0 {
-                vec![
-                    "Next page ->".to_string(),
-                    "Back to main menu".to_string(),
-                    format!("Jump to page (1-{total_pages})"),
-                ]
-            } else if current_page == total_pages - 1 {
-                vec![
-                    "<- Previous page".to_string(),
-                    "Back to main menu".to_string(),
-                ]
-            } else {
-                vec![
-                    "<- Previous page".to_string(),
-                    "Next page ->".to_string(),
-                    "Back to main menu".to_string(),
-                    format!("Jump to page (1-{total_pages})"),
-                ]
-            };
+            let has_prev = page > 0;
+            let has_next = page < total_pages - 1;
+            let show_jump = total_pages > 3;
 
-            let selection = Select::with_theme(&dialoguer::theme::ColorfulTheme::default())
+            let mut nav = Vec::new();
+            if has_prev { nav.push("<- Previous page"); }
+            if has_next { nav.push("Next page ->"); }
+            let jump_label = if show_jump { Some(format!("Jump to page (1-{total_pages})")) } else { None };
+            if let Some(ref jl) = jump_label { nav.push(jl); }
+            nav.push("Back to main menu");
+
+            // Map selection index to action
+            let sel = Select::with_theme(&dialoguer::theme::ColorfulTheme::default())
                 .with_prompt("Navigate")
-                .items(&nav_items)
+                .items(&nav)
                 .default(0)
                 .interact_opt()
-                .unwrap_or(Some(2))
-                .unwrap_or(2);
+                .unwrap_or(Some(nav.len() - 1))
+                .unwrap_or(nav.len() - 1);
 
-            match selection {
-                0 if current_page > 0 => current_page -= 1,
-                0 => break,
-                _ => {
-                    let label = &nav_items[selection];
-                    if label == "<- Previous page" && current_page > 0 {
-                        current_page -= 1;
-                    } else if label == "Next page ->" && current_page < total_pages - 1 {
-                        current_page += 1;
-                    } else if label == "Back to main menu" {
-                        break;
-                    } else if label.starts_with("Jump to") {
-                        let page: String =
-                            Input::with_theme(&dialoguer::theme::ColorfulTheme::default())
-                                .with_prompt("Page number")
-                                .interact_text()
-                                .unwrap_or_default();
-                        if let Ok(p) = page.parse::<usize>() {
-                            if p > 0 && p <= total_pages {
-                                current_page = p - 1;
-                            }
-                        }
-                    } else {
-                        break;
-                    }
-                }
+            let n_prev = has_prev as usize;
+            let n_next = has_next as usize;
+            let n_jump = show_jump as usize;
+
+            // Actions are in this order: [prev?] [next?] [jump?] [back]
+            match sel {
+                i if n_prev > 0 && i == 0 => page -= 1,
+                i if n_next > 0 && i == n_prev => page += 1,
+                i if n_jump > 0 && i == n_prev + n_next => { page = Self::jump_to_page(total_pages); }
+                _ => break,
             }
         }
+    }
+
+    /// Prompt user for a page number and update `page` in `cmd_view_results`.
+    fn jump_to_page(total_pages: usize) -> usize {
+        let input: String = Input::with_theme(&dialoguer::theme::ColorfulTheme::default())
+            .with_prompt("Page number")
+            .interact_text()
+            .unwrap_or_default();
+        input.parse::<usize>().ok()
+            .filter(|p| *p > 0 && *p <= total_pages)
+            .map(|p| p - 1)
+            .unwrap_or(0)
     }
 
     // ─── Command: Filter Results ──────────────────────────────────────

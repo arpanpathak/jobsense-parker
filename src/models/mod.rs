@@ -87,8 +87,11 @@ pub struct Resume {
 impl Resume {
     /// Parse a plain-text resume and extract structured fields.
     ///
-    /// Detection methods:
-    /// * **Skills** — matched against a built-in keyword list (tech stacks, roles).
+    /// No hard-coded skill list. Skills are inferred from context:
+    /// * **Skills** — extracted from context patterns like `"experience with X"`,
+    ///   `"proficient in X"`, `"technologies: X, Y, Z"`.
+    /// * **Roles** — extracted from patterns like `"senior X"`, `"X engineer"`
+    ///   in title lines or `"role: X"` headers.
     /// * **Experience years** — regex for patterns like `"5 years"`, `"10+ years"`, `"3 yrs"`.
     /// * **Location** — regex for patterns like `"based in NYC"`, `"located in San Francisco"`.
     /// * **Job type** — regex for `"full-time"`, `"part-time"`, `"contract"`, `"remote"`.
@@ -96,37 +99,60 @@ impl Resume {
     pub fn from_text(text: &str) -> Self {
         let lower = text.to_lowercase();
 
-        // ── Skills ──────────────────────────────────────────────────────
+        // ── Skills (context-based, no hard-coded list) ──────────────────
 
-        let skill_keywords = [
-            "rust", "python", "go", "golang", "java", "typescript", "javascript",
-            "react", "angular", "vue", "node", "c++", "c#", "kotlin", "swift",
-            "sql", "postgresql", "mysql", "mongodb", "redis", "docker", "kubernetes",
-            "k8s", "aws", "gcp", "azure", "devops", "ci/cd", "terraform", "ansible",
-            "machine learning", "ml", "ai", "data science", "deep learning",
-            "blockchain", "solidity", "web3", "frontend", "backend", "fullstack",
-            "api", "rest", "graphql", "git", "linux", "agile", "scrum",
-        ];
+        // "experience with Rust", "proficient in Python", "knowledge of Docker",
+        // "familiar with React", "worked with AWS", "expertise in K8s", etc.
+        let ctx_re = Regex::new(
+            r"(?i)(?:experience|proficient|skills?|knowledge|worked|familiar|expertise|strong|fluent|background|expert|using|including)\s*(?:with|in|at|using|of|on|including)\s+([a-z][a-z+#.]+(?:\s+[a-z][a-z+#.]+)?)"
+        ).unwrap();
 
-        let role_keywords = [
-            "engineer", "developer", "architect", "manager", "lead", "senior",
-            "staff", "principal", "intern", "junior", "sde", "swe",
-            "data scientist", "analyst", "consultant", "devops",
-        ];
-
-        let mut skills: Vec<String> = skill_keywords
-            .iter()
-            .filter(|kw| lower.contains(*kw))
-            .map(|&s| s.to_string())
+        let mut skills: Vec<String> = ctx_re
+            .captures_iter(&lower)
+            .map(|c| c.get(1).unwrap().as_str().trim().to_string())
+            .filter(|s| s.len() >= 2)
             .collect();
+
+        // Also grab tokens from lines like "Technologies: Rust, Python, Docker"
+        let list_re = Regex::new(
+            r"(?i)(?:technolog(y|ies)|tools?|tech\s*stack|languages?|frameworks?|platforms?)[:\s]+(.+)"
+        ).unwrap();
+        if let Some(caps) = list_re.captures(&lower) {
+            let list_part = caps.get(2).unwrap().as_str();
+            for item in list_part.split([',', ';', '|', '\n']).filter_map(|s| {
+                let t = s.trim().trim_matches(|c: char| c == '.' || c == ' ').to_string();
+                if t.len() >= 2 && !t.contains(char::is_whitespace) { Some(t) } else { None }
+            }) {
+                skills.push(item);
+            }
+        }
+
         skills.sort();
         skills.dedup();
 
-        let mut role_titles: Vec<String> = role_keywords
-            .iter()
-            .filter(|kw| lower.contains(*kw))
-            .map(|&s| s.to_string())
-            .collect();
+        // ── Roles (context-based) ───────────────────────────────────────
+
+        let mut role_titles: Vec<String> = Vec::new();
+
+        // "Role: Senior Engineer", "Position: Lead Developer"
+        let role_ctx_re = Regex::new(
+            r"(?i)(?:role|position|title)[:\s]+([a-z]+\s+(?:engineer|developer|architect|manager|lead|intern|analyst|consultant|scientist|designer|director|head))"
+        ).unwrap();
+        for cap in role_ctx_re.captures_iter(&lower) {
+            role_titles.push(cap.get(1).unwrap().as_str().trim().to_string());
+        }
+
+        // "Software Engineer", "Senior Frontend Developer", "Data Scientist"
+        let title_role_re = Regex::new(
+            r"(?i)(?:(?:senior|staff|principal|lead|junior|intern|head)\s+)?(?:software|data|full.?stack|frontend|backend|devops|platform|security|systems|network|site\s*reliability|machine\s*learning|ai|ml)\s+(?:engineer|developer|architect|manager|scientist|analyst)"
+        ).unwrap();
+        for cap in title_role_re.captures_iter(&lower) {
+            let role = cap.get(0).unwrap().as_str().trim().to_string();
+            if !role_titles.contains(&role) {
+                role_titles.push(role);
+            }
+        }
+
         role_titles.sort();
         role_titles.dedup();
 
