@@ -1,8 +1,50 @@
-//! Terminal rendering helpers — banner, resume display, vim-style paginated
-//! results viewer, scan history, and CLI help text.
+//! # Terminal Rendering
 //!
-//! All URLs are rendered with OSC 8 terminal hyperlinks so you can
-//! Cmd+click (macOS) or Ctrl+click (Linux/Windows) to open them.
+//! Renders all user-facing output: banners, resume display, the vim-style
+//! paginated results viewer, company lists, scan history, and CLI help text.
+//!
+//! ## OSC 8 Clickable Links
+//!
+//! All URLs are rendered with [OSC 8 terminal hyperlinks](https://gist.github.com/egmontkob/eb114294efbcd5adb1944c9f3cb5feda)
+//! so you can Cmd+click (macOS) or Ctrl+click (Linux/Windows) to open them
+//! directly in your browser. This works in:
+//!
+//! - iTerm2
+//! - macOS Terminal.app
+//! - kitty
+//! - alacritty
+//! - Windows Terminal
+//! - VS Code integrated terminal
+//!
+//! ## Vim-Style Results Viewer
+//!
+//! The [`run_results_viewer`] function implements a full-screen paginated
+//! job browser with vi-style keyboard navigation. When you select "View results"
+//! from the menu, the terminal clears and shows:
+//!
+//! ```text
+//!
+//!   ▸ results (page 1/3 · 25 total)
+//!   ────────────────────────────────────────────────────────────
+//!
+//!    1. Senior Rust Engineer 78% [Remote OK] @ Stripe
+//!        https://stripe.com/jobs/engineering/rust-engineer
+//!        + rust, distributed-systems, api-design
+//!        - kubernetes
+//!
+//!    2. Backend Engineer     65% [Hacker News] @ Jane Street
+//!        https://news.ycombinator.com/item?id=12345678
+//!        + ocaml, python, rust
+//!        - kubernetes, aws
+//!   ▸
+//!    3. Full Stack Developer   45% [Remote OK] @ Shopify
+//!        https://shopify.com/careers/fullstack-dev
+//!
+//!   [j↓ k↑  n→ p←  g/G  Enter:open  ?:help  q:quit]  ▸ Full Stack Developer
+//! ```
+//!
+//! The selected row is highlighted with a blue background. Press `?` for a
+//! keybinding reference overlay.
 
 use anyhow::Result;
 use colored::Colorize;

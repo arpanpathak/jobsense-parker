@@ -1,14 +1,41 @@
-//! Job-board crawlers that collect job postings from various sources.
+//! # Job-Source Crawlers
 //!
-//! Each crawler implements the [`SourceCrawler`] trait. The
-//! [`CrawlerCoordinator`] manages all registered crawlers and dispatches
-//! searches to the applicable ones based on [`SearchConfig`].
+//! This module contains all job-source crawlers and the coordinator that
+//! orchestrates them. Each crawler implements the [`SourceCrawler`] trait
+//! and is registered in [`CrawlerCoordinator`].
+//!
+//! ## Architecture
+//!
+//! ```text
+//!                    ┌──────────────────────────────────┐
+//!                    │     CrawlerCoordinator            │
+//!                    │  (filter by config.sources, then  │
+//!                    │   run all concurrently, then      │
+//!                    │   post-filter by keywords)        │
+//!                    └──────┬──────┬──────┬──────┬──────┘
+//!                            │      │      │      │
+//!              ┌─────────────┘      │      │      └─────────────┐
+//!              ▼                    ▼      ▼                    ▼
+//!     ┌────────────┐    ┌────────────┐    ┌────────────┐    ┌──────────┐
+//!     │ Remote OK   │    │   Reddit    │    │ HackerNews  │    │ Company  │
+//!     │ (tagged     │    │ (JSON API,  │    │ (Algolia +  │    │ (heuristic│
+//!     │  JSON API)  │    │  5 subs)    │    │  Firebase)  │    │  scraper) │
+//!     └────────────┘    └────────────┘    └────────────┘    └──────────┘
+//! ```
+//!
+//! ## Adding a New Source
+//!
+//! 1. Create a new module (e.g. `indeed.rs`) with a struct that implements
+//!    [`SourceCrawler`]
+//! 2. Register it in [`CrawlerCoordinator::new`]
+//! 3. Add a variant to [`JobSource`](crate::models::JobSource) if it's a
+//!    distinct board (otherwise `Custom` works)
 
 pub mod company;
 pub mod fetcher;
-pub mod remoteok;
-pub mod reddit;
 pub mod hackernews;
+pub mod reddit;
+pub mod remoteok;
 
 use anyhow::Result;
 use colored::Colorize;
@@ -18,22 +45,69 @@ use crate::models::{JobPost, SearchConfig};
 /// A single job-source crawler.
 ///
 /// Implementations must be `Send + Sync` so the coordinator can run them
-/// concurrently (or sequentially) in an async context.
+/// concurrently in an async context via [`futures::future::join_all`].
+///
+/// # Contract
+///
+/// - `crawl()` should respect [`SearchConfig::keywords`], [`SearchConfig::max_results`],
+///   and [`SearchConfig::sources`]
+/// - Return only jobs that match the keywords (either via API filtering or
+///   internal filtering)
+/// - Set meaningful `company`, `title`, `url`, and `source` on each [`JobPost`]
 #[async_trait::async_trait]
 pub trait SourceCrawler: Send + Sync {
     /// Human-readable name of the source (used for logging and filtering).
+    ///
+    /// Must match the `Display` representation of the corresponding
+    /// [`JobSource`](crate::models::JobSource) variant so that source filtering
+    /// in [`CrawlerCoordinator::crawl_all`] works correctly.
+    ///
+    /// # Examples
+    ///
+    /// - `"Remote OK"` → matched against `JobSource::RemoteOk` (renders as `"Remote OK"`)
+    /// - `"Reddit"` → matched against `JobSource::Reddit`
+    /// - `"Hacker News"` → matched against `JobSource::HackerNews`
     fn name(&self) -> &str;
+
     /// Fetch job posts matching the given search configuration.
+    ///
+    /// # Errors
+    ///
+    /// Errors are logged by the coordinator and do not fail the entire crawl.
+    /// Common failures: network timeouts, rate limiting, API changes.
     async fn crawl(&self, config: &SearchConfig) -> Result<Vec<JobPost>>;
 }
 
-/// Orchestrates multiple [`SourceCrawler`] instances.
+/// Orchestrates multiple [`SourceCrawler`] instances, runs them concurrently,
+/// and post-filters the combined results against the user's search keywords.
+///
+/// # Concurrency
+///
+/// All active crawlers (those whose `name()` matches a source in
+/// [`SearchConfig::sources`]) are spawned concurrently via
+/// [`futures::future::join_all`]. This means a 3-source crawl takes roughly
+/// as long as the *slowest* single source, not the sum of all three.
+///
+/// # Post-filtering
+///
+/// After all crawlers complete, every job is checked against the search
+/// keywords (`job.title`, `job.description`, `job.company`, `job.tags`).
+/// Jobs that don't contain at least one keyword are discarded. This is a
+/// safety net for crawlers that may not fully respect `config.keywords`.
 pub struct CrawlerCoordinator {
     crawlers: Vec<Box<dyn SourceCrawler>>,
 }
 
 impl CrawlerCoordinator {
     /// Create a coordinator with all built-in crawlers registered.
+    ///
+    /// Currently registered:
+    ///
+    /// | Index | Crawler | Source |
+    /// |-------|---------|--------|
+    /// | 0 | [`remoteok::RemoteOkCrawler`] | Remote OK JSON API |
+    /// | 1 | [`reddit::RedditCrawler`] | Reddit JSON API (5 subs) |
+    /// | 2 | [`hackernews::HackerNewsCrawler`] | HN Algolia + Firebase |
     pub fn new() -> Self {
         Self {
             crawlers: vec![
@@ -47,12 +121,15 @@ impl CrawlerCoordinator {
     /// Run all matching crawlers **concurrently** and aggregate their results.
     ///
     /// Only crawlers whose `name()` matches one of the sources in
-    /// `config.sources` are invoked. Errors from individual crawlers
+    /// [`SearchConfig::sources`] are invoked. Errors from individual crawlers
     /// are logged to stderr but do not fail the whole operation.
     ///
-    /// After collection, results are **filtered** against the search
-    /// keywords so that every returned post is actually relevant to
-    /// what the user asked for.
+    /// ## Post-filtering
+    ///
+    /// After collection, results are filtered against the search keywords so
+    /// that every returned post is actually relevant to what the user asked for.
+    /// Jobs whose combined `title + description + company + tags` contain none
+    /// of the keywords are discarded. Logs a count if any were removed.
     pub async fn crawl_all(&self, config: &SearchConfig) -> Vec<JobPost> {
         let futures: Vec<_> = self
             .crawlers
@@ -95,7 +172,6 @@ impl CrawlerCoordinator {
         }
 
         // Post-filter: throw out jobs that don't mention any search keyword.
-        // This catches crawlers that may not filter internally (or do it poorly).
         if !config.keywords.is_empty() {
             let before = all_posts.len();
             all_posts.retain(|job| {

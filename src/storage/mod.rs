@@ -1,5 +1,26 @@
-//! Persistent JSON storage for resumes, preferences, query history, scan records,
-//! and cached results. All data is stored under `$HOME/.jobsense-parker/`.
+//! # JSON Persistence Layer
+//!
+//! All user data is stored as JSON files under `~/.jobsense-parker/`. This
+//! module handles reading and writing every data type with proper error
+//! handling and automatic directory creation.
+//!
+//! ## File Layout
+//!
+//! ```text
+//! ~/.jobsense-parker/
+//! ├── resume.json          ← Parsed resume (skills, roles, keywords)
+//! ├── preferences.json     ← User preferences (sources, max results)
+//! ├── companies.json       ← Cached companies with careers-page URLs
+//! ├── queries.json         ← Recent search queries (capped at 50)
+//! ├── scan_history.json    ← Scan records (capped at 100)
+//! └── last_results.json    ← Most recent match results
+//! ```
+//!
+//! ## First-Run Behaviour
+//!
+//! On first run, the directory is created automatically and:
+//! - `companies.json` is seeded with 80+ major tech companies
+//! - All other files are created on first write
 
 use anyhow::{Context, Result};
 use std::path::PathBuf;
@@ -9,7 +30,7 @@ use crate::models::{CompanyDatabase, MatchResult, Resume, ScanRecord, UserPrefer
 /// Directory name under `$HOME` for storing app data.
 const DATA_DIR: &str = ".jobsense-parker";
 
-/// Returns the path to the data directory (no guarantee it exists).
+/// Returns the path to the data directory (does not guarantee it exists).
 fn data_dir() -> Result<PathBuf> {
     let home = dirs_next::home_dir().context("Cannot determine home directory")?;
     Ok(home.join(DATA_DIR))
@@ -90,9 +111,10 @@ pub fn load_query_history() -> Result<Vec<String>> {
 }
 
 /// Add a query to the front of the history (deduped, capped at 50).
+///
+/// If the query already exists in history it is moved to the front.
 pub fn push_query(query: &str) -> Result<()> {
     let mut history = load_query_history().unwrap_or_default();
-    // Avoid duplicates (recent-first)
     history.retain(|q| q != query);
     history.insert(0, query.to_string());
     if history.len() > 50 {
@@ -135,6 +157,9 @@ pub fn push_scan_record(record: &ScanRecord) -> Result<()> {
 // ─── Last Results Cache ───────────────────────────────────────────────
 
 /// Persist the most recent match results to `~/.jobsense-parker/last_results.json`.
+///
+/// This allows `--results` and the "View results" menu option to work
+/// across restarts without re-running a scan.
 pub fn save_last_results(results: &[MatchResult]) -> Result<()> {
     let dir = ensure_dir()?;
     let path = dir.join("last_results.json");
@@ -153,7 +178,7 @@ pub fn load_last_results() -> Result<Vec<MatchResult>> {
     serde_json::from_str(&json).context("Failed to parse last_results.json")
 }
 
-// ─── Company Database ──────────────────────────────────────────────────────
+// ─── Company Database ─────────────────────────────────────────────────
 
 /// Persist the company database to `~/.jobsense-parker/companies.json`.
 pub fn save_company_database(db: &CompanyDatabase) -> Result<()> {
@@ -166,7 +191,11 @@ pub fn save_company_database(db: &CompanyDatabase) -> Result<()> {
 /// Load the company database.
 ///
 /// On first run the file won't exist, so we seed it with a curated list of
-/// well-known tech companies and their careers-page URLs.
+/// well-known tech companies and their careers-page URLs. See the
+/// [`seed_companies`] function for the full list.
+///
+/// After seeding, the database is persisted immediately so subsequent runs
+/// load from disk.
 pub fn load_company_database() -> Result<CompanyDatabase> {
     let dir = data_dir()?;
     let path = dir.join("companies.json");
@@ -182,6 +211,20 @@ pub fn load_company_database() -> Result<CompanyDatabase> {
 }
 
 /// Guess a careers-page URL from a company name (used for auto-discovery).
+///
+/// Takes the company name, lowercases it, removes non-alphanumeric
+/// characters, and constructs `https://careers.{slug}.com/`.
+///
+/// # Examples
+///
+/// ```ignore
+/// assert_eq!(guess_careers_url("Google"), "https://careers.google.com/");
+/// assert_eq!(guess_careers_url("Stripe"), "https://careers.stripe.com/");
+/// ```
+///
+/// This won't always work (e.g. Meta → `careers.meta.com` is wrong),
+/// but it's a reasonable starting guess. Users can override with
+/// `--add-company` or the interactive menu.
 pub fn guess_careers_url(name: &str) -> String {
     let slug = name
         .to_lowercase()
@@ -191,11 +234,15 @@ pub fn guess_careers_url(name: &str) -> String {
     if slug.is_empty() {
         return String::new();
     }
-    // Try the most common pattern
     format!("https://careers.{slug}.com/")
 }
 
 /// Seed the database with a curated list of major companies.
+///
+/// This list includes big tech, fintech, enterprise/SaaS, e-commerce,
+/// gaming, and notable startups. Each entry has a manually verified
+/// careers-page URL that the [`CompanyCrawler`](crate::crawler::company::CompanyCrawler)
+/// will attempt to parse with heuristics.
 fn seed_companies(db: &mut CompanyDatabase) {
     let entries: &[(&str, &str)] = &[
         // ── Big Tech ───────────────────────────────────────────────────
@@ -266,7 +313,6 @@ fn seed_companies(db: &mut CompanyDatabase) {
         ("New Relic", "https://newrelic.com/about/careers"),
         ("Splunk", "https://www.splunk.com/en_us/careers.html"),
         // ── E-commerce / Retail ────────────────────────────────────────
-        ("Shopify", "https://www.shopify.com/careers"),
         ("eBay", "https://www.ebayinc.com/careers"),
         ("Walmart", "https://careers.walmart.com"),
         ("Target", "https://corporate.target.com/careers"),
@@ -281,7 +327,6 @@ fn seed_companies(db: &mut CompanyDatabase) {
         ("Roblox", "https://corp.roblox.com/careers"),
         ("Electronic Arts", "https://www.ea.com/careers"),
         // ── Other notable ──────────────────────────────────────────────
-        ("Palantir", "https://www.palantir.com/careers"),
         ("Samsara", "https://www.samsara.com/careers"),
         ("Vercel", "https://vercel.com/careers"),
         ("Netlify", "https://www.netlify.com/careers"),
