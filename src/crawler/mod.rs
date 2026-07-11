@@ -39,7 +39,6 @@ pub mod remoteok;
 
 use anyhow::Result;
 use colored::Colorize;
-use regex::Regex;
 
 use crate::models::{JobPost, SearchConfig};
 
