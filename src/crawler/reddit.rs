@@ -1,15 +1,15 @@
-//! Crawler for Reddit — searches hiring-related subreddits for job posts.
+//! Crawler for Reddit — searches hiring-related subreddits for job posts
+//! using Reddit's JSON API (more reliable than HTML scraping).
 
 use anyhow::Result;
-use chrono::Utc;
-use scraper::{Html, Selector};
+use chrono::{DateTime, Utc};
 use uuid::Uuid;
 
 use super::fetcher::Fetcher;
 use crate::models::{JobPost, JobSource, SearchConfig};
 use super::SourceCrawler;
 
-/// Crawler that searches multiple hiring subreddits for job posts.
+/// Crawler that searches multiple hiring subreddits for job posts via JSON API.
 pub struct RedditCrawler;
 
 #[async_trait::async_trait]
@@ -24,43 +24,38 @@ impl SourceCrawler for RedditCrawler {
 
         let subreddits = ["forhire", "jobbit", "remotejobs", "jobs", "cscareerquestions"];
         let mut posts = Vec::new();
+        let per_sub = config.max_results / subreddits.len();
 
         for sub in subreddits {
+            // Use Reddit's JSON API instead of HTML scraping.
+            // The .json endpoint is faster and doesn't break when HTML changes.
             let url = format!(
-                "https://old.reddit.com/r/{sub}/search?q={query}&sort=new&restrict_sr=on&t=week"
+                "https://www.reddit.com/r/{sub}/search.json?q={query}&sort=new&restrict_sr=on&t=week&limit={per_sub}"
             );
 
-            let html = match fetcher.fetch(&url).await {
-                Ok(h) => h,
+            let body = match fetcher.fetch(&url).await {
+                Ok(b) => b,
                 Err(_) => continue,
             };
 
-            let document = Html::parse_document(&html);
-            let post_sel = Selector::parse("div.thing").unwrap();
-            let title_sel = Selector::parse("a.title").unwrap();
-            let link_sel = Selector::parse("a.title").unwrap();
+            let parsed: serde_json::Value = match serde_json::from_str(&body) {
+                Ok(v) => v,
+                Err(_) => continue,
+            };
 
-            for post in document.select(&post_sel).take(config.max_results / subreddits.len()) {
-                let title = post
-                    .select(&title_sel).next()
-                    .map(|e| e.text().collect::<String>())
-                    .unwrap_or_default()
-                    .trim().to_string();
+            let children = parsed["data"]["children"]
+                .as_array()
+                .map(|c| c.to_vec())
+                .unwrap_or_default();
 
-                let url_suffix = post
-                    .select(&link_sel).next()
-                    .and_then(|e| e.value().attr("href"))
-                    .unwrap_or("");
-                let url = if url_suffix.starts_with("http") {
-                    url_suffix.to_string()
-                } else {
-                    format!("https://old.reddit.com{url_suffix}")
-                };
-
+            for child in children {
+                let data = &child["data"];
+                let title = data["title"].as_str().unwrap_or("").trim().to_string();
                 if title.is_empty() {
                     continue;
                 }
 
+                // Skip non-hiring posts
                 let lower = title.to_lowercase();
                 let is_hiring = lower.contains("hiring") || lower.contains("[hiring]")
                     || lower.contains("job") || lower.contains("position")
@@ -74,15 +69,26 @@ impl SourceCrawler for RedditCrawler {
                     continue;
                 }
 
+                let url = data["url"].as_str().unwrap_or("").to_string();
+                let url = if url.starts_with('/') {
+                    format!("https://www.reddit.com{url}")
+                } else {
+                    url
+                };
+
+                let selftext = data["selftext"].as_str().unwrap_or("").to_string();
+                let created = data["created_utc"].as_f64()
+                    .and_then(|ts| DateTime::from_timestamp(ts as i64, 0));
+
                 posts.push(JobPost {
                     id: Uuid::new_v4().to_string(),
                     title,
                     company: None,
                     location: None,
-                    description: String::new(),
+                    description: selftext,
                     url,
                     source: JobSource::Reddit,
-                    posted_at: None,
+                    posted_at: created,
                     crawled_at: Utc::now(),
                     salary: None,
                     job_type: None,

@@ -1005,6 +1005,7 @@ dependencies = [
  "async-trait",
  "chrono",
  "colored",
+ "console",
  "dialoguer",
  "dirs-next",
  "futures",

@@ -4,6 +4,7 @@ mod views;
 
 use colored::Colorize;
 use dialoguer::{FuzzySelect, Input, Select};
+use indicatif::{ProgressBar, ProgressStyle};
 use uuid::Uuid;
 
 use crate::crawler::CrawlerCoordinator;
@@ -131,11 +132,12 @@ impl App {
                 r.job.source,
                 company,
             );
-            println!("      {}", r.job.url.dimmed());
+            println!("      {}", views::clickable(&r.job.url, &r.job.url).dimmed());
         }
         if self.results.len() > 10 {
             println!("  ... and {} more", self.results.len() - 10);
         }
+        println!("  Use 'View results' for full paginated browser with j/k navigation.");
         println!();
     }
 
@@ -206,11 +208,6 @@ impl App {
     // ─── Command: Load Resume ─────────────────────────────────────────
 
     /// Handle the "Load Resume" command.
-    ///
-    /// Determines whether `input` is a file or raw text by checking if
-    /// the path exists on disk. PDF files are extracted with `pdf_extract`;
-    /// JSON/YAML files are deserialised; all others fall back to
-    /// [`Resume::from_text`].
     fn cmd_load_resume(&mut self, input: &str) {
         let trimmed = input.trim();
         if trimmed.is_empty() {
@@ -222,7 +219,6 @@ impl App {
         let path_exists = path.exists();
 
         let resume = if path_exists && trimmed.ends_with(".pdf") {
-            // PDF file — extract text from it
             match pdf_extract::extract_text(trimmed) {
                 Ok(pdf_text) => {
                     println!("  Extracted {} chars from PDF.", pdf_text.len());
@@ -234,7 +230,6 @@ impl App {
                 }
             }
         } else if path_exists {
-            // Existing file — read and try to parse as JSON/YAML, fall back to plain text
             match std::fs::read_to_string(trimmed) {
                 Ok(content) => {
                     serde_json::from_str::<Resume>(&content)
@@ -250,14 +245,12 @@ impl App {
                 }
             }
         } else {
-            // Not a file — treat as raw text (JSON, YAML, or plain text)
             serde_json::from_str::<Resume>(trimmed)
                 .or_else(|_| serde_yaml::from_str::<Resume>(trimmed))
                 .unwrap_or_else(|_| Resume::from_text(trimmed))
         };
 
         self.matcher.load_resume(resume.clone());
-        // Persist resume immediately
         if let Err(e) = storage::save_resume(&resume) {
             eprintln!("  Warning: failed to persist resume: {e}");
         }
@@ -271,7 +264,6 @@ impl App {
 
     // ─── Command: Show Resume ─────────────────────────────────────────
 
-    /// Display the currently loaded resume to the user.
     fn cmd_show_resume(&self) {
         match self.matcher.resume() {
             None => println!("  No resume loaded."),
@@ -281,9 +273,6 @@ impl App {
 
     // ─── Command: Scan ────────────────────────────────────────────────
 
-    /// Prepare search keywords from the loaded resume (skills + roles).
-    /// If no resume is loaded and keywords are empty, this is a no-op
-    /// (the scan will return zero results unless the user provides keywords).
     fn prepare_keywords(&mut self) {
         if !self.matcher.has_resume() {
             println!("  No resume loaded. Search keywords must be provided manually.");
@@ -308,62 +297,8 @@ impl App {
             return;
         }
 
-        println!(
-            "\n  Scanning with keywords: {}\n",
-            self.config.keywords.iter().map(|k| k.green().to_string()).collect::<Vec<_>>().join(", ")
-        );
-
-        let jobs = self.coordinator.crawl_all(&self.config).await;
-        let raw_count = jobs.len();
-
-        if jobs.is_empty() {
-            println!("\n  No jobs found. Try different keywords or sources.\n");
-            return;
-        }
-
-        println!(
-            "\n  Found {} raw job posts. Matching against resume...",
-            raw_count
-        );
-
-        if self.matcher.has_resume() {
-            self.results = self.matcher.score_all(&jobs);
-            println!("  {} matched results (above threshold)\n", self.results.len());
-        } else {
-            self.results = jobs
-                .into_iter()
-                .map(|j| MatchResult {
-                    score: 0.5,
-                    matched_skills: vec![],
-                    matched_keywords: vec![],
-                    missing_skills: vec![],
-                    job: j,
-                })
-                .collect();
-            println!("  {} raw results (no resume to match)\n", self.results.len());
-        }
-
-        // Persist results
-        let _ = storage::save_last_results(&self.results);
-
-        // Record scan in history (impact profile)
-        let top_score = self.results.iter().map(|r| r.score).fold(0.0, f64::max);
-        let record = ScanRecord {
-            id: Uuid::new_v4().to_string(),
-            timestamp: chrono::Utc::now(),
-            query: self.config.keywords.join(" "),
-            source_count: self.config.sources.len(),
-            total_jobs_found: raw_count,
-            top_score,
-            result_count: self.results.len(),
-        };
-        self.scan_history.insert(0, record.clone());
-        if self.scan_history.len() > 100 {
-            self.scan_history.truncate(100);
-        }
-        let _ = storage::push_scan_record(&record);
-
-        self.show_results();
+        let kw = self.config.keywords.clone();
+        self.run_with_spinner("Scanning", &kw, false).await;
     }
 
     // ─── Command: Search ──────────────────────────────────────────────
@@ -376,15 +311,49 @@ impl App {
         }
 
         self.config.keywords = query.split_whitespace().map(|s| s.to_string()).collect();
+        let kw = self.config.keywords.clone();
+        self.run_with_spinner("Searching", &kw, true).await;
+    }
 
-        println!("\n  Searching for: {}\n", query.bright_white());
+    // ─── Shared crawl + spinner logic ─────────────────────────────────
+
+    /// Run a crawl with a progress spinner showing status in real-time.
+    async fn run_with_spinner(&mut self, action: &str, keywords: &[String], save_query: bool) {
+        let kw_display = keywords
+            .iter()
+            .map(|k| k.green().to_string())
+            .collect::<Vec<_>>()
+            .join(", ");
+
+        // Set up a spinner that shows what's happening
+        let pb = ProgressBar::new_spinner();
+        pb.set_style(
+            ProgressStyle::default_spinner()
+                .template("{spinner:.green} {msg}")
+                .unwrap(),
+        );
+        pb.set_message(format!(
+            "{} jobs for: {} (Remote OK, Reddit, Hacker News)...",
+            action, kw_display
+        ));
+        pb.enable_steady_tick(std::time::Duration::from_millis(100));
 
         let jobs = self.coordinator.crawl_all(&self.config).await;
 
+        pb.finish_and_clear();
+
+        let raw_count = jobs.len();
+
         if jobs.is_empty() {
-            println!("\n  No jobs found.\n");
+            println!("\n  No jobs found. Try different keywords or sources.\n");
             return;
         }
+
+        println!(
+            "  {} {} raw job posts. Matching against resume...",
+            "⚡".bright_green(),
+            raw_count
+        );
 
         if self.matcher.has_resume() {
             self.results = self.matcher.score_all(&jobs);
@@ -402,18 +371,20 @@ impl App {
         }
 
         // Save query to history
-        let _ = storage::push_query(query);
+        if save_query {
+            let _ = storage::push_query(&keywords.join(" "));
+        }
         // Persist results
         let _ = storage::save_last_results(&self.results);
 
-        // Record scan
+        // Record scan in history
         let top_score = self.results.iter().map(|r| r.score).fold(0.0, f64::max);
         let record = ScanRecord {
             id: Uuid::new_v4().to_string(),
             timestamp: chrono::Utc::now(),
-            query: query.to_string(),
+            query: keywords.join(" "),
             source_count: self.config.sources.len(),
-            total_jobs_found: self.results.len(),
+            total_jobs_found: raw_count,
             top_score,
             result_count: self.results.len(),
         };
@@ -423,76 +394,38 @@ impl App {
         }
         let _ = storage::push_scan_record(&record);
 
-        println!("\n  Found {} results\n", self.results.len());
-
-        self.show_results();
+        // Show top results immediately
+        if !self.results.is_empty() {
+            println!(
+                "  {} {} matched results (top score: {:.0}%)\n",
+                "✓".bright_green(),
+                self.results.len(),
+                top_score * 100.0
+            );
+            self.show_results();
+        } else {
+            println!("  No matches above threshold.\n");
+        }
     }
 
     // ─── Command: View Results ────────────────────────────────────────
 
-    /// Paginated viewer for the current match results.
+    /// Open the vim-style paginated results browser.
     fn cmd_view_results(&self) {
         if self.results.is_empty() {
             println!("  No results yet. Run a scan or search first.");
             return;
         }
 
-        let page_size = 10;
-        let total_pages = (self.results.len() + page_size - 1) / page_size;
-        let mut page = 0usize;
-
-        loop {
-            views::show_results_page(&self.results, page, total_pages);
-
-            let has_prev = page > 0;
-            let has_next = page < total_pages - 1;
-            let show_jump = total_pages > 3;
-
-            let mut nav = Vec::new();
-            if has_prev { nav.push("<- Previous page"); }
-            if has_next { nav.push("Next page ->"); }
-            let jump_label = if show_jump { Some(format!("Jump to page (1-{total_pages})")) } else { None };
-            if let Some(ref jl) = jump_label { nav.push(jl); }
-            nav.push("Back to main menu");
-
-            // Map selection index to action
-            let sel = Select::with_theme(&dialoguer::theme::ColorfulTheme::default())
-                .with_prompt("Navigate")
-                .items(&nav)
-                .default(0)
-                .interact_opt()
-                .unwrap_or(Some(nav.len() - 1))
-                .unwrap_or(nav.len() - 1);
-
-            let n_prev = has_prev as usize;
-            let n_next = has_next as usize;
-            let n_jump = show_jump as usize;
-
-            // Actions are in this order: [prev?] [next?] [jump?] [back]
-            match sel {
-                i if n_prev > 0 && i == 0 => page -= 1,
-                i if n_next > 0 && i == n_prev => page += 1,
-                i if n_jump > 0 && i == n_prev + n_next => { page = Self::jump_to_page(total_pages); }
-                _ => break,
-            }
+        // Enter raw mode via console Term for the vim-style viewer.
+        // The viewer handles its own screen rendering and key reading.
+        if let Err(e) = views::run_results_viewer(&self.results) {
+            eprintln!("  Viewer error: {e}");
         }
-    }
-
-    /// Prompt user for a page number and update `page` in `cmd_view_results`.
-    fn jump_to_page(total_pages: usize) -> usize {
-        let input: String = Input::with_theme(&dialoguer::theme::ColorfulTheme::default())
-            .with_prompt("Page number")
-            .interact_text()
-            .unwrap_or_default();
-        input.parse::<usize>().ok()
-            .filter(|p| *p > 0 && *p <= total_pages)
-            .map(|p| p - 1)
-            .unwrap_or(0)
     }
 
     // ─── Command: Filter Results ──────────────────────────────────────
 
-    /// Interactive filter/sort menu for the current results.
     fn cmd_filter_results(&mut self) {
         if self.results.is_empty() {
             println!("  No results to filter.");
@@ -550,10 +483,6 @@ impl App {
 
 // ─── File Picker ─────────────────────────────────────────────────────────
 
-/// Interactive file-picker dialog for selecting a resume file.
-///
-/// Navigate directories with arrow keys and fuzzy-find. Supports
-/// PDF, JSON, YAML, and TXT extensions.
 fn pick_resume_file() -> Option<String> {
     let mut current_dir = std::env::current_dir().ok()?;
 

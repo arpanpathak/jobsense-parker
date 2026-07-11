@@ -1,40 +1,64 @@
-//! Terminal rendering helpers — banner, resume display, results pagination,
-//! scan history, and CLI help text.
+//! Terminal rendering helpers — banner, resume display, vim-style paginated
+//! results viewer, scan history, and CLI help text.
+//!
+//! All URLs are rendered with OSC 8 terminal hyperlinks so you can
+//! Cmd+click (macOS) or Ctrl+click (Linux/Windows) to open them.
 
+use anyhow::Result;
 use colored::Colorize;
+use console::Term;
 
 use crate::models::{MatchResult, Resume, ScanRecord};
+
+// ─── OSC 8 Hyperlink ───────────────────────────────────────────────────────
+
+/// Wrap `text` in an [OSC 8 terminal hyperlink](https://gist.github.com/egmontkob/eb114294efbcd5adb1944c9f3cb5feda).
+///
+/// Most modern terminals (iTerm2, Terminal.app, kitty, alacritty, Windows
+/// Terminal) support Cmd+click / Ctrl+click on these.
+pub fn clickable(url: &str, text: &str) -> String {
+    format!("\x1b]8;;{url}\x1b\\{text}\x1b]8;;\x1b\\")
+}
+
+// ─── Banner ────────────────────────────────────────────────────────────────
 
 /// Render the startup banner.
 pub fn banner() {
     println!();
     println!(
         "  {}",
-        "╔══════════════════════════════════════════════════╗"
+        "╔══════════════════════════════════════════════════════╗"
             .bright_blue()
     );
     println!(
-        "  {}  JobSense-Parker  v0.2{}",
+        "  {}  JobSense-Parker  v0.3                          {}",
         "║".bright_blue(),
         "║".bright_blue(),
     );
     println!(
-        "  {}  Hunt the internet for your next gig.   {}",
+        "  {}  Hunt the internet for your next gig.           {}",
         "║".bright_blue(),
         "║".bright_blue()
     );
     println!(
-        "  {}  (LinkedIn-free zone)                   {}",
+        "  {}  Type '?' at any results view for keybindings   {}",
+        "║".bright_blue(),
+        "║".bright_blue()
+    );
+    println!(
+        "  {}  (LinkedIn-free zone)                           {}",
         "║".bright_blue(),
         "║".bright_blue()
     );
     println!(
         "  {}",
-        "╚══════════════════════════════════════════════════╝"
+        "╚══════════════════════════════════════════════════════╝"
             .bright_blue()
     );
     println!();
 }
+
+// ─── Resume ────────────────────────────────────────────────────────────────
 
 /// Display the parsed contents of a resume.
 pub fn show_resume(r: &Resume) {
@@ -73,67 +97,246 @@ pub fn show_resume(r: &Resume) {
     println!();
 }
 
-/// Render a single page of match results with navigation.
-pub fn show_results_page(results: &[MatchResult], page: usize, total_pages: usize) {
-    let page_size = 10;
-    let start = page * page_size;
-    let end = usize::min(start + page_size, results.len());
-    let page_results = &results[start..end];
+// ─── Vim-Style Paginated Results Viewer ────────────────────────────────────
 
-    println!();
-    println!(
-        "  Results (page {}/{} -- {} total)",
-        page + 1,
-        total_pages,
-        results.len()
-    );
-    println!("  {}", "─".repeat(60).dimmed());
-    println!();
+const PAGE_SIZE: usize = 10;
 
-    for (i, result) in page_results.iter().enumerate() {
-        let idx = start + i + 1;
-        let score_pct = format!("{:.0}%", result.score * 100.0);
+/// Keybinding reference overlay.
+const KEYBINDINGS: &str = r"
+  ╔═══════════════════════════════════════╗
+  ║          Results Viewer Keys          ║
+  ╠═══════════════════════════════════════╣
+  ║  j / ↓        Move selection down     ║
+  ║  k / ↑        Move selection up       ║
+  ║  n / →        Next page               ║
+  ║  p / ←        Previous page           ║
+  ║  g            First page              ║
+  ║  G            Last page               ║
+  ║  Enter / o    Open job URL in browser ║
+  ║  q / Esc      Back to menu            ║
+  ║  ?            Toggle this help        ║
+  ╚═══════════════════════════════════════╝
+";
 
-        let score_color = if result.score >= 0.7 {
-            score_pct.green()
-        } else if result.score >= 0.4 {
-            score_pct.yellow()
-        } else {
-            score_pct.dimmed()
-        };
-
-        println!(
-            "  {}. {} {} [{}]",
-            format!("{:>2}", idx).bright_black(),
-            result.job.title.bright_white(),
-            score_color,
-            result.job.source,
-        );
-
-        if let Some(c) = &result.job.company {
-            println!("     Company: {}", c.cyan());
-        }
-        if let Some(l) = &result.job.location {
-            println!("     Location: {}", l);
-        }
-
-        if !result.matched_skills.is_empty() {
-            println!(
-                "     + {}",
-                result.matched_skills.join(", ")
-            );
-        }
-        if !result.missing_skills.is_empty() {
-            println!(
-                "     - {}",
-                result.missing_skills.join(", ")
-            );
-        }
-
-        println!("     {}", result.job.url.dimmed());
-        println!();
+/// Run the vim-style paginated results viewer.
+///
+/// ## Keybindings
+///
+/// | Key | Action |
+/// |-----|--------|
+/// | `j` / `↓` | Move selection down |
+/// | `k` / `↑` | Move selection up |
+/// | `n` / `→` | Next page |
+/// | `p` / `←` | Previous page |
+/// | `g` | First page |
+/// | `G` | Last page |
+/// | `Enter` / `o` | Open selected job URL in browser |
+/// | `q` / `Esc` | Back to menu |
+/// | `?` | Toggle keybinding help |
+pub fn run_results_viewer(results: &[MatchResult]) -> Result<()> {
+    if results.is_empty() {
+        println!("  No results to display.");
+        return Ok(());
     }
+
+    let total_pages = (results.len() + PAGE_SIZE - 1) / PAGE_SIZE;
+    let mut page = 0usize;
+    let mut selected = 0usize; // index within current page
+    let mut show_help = false;
+    let term = Term::stdout();
+
+    loop {
+        // ── Render page ──────────────────────────────────────────────
+        let start = page * PAGE_SIZE;
+        let end = usize::min(start + PAGE_SIZE, results.len());
+        let page_results = &results[start..end];
+
+        // Clear screen (scroll up so history is still accessible)
+        print!("\x1b[2J\x1b[H");
+
+        println!();
+        println!(
+            "  {} {}results (page {}/{} · {} total){}",
+            "▸".bright_blue(),
+            "".bright_blue(),
+            page + 1,
+            total_pages,
+            results.len(),
+            "".bright_blue(),
+        );
+        println!("  {}", "─".repeat(60).dimmed());
+        println!();
+
+        for (i, result) in page_results.iter().enumerate() {
+            let is_selected = i == selected;
+            let prefix = if is_selected { "▸".yellow() } else { " ".into() };
+
+            let idx = start + i + 1;
+            let score_pct = format!("{:.0}%", result.score * 100.0);
+            let score_color = if result.score >= 0.7 {
+                score_pct.green()
+            } else if result.score >= 0.4 {
+                score_pct.yellow()
+            } else {
+                score_pct.dimmed()
+            };
+
+            let company = result
+                .job
+                .company
+                .as_deref()
+                .map(|c| format!(" @ {}", c.cyan()))
+                .unwrap_or_default();
+
+            // Highlight selected row
+            let line = if is_selected {
+                format!(
+                    " {}{:>2}. {} {} [{}]{}",
+                    prefix,
+                    idx,
+                    result.job.title.bright_white(),
+                    score_color,
+                    result.job.source,
+                    company,
+                ).on_blue().black().to_string()
+            } else {
+                format!(
+                    " {}{:>2}. {} {} [{}]{}",
+                    prefix,
+                    idx,
+                    result.job.title.bright_white(),
+                    score_color,
+                    result.job.source,
+                    company,
+                )
+            };
+            println!("{line}");
+
+            // URL as clickable link
+            let url_display = if is_selected {
+                clickable(&result.job.url, &result.job.url).dimmed().to_string()
+            } else {
+                format!("     {}", clickable(&result.job.url, &result.job.url).dimmed())
+            };
+            println!("{url_display}");
+
+            // Matched skills on selected item
+            if is_selected && !result.matched_skills.is_empty() {
+                println!(
+                    "     {} {}",
+                    "+".green(),
+                    result.matched_skills.join(", ")
+                );
+            }
+            if is_selected && !result.missing_skills.is_empty() {
+                println!(
+                    "     {} {}",
+                    "-".red(),
+                    result.missing_skills.join(", ")
+                );
+            }
+
+            println!();
+        }
+
+        // ── Footer ───────────────────────────────────────────────────
+        let footer = format!(
+            "  [j↓ k↑  n→ p←  g/G  Enter:open  ?:help  q:quit]  ▸ {}",
+            results[start + selected].job.title
+        );
+        println!("  {}", footer.dimmed());
+        println!();
+
+        // ── Help overlay ─────────────────────────────────────────────
+        if show_help {
+            for line in KEYBINDINGS.lines() {
+                println!("{}", line.bright_yellow());
+            }
+            println!();
+        }
+
+        // ── Read key ─────────────────────────────────────────────────
+        let key = term.read_key()?;
+
+        match key {
+            console::Key::Char('q') | console::Key::Escape => break,
+            console::Key::Char('j') | console::Key::ArrowDown => {
+                if selected + 1 < page_results.len() {
+                    selected += 1;
+                } else if page + 1 < total_pages {
+                    page += 1;
+                    selected = 0;
+                }
+            }
+            console::Key::Char('k') | console::Key::ArrowUp => {
+                if selected > 0 {
+                    selected -= 1;
+                } else if page > 0 {
+                    page -= 1;
+                    selected = PAGE_SIZE - 1;
+                    // Clamp in case last page has fewer items
+                    let prev_start = page * PAGE_SIZE;
+                    let prev_end = usize::min(prev_start + PAGE_SIZE, results.len());
+                    selected = usize::min(selected, prev_end - prev_start - 1);
+                }
+            }
+            console::Key::Char('n') | console::Key::ArrowRight => {
+                if page + 1 < total_pages {
+                    page += 1;
+                    selected = 0;
+                }
+            }
+            console::Key::Char('p') | console::Key::ArrowLeft => {
+                if page > 0 {
+                    page -= 1;
+                    selected = 0;
+                }
+            }
+            console::Key::Char('g') => {
+                page = 0;
+                selected = 0;
+            }
+            console::Key::Char('G') => {
+                page = total_pages - 1;
+                selected = 0;
+            }
+            console::Key::Char('o') | console::Key::Enter => {
+                let job = &results[start + selected].job;
+                if let Err(e) = open_url(&job.url) {
+                    eprintln!("  Failed to open URL: {e}");
+                }
+            }
+            console::Key::Char('?') => {
+                show_help = !show_help;
+            }
+            _ => {}
+        }
+    }
+
+    print!("\x1b[2J\x1b[H");
+    Ok(())
 }
+
+/// Open a URL in the system browser.
+fn open_url(url: &str) -> Result<()> {
+    #[cfg(target_os = "macos")]
+    {
+        std::process::Command::new("open").arg(url).spawn()?;
+    }
+    #[cfg(target_os = "linux")]
+    {
+        std::process::Command::new("xdg-open").arg(url).spawn()?;
+    }
+    #[cfg(target_os = "windows")]
+    {
+        std::process::Command::new("cmd")
+            .args(["/c", "start", url])
+            .spawn()?;
+    }
+    Ok(())
+}
+
+// ─── Scan History ──────────────────────────────────────────────────────────
 
 /// Render the scan history (last 10 records).
 pub fn show_scan_history(records: &[ScanRecord]) {
@@ -157,7 +360,9 @@ pub fn show_scan_history(records: &[ScanRecord]) {
     println!();
 }
 
-/// Print the CLI usage help text.
+// ─── CLI Help ──────────────────────────────────────────────────────────────
+
+/// Print the CLI usage help text with all keybindings documented.
 pub fn print_help() {
     println!();
     println!("  Usage: jobsense-parker [COMMAND]");
@@ -170,5 +375,23 @@ pub fn print_help() {
     println!("    --resume <p>  Set resume file path (PDF, JSON, YAML, TXT)");
     println!("    --results     View last cached results");
     println!("    --history     Show scan history");
+    println!();
+    println!("  Interactive Menu Keybindings:");
+    println!("    ↑/↓           Navigate menu items");
+    println!("    Enter         Select item");
+    println!("    Esc / q       Quit");
+    println!();
+    println!("  Results Viewer Keybindings:");
+    println!("    j / ↓         Move selection down");
+    println!("    k / ↑         Move selection up");
+    println!("    n / →         Next page");
+    println!("    p / ←         Previous page");
+    println!("    g             First page");
+    println!("    G             Last page");
+    println!("    Enter / o     Open job URL in browser");
+    println!("    q / Esc       Back to menu");
+    println!("    ?             Toggle keybinding help overlay");
+    println!();
+    println!("  URLs are clickable (Cmd+click on macOS, Ctrl+click elsewhere).");
     println!();
 }
