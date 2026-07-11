@@ -9,7 +9,8 @@ use super::fetcher::Fetcher;
 use crate::models::{JobPost, JobSource, SearchConfig};
 use super::SourceCrawler;
 
-/// Crawler that extracts job listings from the Hacker News "Who is Hiring?" thread.
+/// Crawler that extracts job listings from the Hacker News "Who is Hiring?" thread
+/// and filters them against the search keywords.
 pub struct HackerNewsCrawler;
 
 #[async_trait::async_trait]
@@ -19,13 +20,22 @@ impl SourceCrawler for HackerNewsCrawler {
     }
 
     async fn crawl(&self, config: &SearchConfig) -> Result<Vec<JobPost>> {
-        let mut fetcher = Fetcher::new()?;
+        let fetcher = Fetcher::new()?;
 
         let now = Utc::now();
         let month = now.format("%B").to_string();
         let year = now.format("%Y").to_string();
+
+        // Build a query that includes the user's keywords so Algolia
+        // returns only relevant stories in the first place.
+        let keyword_q = if config.keywords.is_empty() {
+            String::new()
+        } else {
+            let joined = config.keywords.join(" ");
+            format!("%20{joined}")
+        };
         let search_url = format!(
-            "https://hn.algolia.com/api/v1/search?query=Who%20is%20Hiring%20{month}%20{year}&tags=story&hitsPerPage=5"
+            "https://hn.algolia.com/api/v1/search?query=Who%20is%20Hiring%20{month}%20{year}{keyword_q}&tags=story&hitsPerPage=5"
         );
 
         let json = fetcher.fetch(&search_url).await?;
@@ -46,6 +56,9 @@ impl SourceCrawler for HackerNewsCrawler {
                     .to_string();
 
                 let kids = item["kids"].as_array().cloned().unwrap_or_default();
+                // Pre-compile keyword matcher so we only keep relevant comments.
+                let kw_matcher = KeywordMatcher::new(&config.keywords);
+
                 for kid in kids.iter().take(config.max_results) {
                     let comment_id = kid.as_i64().unwrap_or(0);
                     let comment_url =
@@ -58,6 +71,11 @@ impl SourceCrawler for HackerNewsCrawler {
                     let by = comment["by"].as_str().unwrap_or("anonymous");
 
                     if text.is_empty() {
+                        continue;
+                    }
+
+                    // *** KEY FIX: skip comments that don't mention any keyword ***
+                    if !kw_matcher.matches(&text) {
                         continue;
                     }
 
@@ -90,5 +108,27 @@ impl SourceCrawler for HackerNewsCrawler {
         }
 
         Ok(posts)
+    }
+}
+
+/// Efficient keyword checker — returns true if the text contains at least
+/// one of the user's search keywords (case-insensitive).
+struct KeywordMatcher {
+    keywords: Vec<String>,
+}
+
+impl KeywordMatcher {
+    fn new(keywords: &[String]) -> Self {
+        Self {
+            keywords: keywords.iter().map(|k| k.to_lowercase()).collect(),
+        }
+    }
+
+    fn matches(&self, text: &str) -> bool {
+        if self.keywords.is_empty() {
+            return true; // no filter = everything passes
+        }
+        let lower = text.to_lowercase();
+        self.keywords.iter().any(|kw| lower.contains(kw))
     }
 }

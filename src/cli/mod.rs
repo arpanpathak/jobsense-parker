@@ -82,12 +82,18 @@ impl App {
     pub async fn run_scan(&mut self) {
         self.prepare_keywords();
         self.cmd_scan().await;
+        if !self.results.is_empty() {
+            self.show_results();
+        }
     }
 
     /// Search with a custom query string (space-separated keywords).
     pub async fn run_search(&mut self, query: &str) {
         self.config.keywords = query.split_whitespace().map(|s| s.to_string()).collect();
         self.cmd_search(query).await;
+        if !self.results.is_empty() {
+            self.show_results();
+        }
     }
 
     /// Load a resume from a file path.
@@ -98,13 +104,39 @@ impl App {
     /// Print a summary of cached results to stdout.
     pub fn show_results(&self) {
         if self.results.is_empty() {
-            println!("  No results cached. Run a scan first.");
+            println!("  No results found.");
             return;
         }
-        println!("  {} results cached", self.results.len());
-        for (i, r) in self.results.iter().enumerate().take(5) {
-            println!("  {}. {} ({:.0}%)", i + 1, r.job.title, r.score * 100.0);
+        println!("  {} results\n", self.results.len());
+        for (i, r) in self.results.iter().enumerate().take(10) {
+            let score = format!("{:.0}%", r.score * 100.0);
+            let score_colored = if r.score >= 0.7 {
+                score.green()
+            } else if r.score >= 0.4 {
+                score.yellow()
+            } else {
+                score.dimmed()
+            };
+            let company = r
+                .job
+                .company
+                .as_deref()
+                .map(|c| format!(" @ {}", c.cyan()))
+                .unwrap_or_default();
+            println!(
+                "  {:>2}. {} {} [{}]{}",
+                i + 1,
+                r.job.title.bright_white(),
+                score_colored,
+                r.job.source,
+                company,
+            );
+            println!("      {}", r.job.url.dimmed());
         }
+        if self.results.len() > 10 {
+            println!("  ... and {} more", self.results.len() - 10);
+        }
+        println!();
     }
 
     // ─── Menu ─────────────────────────────────────────────────────────
@@ -250,28 +282,31 @@ impl App {
     // ─── Command: Scan ────────────────────────────────────────────────
 
     /// Prepare search keywords from the loaded resume (skills + roles).
+    /// If no resume is loaded and keywords are empty, this is a no-op
+    /// (the scan will return zero results unless the user provides keywords).
     fn prepare_keywords(&mut self) {
         if !self.matcher.has_resume() {
-            println!("  No resume loaded. Scanning without matching.");
-            println!("  Use 'Load resume' first, or continue with raw results.");
+            println!("  No resume loaded. Search keywords must be provided manually.");
+            return;
         }
 
-        self.config.keywords = if let Some(r) = self.matcher.resume() {
+        if let Some(r) = self.matcher.resume() {
             let mut kws = r.skills.clone();
             kws.extend(r.role_titles.clone());
-            if kws.is_empty() {
-                vec!["software engineer".to_string(), "developer".to_string()]
-            } else {
-                kws
+            if !kws.is_empty() {
+                self.config.keywords = kws;
             }
-        } else {
-            vec!["software engineer".to_string(), "developer".to_string()]
-        };
+        }
     }
 
     /// Execute a scan against all sources with the current config.
     async fn cmd_scan(&mut self) {
         self.prepare_keywords();
+
+        if self.config.keywords.is_empty() {
+            println!("\n  No keywords available. Load a resume or use --search \"your keywords\".\n");
+            return;
+        }
 
         println!(
             "\n  Scanning with keywords: {}\n",
@@ -327,6 +362,8 @@ impl App {
             self.scan_history.truncate(100);
         }
         let _ = storage::push_scan_record(&record);
+
+        self.show_results();
     }
 
     // ─── Command: Search ──────────────────────────────────────────────
@@ -387,6 +424,8 @@ impl App {
         let _ = storage::push_scan_record(&record);
 
         println!("\n  Found {} results\n", self.results.len());
+
+        self.show_results();
     }
 
     // ─── Command: View Results ────────────────────────────────────────

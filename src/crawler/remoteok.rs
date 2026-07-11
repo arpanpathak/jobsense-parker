@@ -19,7 +19,7 @@ impl SourceCrawler for RemoteOkCrawler {
     }
 
     async fn crawl(&self, config: &SearchConfig) -> Result<Vec<JobPost>> {
-        let mut fetcher = Fetcher::new()?;
+        let fetcher = Fetcher::new()?;
 
         // Remote OK has tag-based pages. Try each keyword to get relevant results.
         // First element in each response is metadata, rest are job posts.

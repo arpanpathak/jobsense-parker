@@ -19,7 +19,7 @@ impl SourceCrawler for RedditCrawler {
     }
 
     async fn crawl(&self, config: &SearchConfig) -> Result<Vec<JobPost>> {
-        let mut fetcher = Fetcher::new()?;
+        let fetcher = Fetcher::new()?;
         let query = urlencode(&config.keywords.join(" "));
 
         let subreddits = ["forhire", "jobbit", "remotejobs", "jobs", "cscareerquestions"];

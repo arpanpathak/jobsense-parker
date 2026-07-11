@@ -43,37 +43,78 @@ impl CrawlerCoordinator {
         }
     }
 
-    /// Run all matching crawlers and aggregate their results.
+    /// Run all matching crawlers **concurrently** and aggregate their results.
     ///
     /// Only crawlers whose `name()` matches one of the sources in
     /// `config.sources` are invoked. Errors from individual crawlers
     /// are logged to stderr but do not fail the whole operation.
+    ///
+    /// After collection, results are **filtered** against the search
+    /// keywords so that every returned post is actually relevant to
+    /// what the user asked for.
     pub async fn crawl_all(&self, config: &SearchConfig) -> Vec<JobPost> {
+        let futures: Vec<_> = self
+            .crawlers
+            .iter()
+            .filter(|crawler| {
+                let name = crawler.name();
+                config
+                    .sources
+                    .iter()
+                    .any(|s| name.to_lowercase().contains(&s.to_string().to_lowercase()))
+            })
+            .map(|crawler| {
+                let name = crawler.name().to_string();
+                async move {
+                    let result = crawler.crawl(config).await;
+                    match &result {
+                        Ok(posts) => {
+                            eprintln!(
+                                "  {} {} posts from {}",
+                                "+".green(),
+                                posts.len(),
+                                name.cyan()
+                            );
+                        }
+                        Err(e) => {
+                            eprintln!("  {} {} -- {}", "x".red(), name.cyan(), e);
+                        }
+                    }
+                    result
+                }
+            })
+            .collect();
+
         let mut all_posts = Vec::new();
 
-        for crawler in &self.crawlers {
-            let name = crawler.name();
-            if !config
-                .sources
-                .iter()
-                .any(|s| name.to_lowercase().contains(&s.to_string().to_lowercase()))
-            {
-                continue;
+        for result in futures::future::join_all(futures).await {
+            if let Ok(posts) = result {
+                all_posts.extend(posts);
             }
+        }
 
-            match crawler.crawl(config).await {
-                Ok(posts) => {
-                    eprintln!(
-                        "  {} {} posts from {}",
-                        "+".green(),
-                        posts.len(),
-                        name.cyan()
-                    );
-                    all_posts.extend(posts);
-                }
-                Err(e) => {
-                    eprintln!("  {} {} -- {}", "x".red(), name.cyan(), e);
-                }
+        // Post-filter: throw out jobs that don't mention any search keyword.
+        // This catches crawlers that may not filter internally (or do it poorly).
+        if !config.keywords.is_empty() {
+            let before = all_posts.len();
+            all_posts.retain(|job| {
+                let text = format!(
+                    "{} {} {} {}",
+                    job.title,
+                    job.description,
+                    job.company.as_deref().unwrap_or(""),
+                    job.tags.join(" ")
+                )
+                .to_lowercase();
+                config.keywords.iter().any(|kw| text.contains(&kw.to_lowercase()))
+            });
+            let removed = before - all_posts.len();
+            if removed > 0 {
+                eprintln!(
+                    "  {} {} posts filtered out (didn't match keywords)",
+                    "-".yellow(),
+                    removed
+                );
             }
         }
 
