@@ -21,18 +21,33 @@ impl SourceCrawler for RemoteOkCrawler {
     async fn crawl(&self, config: &SearchConfig) -> Result<Vec<JobPost>> {
         let fetcher = Fetcher::new()?;
 
-        // Use the main Remote OK API endpoint which returns ALL active job posts.
-        // Previously we used tag-based pages (remote-{keyword}-jobs.json) but those
-        // return every job with that tag, including completely unrelated roles
-        // (a "Senior Vice President" job tagged "software" because the company
-        // makes software). Client-side filtering via the coordinator is more accurate.
+        // Fetch ALL jobs from the main Remote OK API.
+        // The API returns a flat JSON array of job objects — NO metadata element
+        // at index 0 (unlike the tag-based pages which had metadata first).
         let body = fetcher.fetch("https://remoteok.com/api").await?;
-        let parsed: Vec<serde_json::Value> = serde_json::from_str(&body)?;
 
-        // First element is metadata, rest are jobs
-        let mut posts: Vec<JobPost> = parsed.iter().skip(1).filter_map(Self::parse_item).collect();
+        // Try to parse as flat array first, then fall back to object-wrapped format.
+        let items: Vec<serde_json::Value> = match serde_json::from_str::<Vec<serde_json::Value>>(&body)
+        {
+            Ok(arr) => {
+                // The API returns a flat array. No metadata element.
+                // If the first element has a "last_updated" field, it IS metadata — skip it.
+                if arr.first().and_then(|f| f.get("last_updated")).is_some() {
+                    arr.iter().skip(1).cloned().collect()
+                } else {
+                    arr
+                }
+            }
+            Err(_) => {
+                // Try object-wrapped format: { "jobs": [...] }
+                let obj: serde_json::Value = serde_json::from_str(&body)?;
+                obj["jobs"].as_array().cloned().unwrap_or_default()
+            }
+        };
 
-        // Sort by date (newest first), then cap with room for keyword filtering
+        let mut posts: Vec<JobPost> = items.iter().filter_map(Self::parse_item).collect();
+
+        // Sort by date (newest first), cap with room for keyword filtering
         posts.sort_by(|a, b| b.crawled_at.cmp(&a.crawled_at));
         posts.truncate(config.max_results * 2);
 

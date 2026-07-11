@@ -35,17 +35,9 @@ impl CompanyCrawler {
     /// Returns discovered job posts and updates `db.last_crawled` /
     /// `db.failed` on each company.
     pub async fn crawl_all(db: &mut CompanyDatabase, config: &SearchConfig) -> Vec<JobPost> {
-        let companies: Vec<Company> = db
-            .companies
-            .iter()
-            .filter(|c| {
-                // Skip if crawled less than 1 hour ago
-                c.last_crawled
-                    .map(|last| Utc::now().signed_duration_since(last).num_hours() < 1)
-                    .unwrap_or(false)
-            })
-            .cloned()
-            .collect();
+        // Crawl ALL companies every time. No hour-skip — users expect career
+        // sites to be searched on every scan to find new postings.
+        let companies: Vec<Company> = db.companies.clone();
 
         if companies.is_empty() {
             return Vec::new();
