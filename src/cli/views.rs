@@ -48,6 +48,7 @@
 
 use anyhow::Result;
 use colored::Colorize;
+use chrono::Utc;
 use console::Term;
 
 use crate::models::{CompanyDatabase, MatchResult, Resume, ScanRecord};
@@ -230,26 +231,30 @@ pub fn run_results_viewer(results: &[MatchResult]) -> Result<()> {
                 .map(|c| format!(" @ {}", c.cyan()))
                 .unwrap_or_default();
 
+            let ago = relative_time(result.job.posted_at.or(Some(result.job.crawled_at)));
+
             // Highlight selected row
             let line = if is_selected {
                 format!(
-                    " {}{:>2}. {} {} [{}]{}",
+                    " {}{:>2}. {} {} [{}]{}  {}",
                     prefix,
                     idx,
                     result.job.title.bright_white(),
                     score_color,
                     result.job.source,
                     company,
+                    ago,
                 ).on_blue().black().to_string()
             } else {
                 format!(
-                    " {}{:>2}. {} {} [{}]{}",
+                    " {}{:>2}. {} {} [{}]{}  {}",
                     prefix,
                     idx,
                     result.job.title.bright_white(),
                     score_color,
                     result.job.source,
                     company,
+                    ago,
                 )
             };
             println!("{line}");
@@ -357,6 +362,37 @@ pub fn run_results_viewer(results: &[MatchResult]) -> Result<()> {
 
     print!("\x1b[2J\x1b[H");
     Ok(())
+}
+
+/// Format a timestamp as a human-readable relative time string.
+///
+/// # Examples
+///
+/// ```ignore
+/// assert_eq!(relative_time(Some(now - 2h)), "2h ago");
+/// assert_eq!(relative_time(Some(now - 3d)), "3d ago");
+/// ```
+fn relative_time(time: Option<chrono::DateTime<Utc>>) -> String {
+    let time = match time {
+        Some(t) => t,
+        None => return "".to_string(),
+    };
+    let now = Utc::now();
+    let diff = now.signed_duration_since(time);
+
+    if diff.num_minutes() < 1 {
+        "just now".to_string()
+    } else if diff.num_hours() < 1 {
+        format!("{}m ago", diff.num_minutes())
+    } else if diff.num_days() < 1 {
+        format!("{}h ago", diff.num_hours())
+    } else if diff.num_days() < 30 {
+        format!("{}d ago", diff.num_days())
+    } else if diff.num_days() < 365 {
+        format!("{}mo ago", diff.num_days() / 30)
+    } else {
+        format!("{}y ago", diff.num_days() / 365)
+    }
 }
 
 /// Open a URL in the system browser.
