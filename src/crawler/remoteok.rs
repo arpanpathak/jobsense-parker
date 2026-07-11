@@ -87,23 +87,6 @@ impl RemoteOkCrawler {
 }
 
 /// URL-encode a string for Remote OK's API (spaces → dashes, lowercase).
-fn urlencode(s: &str) -> String {
-    let mut result = String::new();
-    for ch in s.chars() {
-        match ch {
-            'a'..='z' | 'A'..='Z' | '0'..='9' | '-' | '_' => result.push(ch),
-            ' ' => result.push('-'),
-            _ => {
-                for byte in ch.to_string().bytes() {
-                    result.push_str(&format!("%{:02X}", byte));
-                }
-            }
-        }
-    }
-    result.to_lowercase()
-}
-
-/// Remove HTML tags and decode common entities from a string.
 fn strip_html(html: &str) -> String {
     let mut result = String::with_capacity(html.len());
     let mut in_tag = false;
