@@ -1,19 +1,11 @@
-//! Career-site crawler — fetches each known company's careers page and
-//! extracts job listings using heuristic HTML parsing.
+//! Career-site crawler — fetches each known company's career page and extracts
+//! job listings using either:
 //!
-//! Since every company has a different career-page layout, we use a
-//! pattern-based approach:
-//!
-//! 1. Fetch the careers URL
-//! 2. Find every `<a>` link on the page
-//! 3. Filter links whose href or text suggests a job posting
-//! 4. Extract title, optional location, build a [`JobPost`]
-//!
-//! This will never be perfect for every site, but it covers a wide range
-//! of company career pages without per-site configuration.
+//! 1. **Dedicated API** (Greenhouse, Lever) — clean JSON, always works
+//! 2. **Heuristic HTML scraping** — falls back for all other sites
 
 use anyhow::Result;
-use chrono::Utc;
+use chrono::{DateTime, Utc};
 use colored::Colorize;
 use scraper::{Html, Selector};
 use uuid::Uuid;
@@ -105,13 +97,170 @@ impl CompanyCrawler {
         all_posts
     }
 
+    // ─── Greenhouse API ─────────────────────────────────────────────────
+
+    /// Extract the company slug from a Greenhouse careers URL.
+    ///
+    /// Matches: `boards.greenhouse.io/{slug}` or `{slug}.greenhouse.io`
+    fn extract_greenhouse_slug(url: &str) -> Option<String> {
+        if let Some(pos) = url.find("boards.greenhouse.io/") {
+            let rest = &url[pos + "boards.greenhouse.io/".len()..];
+            return rest.split('/').next().filter(|s| !s.is_empty()).map(|s| s.to_string());
+        }
+        if let Some(_pos) = url.find(".greenhouse.io") {
+            // Extract subdomain: https://{slug}.greenhouse.io/
+            if let Some(start) = url.find("://") {
+                let domain = &url[start + 3..];
+                if let Some(dot) = domain.find('.') {
+                    let slug = &domain[..dot];
+                    if !slug.is_empty() && slug != "boards" {
+                        return Some(slug.to_string());
+                    }
+                }
+            }
+        }
+        None
+    }
+
+    /// Fetch jobs from Greenhouse's public JSON API.
+    async fn crawl_greenhouse(
+        fetcher: &Fetcher,
+        slug: &str,
+        company: &Company,
+        config: &SearchConfig,
+    ) -> Result<Vec<JobPost>> {
+        let url = format!("https://boards-api.greenhouse.io/v1/boards/{slug}/jobs?content=true");
+        let body = fetcher.fetch(&url).await?;
+        let parsed: serde_json::Value = serde_json::from_str(&body)?;
+
+        let jobs = parsed["jobs"].as_array().ok_or_else(|| anyhow::anyhow!("no jobs array"))?;
+        let mut posts = Vec::new();
+
+        for job in jobs.iter() {
+            let title = job["title"].as_str().unwrap_or("").to_string();
+            if title.is_empty() { continue; }
+
+            // Apply keyword filter
+            if !config.keywords.is_empty() {
+                let lower = title.to_lowercase();
+                let matches = config.keywords.iter().any(|kw| lower.contains(&kw.to_lowercase()));
+                if !matches { continue; }
+            }
+
+            let url = job["absolute_url"].as_str().unwrap_or("").to_string();
+            let location = job["offices"].as_array()
+                .and_then(|o| o.first())
+                .and_then(|o| o["location"].as_str().map(|s| s.to_string()));
+            let updated_at = job["updated_at"].as_str()
+                .and_then(|s| DateTime::parse_from_rfc3339(s).ok())
+                .map(|dt| dt.with_timezone(&Utc));
+
+            posts.push(JobPost {
+                id: Uuid::new_v4().to_string(),
+                title,
+                company: Some(company.name.clone()),
+                location,
+                description: job["content"].as_str().unwrap_or("").to_string(),
+                url,
+                source: JobSource::Custom(company.name.clone()),
+                posted_at: updated_at,
+                crawled_at: Utc::now(),
+                salary: None,
+                job_type: None,
+                tags: vec!["greenhouse".to_string(), company.name.to_lowercase()],
+            });
+        }
+
+        Ok(posts)
+    }
+
+    // ─── Lever API ──────────────────────────────────────────────────────
+
+    /// Extract the company slug from a Lever careers URL.
+    ///
+    /// Matches: `jobs.lever.co/{slug}`
+    fn extract_lever_slug(url: &str) -> Option<String> {
+        if let Some(pos) = url.find("jobs.lever.co/") {
+            let rest = &url[pos + "jobs.lever.co/".len()..];
+            return rest.split('/').next().filter(|s| !s.is_empty()).map(|s| s.to_string());
+        }
+        None
+    }
+
+    /// Fetch jobs from Lever's public JSON API.
+    async fn crawl_lever(
+        fetcher: &Fetcher,
+        slug: &str,
+        company: &Company,
+        config: &SearchConfig,
+    ) -> Result<Vec<JobPost>> {
+        let url = format!("https://api.lever.co/v0/postings/{slug}?mode=json");
+        let body = fetcher.fetch(&url).await?;
+        let parsed: Vec<serde_json::Value> = serde_json::from_str(&body)?;
+
+        let mut posts = Vec::new();
+        for job in parsed.iter() {
+            let title = job["text"].as_str().unwrap_or("").to_string();
+            if title.is_empty() { continue; }
+
+            // Apply keyword filter
+            if !config.keywords.is_empty() {
+                let lower = title.to_lowercase();
+                let matches = config.keywords.iter().any(|kw| lower.contains(&kw.to_lowercase()));
+                if !matches { continue; }
+            }
+
+            let url = job["hostedUrl"].as_str().unwrap_or("").to_string();
+            let location = job["categories"]["location"].as_str().map(|s| s.to_string());
+            let description = job["descriptionPlain"].as_str().unwrap_or("").to_string();
+            let updated_at = job["createdAt"].as_i64()
+                .and_then(|ts| DateTime::from_timestamp(ts / 1000, 0));
+
+            posts.push(JobPost {
+                id: Uuid::new_v4().to_string(),
+                title,
+                company: Some(company.name.clone()),
+                location,
+                description,
+                url,
+                source: JobSource::Custom(company.name.clone()),
+                posted_at: updated_at,
+                crawled_at: Utc::now(),
+                salary: None,
+                job_type: None,
+                tags: vec!["lever".to_string(), company.name.to_lowercase()],
+            });
+        }
+
+        Ok(posts)
+    }
+
     /// Fetch a single company's careers page and extract job listings.
     async fn crawl_company(company: &Company, config: &SearchConfig) -> Result<Vec<JobPost>> {
         let fetcher = Fetcher::new()?;
+
+        // Check for dedicated API support first (Greenhouse, Lever).
+        // These return clean JSON and are more reliable than HTML scraping.
+        let url_lower = company.careers_url.to_lowercase();
+
+        // Greenhouse: https://boards.greenhouse.io/{company} or {company}.greenhouse.io
+        if let Some(slug) = Self::extract_greenhouse_slug(&url_lower) {
+            if let Ok(posts) = Self::crawl_greenhouse(&fetcher, &slug, company, config).await {
+                return Ok(posts);
+            }
+        }
+
+        // Lever: https://jobs.lever.co/{company}
+        if let Some(slug) = Self::extract_lever_slug(&url_lower) {
+            if let Ok(posts) = Self::crawl_lever(&fetcher, &slug, company, config).await {
+                return Ok(posts);
+            }
+        }
+
+        // Fallback: heuristic HTML parsing
         let html = fetcher.fetch(&company.careers_url).await?;
         let document = Html::parse_document(&html);
 
-        // Find all links on the page
         let link_sel = Selector::parse("a[href]").unwrap();
         let mut posts = Vec::new();
         let mut seen_urls = std::collections::HashSet::new();
