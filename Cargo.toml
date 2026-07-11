@@ -1,0 +1,54 @@
+[package]
+name = "jobsense-parker"
+version = "0.1.0"
+edition = "2021"
+description = "A CLI job crawler that hunts the internet for hiring posts matching your resume — because LinkedIn sucks."
+
+[[bin]]
+name = "jobsense-parker"
+path = "src/main.rs"
+
+[dependencies]
+# Async runtime
+tokio = { version = "1", features = ["full"] }
+
+# HTTP client
+reqwest = { version = "0.12", features = ["json"] }
+
+# HTML parsing
+scraper = "0.21"
+
+# CLI interaction
+dialoguer = { version = "0.11", features = ["fuzzy-select"] }
+indicatif = "0.17"
+
+# Serialization
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+serde_yaml = "0.9"
+
+# Output styling
+colored = "2"
+
+# Date/time
+chrono = { version = "0.4", features = ["serde"] }
+
+# Text matching
+regex = "1"
+strsim = "0.11"
+
+# Error handling
+thiserror = "2"
+anyhow = "1"
+
+# Random (for user-agent rotation)
+rand = "0.8"
+
+# Unique IDs
+uuid = { version = "1", features = ["v4"] }
+
+# Async trait support
+async-trait = "0.1"
+
+# PDF text extraction
+pdf-extract = "0.12"
