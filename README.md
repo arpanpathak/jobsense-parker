@@ -1,206 +1,296 @@
-<p align="center">
-  <br>
-  <img src="https://img.shields.io/badge/rust-2024-edition?style=for-the-badge&logo=rust&logoColor=white&color=black" alt="Rust">
-  <img src="https://img.shields.io/badge/license-MIT-blue?style=for-the-badge&color=blue" alt="MIT License">
-  <img src="https://img.shields.io/badge/status-alpha-orange?style=for-the-badge" alt="Alpha">
-  <img src="https://img.shields.io/badge/PRs-welcome-brightgreen?style=for-the-badge" alt="PRs Welcome">
-</p>
+<div align="center">
 
-<p align="center">
-  <pre align="center">
-   ╔══════════════════════════════════════════════════╗
-   ║   🔍  JobSense-Parker  v0.1.0                  ║
-   ║   ────────────────────────────────────────────   ║
-   ║   Hunt the internet for your next gig.          ║
-   ║   (LinkedIn-free zone)                          ║
-   ╚══════════════════════════════════════════════════╝
-  </pre>
-</p>
+# 🔍 jobsense-parker
 
-<p align="center">
-  <b>jobense-parker</b> is an interactive CLI that crawls job boards, social media,
-  and hiring threads — then matches them against your resume so you only see
-  what's relevant. No recruiter spam. No LinkedIn. Just clean, scored results.
-</p>
+**Terminal-based job search engine** — crawls job boards, hiring threads, and **80+ company career sites**, then scores every posting against your resume.
+
+![Rust](https://img.shields.io/badge/rust-1.75%2B-black?style=flat-square&logo=rust)
+![License](https://img.shields.io/badge/license-MIT-blue?style=flat-square)
+![Status](https://img.shields.io/badge/status-beta-brightgreen?style=flat-square)
+![PRs](https://img.shields.io/badge/PRs-welcome-orange?style=flat-square)
+
+```text
+╔══════════════════════════════════════════════════════╗
+║  🔍  JobSense-Parker  v0.3                          ║
+║  ──────────────────────────────────────────────────   ║
+║  Hunt the internet for your next gig.                ║
+║  Type '?' at any results view for keybindings        ║
+║  (LinkedIn-free zone)                                ║
+╚══════════════════════════════════════════════════════╝
+```
+
+No recruiter spam. No LinkedIn. Just clean, scored results from real job sources.
+
+</div>
 
 ---
 
-<details open>
-<summary><b>📦 Install</b></summary>
-<br>
+## ✨ Features
+
+- **4 job sources**: Remote OK, Reddit (5 hiring subreddits), Hacker News "Who is Hiring?", and **80+ company career sites** — auto-crawled during every scan
+- **Resume matching**: Paste your resume or a PDF/JSON file — skills, roles, and keywords are extracted automatically and matched against every job
+- **Smart scoring**: Weighted algorithm (skill overlap 50%, keywords 25%, role title 10%, location 10%, job type 5%) with Jaro-Winkler fuzzy matching
+- **Auto-discovery**: Company names extracted from job posts are cached locally — future scans automatically crawl their career pages
+- **Vim-style results viewer**: Full-screen paginated browser with `j`/`k` navigation, `Enter` to open URLs, `?` for help
+- **OSC 8 clickable links**: Cmd+click (macOS) or Ctrl+click (Linux/Windows) any job URL to open in your browser
+- **Progress spinner**: Real-time feedback during crawling — no more silent waiting
+- **Fully concurrent**: All sources are crawled simultaneously; HN comments are fetched in parallel
+- **Persistent**: Resumes, preferences, company database, scan history — all saved to `~/.jobsense-parker/`
+
+---
+
+## 📦 Install
 
 ```bash
-# Clone it
-git clone https://github.com/yourname/jobsense-parker
+# Prerequisites: Rust 1.75+ (install via https://rustup.rs/)
+git clone https://github.com/arpanpathak/jobsense-parker.git
 cd jobsense-parker
-
-# Build it
 cargo build --release
 
-# Run it
+# Run the interactive menu
 ./target/release/jobsense-parker
 ```
 
-> **Prerequisites:** Rust 1.75+ ([install via rustup](https://rustup.rs/))
-
-</details>
-
 ---
 
-<details open>
-<summary><b>🎮 Usage</b></summary>
+## 🎮 Quick Start
 
-<br>
+### Interactive mode (no arguments)
 
-When you launch the tool, you're greeted with an interactive menu:
-
+```bash
+./target/release/jobsense-parker
 ```
-╔══════════════════════════════════════════════════╗
-║  🔍 JobSense-Parker  v0.1.0                     ║
-║  Hunt the internet for your next gig.            ║
-║  (LinkedIn-free zone)                            ║
-╚══════════════════════════════════════════════════╝
 
+Shows the menu:
+
+```text
 ? jobense-parker ›
-❯ 🔍  Scan jobs (all sources)
-  🎯  Search with custom query
-  📋  View results (no results)
-  📄  Load resume (not loaded)
-  👤  Show current resume
-  🔧  Filter / sort results
-  🚪  Quit
+❯ Scan jobs (all sources + career sites)
+  Search with custom query
+  View results (no results)
+  Company career sites (87 companies cached)
+  Load resume (not loaded)
+  Show current resume
+  Filter / sort results
+  Scan history
+  Quit
 ```
 
-### 1️⃣ Load your resume
+### Non-interactive mode (flags)
 
-Paste skills, a structured JSON/YAML resume, or a file path:
+```bash
+# Search from the command line
+./target/release/jobsense-parker --search "rust engineer"
 
+# Scan with a loaded resume
+./target/release/jobsense-parker --resume ~/Resume.pdf --scan
+
+# View cached companies
+./target/release/jobsense-parker --companies
+
+# Add a company career site
+./target/release/jobsense-parker --add-company "Tesla" "https://www.tesla.com/careers"
 ```
-? Resume text (paste or type)
-> Rust, TypeScript, React, Docker, Kubernetes, Python, AWS, PostgreSQL
-✓ Resume loaded! (8 skills, 0 roles)
-```
-
-### 2️⃣ Scan
-
-Hit <kbd>Enter</kbd> on **Scan jobs** and watch the crawlers go to work:
-
-```
-🌐 Scanning with keywords: Rust, TypeScript, React, Docker, Kubernetes, Python, AWS, PostgreSQL
-
-  ✓ 12 posts from Indeed
-  ✓ 8 posts from Google Jobs
-  ✓ 15 posts from Reddit
-  ✓ 22 posts from Hacker News
-
-📊 Found 57 raw job posts. Matching against resume...
-✓ 31 matched results (above threshold)
-```
-
-### 3️⃣ Browse results
-
-Paginated, scored, with matched vs missing skills:
-
-```
-📋 Results (page 1/4 — 31 total)
-────────────────────────────────────────────────────────────
-
- 1. Senior Rust Engineer           92% [████████████████████] [Indeed]
-     Company: Cloudflare
-     Location: Remote / US
-     ✓ rust, python, kubernetes, aws
-     ✗ terraform
-     https://www.indeed.com/.../job
-
- 2. Full-Stack TypeScript Dev     71% [███████████████░░░░░] [Hacker News]
-     Company: Vercel
-     ✓ typescript, react, aws
-     ✗ kubernetes, docker
-     https://news.ycombinator.com/item?id=...
-```
-
-### 4️⃣ Filter & sort
-
-```
-? Filter results ›
-❯ Sort by score (high → low)
-  Sort by score (low → high)
-  Show only high matches (>70%)
-  Show only medium matches (40-70%)
-  Show only low matches (<40%)
-  Reset filters
-  Back
-```
-
-</details>
 
 ---
 
-<details open>
-<summary><b>🗺️ Architecture</b></summary>
+## 📋 Vim-Style Results Viewer
 
-<br>
+Select "View results" from the menu to enter the full-screen paginated browser:
 
-```
-                         ┌─────────────┐
-                         │   CLI Menu   │
-                         │  (dialoguer) │
-                         └──────┬──────┘
-                                │ commands
-                                ▼
-          ┌─────────────────────────────────────┐
-          │              App                     │
-          │  ┌──────────┐  ┌──────────────────┐ │
-          │  │  Matcher  │  │ CrawlerCoordinator│ │
-          │  │  (scorer) │  │  (orchestrator)  │ │
-          │  └──────────┘  └────────┬─────────┘ │
-          └─────────────────────────┼────────────┘
-                                    │
-              ┌─────────────────────┼─────────────────────┐
-              │                     │                     │
-              ▼                     ▼                     ▼
-        ┌──────────┐         ┌──────────┐          ┌────────────┐
-        │ Indeed   │         │  Google  │          │   Reddit   │
-        │ scraper  │         │  Jobs    │          │  scraper   │
-        └──────────┘         └──────────┘          └────────────┘
-                                                           :
-        ┌────────────┐        ┌──────────────────┐         :
-        │ Hacker News │       │   HTTP Fetcher    │
-        │ (Algolia   │       │  (UA rotation +   │
-        │  API)      │       │   polite delays)  │
-        └────────────┘        └──────────────────┘
+```text
+  ▸ results (page 1/3 · 25 total)
+  ────────────────────────────────────────────────────────────
+
+   1. Senior Rust Engineer 78% [Remote OK] @ Stripe
+       https://stripe.com/jobs/engineering/senior-rust-engineer
+       + rust, distributed-systems, api-design
+       - kubernetes, aws
+
+   2. Backend Engineer     65% [Hacker News] @ Jane Street
+       https://news.ycombinator.com/item?id=12345678
+       + ocaml, python
+       - kubernetes, docker, aws
+
+  ▸3. Full Stack Developer 45% [Company Careers] @ Shopify
+       https://shopify.com/careers/fullstack-developer-123
+
+  [j↓ k↑  n→ p←  g/G  Enter:open  ?:help  q:quit]  ▸ Full Stack Developer
 ```
 
-### Modules
+### Keybindings
 
-| Module | Responsibility |
-|--------|---------------|
-| `models/` | Data types: `JobPost`, `Resume`, `MatchResult`, `SearchConfig` |
-| `crawler/` | `SourceCrawler` trait + per-source implementations + `Fetcher` with UA rotation |
-| `matcher/` | Resume parsing, fuzzy matching (Jaro-Winkler), score computation |
-| `cli/` | Interactive menu, paginated viewer, filter/sort controls |
+| Key | Action |
+|-----|--------|
+| `j` / `↓` | Move selection down |
+| `k` / `↑` | Move selection up |
+| `n` / `→` | Next page |
+| `p` / `←` | Previous page |
+| `g` | First page |
+| `G` | Last page |
+| `Enter` / `o` | Open job URL in browser |
+| `q` / `Esc` | Back to menu |
+| `?` | Toggle keybinding help overlay |
 
-### Scoring formula
+All URLs support **Cmd+click** (macOS) or **Ctrl+click** (Linux/Windows) to open directly.
 
-| Factor | Weight | Detail |
-|--------|--------|--------|
-| Skill overlap | **50%** | Exact + fuzzy match of resume skills against job text |
-| Keyword/role match | **25%** | Role titles & user keywords found in job posting |
-| Title bonus | **10%** | Job title contains a resume role title |
-| Location bonus | **10%** | Preferred location matches job location |
-| Job type bonus | **5%** | Preferred type (remote, contract, etc.) matches |
+---
+
+## 🏢 Company Career Sites
+
+On first run, the tool seeds a local database with **80+ major tech companies** and their careers-page URLs:
+
+```
+Big Tech:     Google, Meta, Apple, Amazon, Microsoft, Netflix, Spotify, Stripe, Shopify, GitLab ...
+Fintech:      Stripe, Coinbase, Robinhood, Plaid, Jane Street, Citadel, Two Sigma ...
+Enterprise:   Salesforce, Adobe, Atlassian, Datadog, MongoDB, Databricks, HashiCorp ...
+Cloud:        Cloudflare, Snowflake, Confluent, Elastic, Vercel, Netlify, Supabase ...
+Gaming:       Riot Games, Blizzard, Epic Games, Unity, Roblox ...
+```
+
+During every scan, new companies are **auto-discovered** from job postings and added to the cache. The career-page crawler uses URL heuristics to find job listings (supports Greenhouse, Lever, Workday, and standard career portals).
+
+```bash
+# List cached companies
+./target/release/jobsense-parker --companies
+
+# Add a company manually
+./target/release/jobsense-parker --add-company "MyCorp" "https://mycorp.com/careers"
+
+# Remove a company
+./target/release/jobsense-parker --remove-company "Twitter/X"
+```
+
+---
+
+## 🗂 Project Structure
+
+```
+jobsense-parker/
+├── Cargo.toml                  # Dependencies & metadata
+├── Cargo.lock
+├── LICENSE                     # MIT
+├── README.md                   # ← you are here
+└── src/
+    ├── main.rs                 # CLI entry point (flag parsing)
+    ├── lib.rs                  # Crate root, module declarations
+    ├── cli/
+    │   ├── mod.rs              # Interactive menu loop, command dispatch
+    │   └── views.rs            # Terminal rendering (banner, vim viewer, help)
+    ├── crawler/
+    │   ├── mod.rs              # CrawlerCoordinator (concurrency + post-filter)
+    │   ├── fetcher.rs          # HTTP client (concurrent-safe, 15s timeout)
+    │   ├── remoteok.rs         # Remote OK job board (tagged JSON API)
+    │   ├── reddit.rs           # Reddit hiring subreddits (JSON API)
+    │   ├── hackernews.rs       # HN "Who is Hiring?" (Algolia + Firebase)
+    │   └── company.rs          # Company career-site crawler (heuristics)
+    ├── matcher/
+    │   ├── mod.rs              # Resume-to-job matching engine
+    │   └── scoring.rs          # Scoring algorithm (weights, fuzzy match)
+    ├── models/
+    │   └── mod.rs              # Data types (JobPost, Resume, MatchResult, etc.)
+    └── storage/
+        └── mod.rs              # JSON persistence to ~/.jobsense-parker/
+```
+
+---
+
+## 🏗 Architecture
+
+```text
+  ┌──────────────┐
+  │  User Input   │  Query string or resume file (PDF/JSON/YAML/text)
+  └──────┬───────┘
+         │
+         ▼
+  ┌───────────────────────────────────────────────────────────────┐
+  │                    CrawlerCoordinator                         │
+  │  (filter sources, then run ALL concurrently via join_all)     │
+  └────┬──────────┬──────────┬──────────┬────────────────────────┘
+       │          │          │          │
+       ▼          ▼          ▼          ▼
+  ┌────────┐ ┌────────┐ ┌────────┐ ┌────────────┐
+  │Remote  │ │ Reddit │ │Hacker  │ │ Company    │   ← concurrent
+  │ OK     │ │ (JSON  │ │ News   │ │ Career     │
+  │(tagged │ │  API,  │ │(Algolia│ │ Sites      │
+  │ JSON)  │ │ 5 subs)│ │+Firebase│ │ (80+ seeded)│
+  └────────┘ └────────┘ └────────┘ └────────────┘
+       │          │          │          │
+       └──────────┴──────────┴──────────┘
+                        │
+                        ▼ post-filter by keywords
+                        │
+                        ▼ auto-discover companies from job posts
+                        │
+                        ▼
+  ┌──────────────────────────────────────────────┐
+  │                 Matcher                       │
+  │  score_all(jobs) → Vec<MatchResult>           │
+  │  • Skill overlap (50%)                        │
+  │  • Keyword ratio (25%)                        │
+  │  • Role-title match (10%)                     │
+  │  • Location match (10%)                       │
+  │  • Job-type match (5%)                        │
+  │  • Jaro-Winkler fuzzy matching                │
+  └──────────────────┬───────────────────────────┘
+                     │
+                     ▼ sorted by score (desc)
+                     │
+                     ▼
+  ┌──────────────────────────────────────────────┐
+  │          Vim-Style Results Viewer             │
+  │  j/k/Enter/q/?  →  Terminal (with OSC 8     │
+  │                      clickable links)        │
+  └──────────────────────────────────────────────┘
+```
+
+---
+
+## 📟 CLI Reference
+
+| Flag | Description | Example |
+|------|-------------|---------|
+| *(no args)* | Interactive menu | `jobsense-parker` |
+| `--help`, `-h` | Show help | |
+| `--scan`, `-s` | Scan all sources with loaded resume | `jobsense-parker --scan` |
+| `--search <query>` | Search with custom query | `jobsense-parker --search "rust engineer"` |
+| `--resume`, `-r <file>` | Load resume file | `jobsense-parker -r ~/resume.pdf` |
+| `--results` | View last cached results | |
+| `--history` | Show scan history | |
+| `--companies` | List cached companies | |
+| `--add-company <name> <url>` | Add a company career site | `--add-company "Tesla" "https://tesla.com/careers"` |
+| `--remove-company <name>` | Remove a company | `--remove-company "Twitter/X"` |
+
+### Persisted data (`~/.jobsense-parker/`)
+
+| File | Purpose |
+|------|---------|
+| `resume.json` | Parsed resume (skills, roles, keywords) |
+| `preferences.json` | User preferences (sources, max results) |
+| `companies.json` | 80+ seeded + auto-discovered companies |
+| `queries.json` | Recent search queries (capped at 50) |
+| `scan_history.json` | Scan records (capped at 100) |
+| `last_results.json` | Most recent match results |
+
+---
+
+## 🔬 Scoring Algorithm
+
+| Component | Weight | How it works |
+|-----------|--------|-------------|
+| **Skill ratio** | 50% | `matched_skills / total_skills` — what fraction of your skills appear in the job description? |
+| **Keyword ratio** | 25% | `matched_keywords / total_keywords` — broad keyword overlap |
+| **Role-title match** | 10% | Does the job title contain one of your role titles? Uses Jaro-Winkler fuzzy match. |
+| **Location match** | 10% | Does the job location contain your preferred location? Fuzzy matched. |
+| **Job-type match** | 5% | Does the job type match your preferred type (e.g. "remote")? |
 
 Fuzzy matching uses the [Jaro-Winkler distance](https://en.wikipedia.org/wiki/Jaro%E2%80%93Winkler_distance) with a 0.85 threshold — catches typos and close variants.
 
-</details>
-
 ---
 
-<details open>
-<summary><b>🔌 Adding a custom source</b></summary>
-<br>
+## 🔌 Adding a Custom Source
 
-Implement the `SourceCrawler` trait:
+Implement the `SourceCrawler` trait and register it in `CrawlerCoordinator`:
 
 ```rust
 use async_trait::async_trait;
@@ -211,53 +301,44 @@ pub struct MyJobBoard;
 
 #[async_trait]
 impl SourceCrawler for MyJobBoard {
-    fn name(&self) -> &str {
-        "My Board"
-    }
+    fn name(&self) -> &str { "My Board" }
 
     async fn crawl(&self, config: &SearchConfig) -> anyhow::Result<Vec<JobPost>> {
-        // 1. Fetch & parse HTML/JSON
-        // 2. Return Vec<JobPost>
+        // Fetch API/HTML, parse, filter by config.keywords
+        // Return Vec<JobPost>
         todo!()
     }
 }
 ```
 
-Then register it in [`CrawlerCoordinator::new()`](src/crawler/mod.rs).
-
-</details>
+Then in [`src/crawler/mod.rs`](src/crawler/mod.rs), add it to `CrawlerCoordinator::new()`.
 
 ---
 
-<details open>
-<summary><b>🧪 Tests</b></summary>
-<br>
+## 🧪 Tests
 
 ```bash
-# Run all tests
+# All tests
 cargo test
 
-# Run with output
+# With output
 cargo test -- --nocapture
 
 # Specific test
 cargo test test_score_rust_job
+
+# Doc tests only
+cargo test --doc
 ```
 
-</details>
+---
+
+## 📄 License
+
+MIT — see [LICENSE](LICENSE). Go build something cool.
 
 ---
 
-<details open>
-<summary><b>📄 License</b></summary>
-<br>
-
-MIT — see [LICENSE](LICENSE). Do what you want with it.
-
-</details>
-
----
-
-<p align="center">
-  <sub>Built with 🦀 Rust &middot; Crawls ethically with polite delays &middot; Not affiliated with LinkedIn</sub>
-</p>
+<div align="center">
+  <sub>Built with 🦀 Rust · Crawls ethically with no artificial delays · Not affiliated with LinkedIn</sub>
+</div>
