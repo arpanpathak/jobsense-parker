@@ -39,6 +39,7 @@ pub mod remoteok;
 
 use anyhow::Result;
 use colored::Colorize;
+use regex::Regex;
 
 use crate::models::{JobPost, SearchConfig};
 
@@ -191,12 +192,43 @@ impl CrawlerCoordinator {
                 kw_count / 2
             };
 
-            // Pass 1: Title-gate — the same min_required keywords must appear
-            // in the TITLE alone. This eliminates "Senior Vice President"
-            // when searching "senior software engineer" because the title
-            // only has "senior" (1 of 3, needs 2).
+            // Pass 1: Title-gate — min_required keywords must appear in TITLE.
+            // This eliminates "Senior Vice President" when searching
+            // "senior software engineer" because the title only has "senior".
+            //
+            // Additionally: if the query contains role-type keywords
+            // (e.g. "software" in "senior software engineer"), at least one
+            // such keyword must appear in the title. This eliminates
+            // "Senior Quality Engineer" — it hits the soft-AND minimum (2 of 3
+            // with "senior"+"engineer") but lacks "software" or any role type.
             all_posts.retain(|job| {
                 let title_lower = job.title.to_lowercase();
+
+                // Check role-type keywords first
+                let role_keywords = ["software", "frontend", "backend", "full.?stack", "fullstack",
+                    "devops", "data", "ml", "ai", "machine.?learning", "platform", "security",
+                    "systems", "network", "site.?reliability", "sre", "qa", "test",
+                    "ios", "android", "mobile", "embedded", "firmware", "hardware",
+                    "infrastructure", "cloud", "rust", "go", "python", "java", "javascript",
+                    "typescript", "react", "angular", "vue", "node", "devsecops"];
+                let has_role_keyword = role_keywords.iter().any(|rk| {
+                    if rk.contains(".?") {
+                        let re = regex::Regex::new(rk).unwrap();
+                        re.is_match(&title_lower)
+                    } else {
+                        title_lower.contains(rk)
+                    }
+                });
+                // If the query has role keywords and none match in the title, drop it
+                let query_has_role = role_keywords.iter().any(|rk| {
+                    let rk_lower = rk.replace(".?", "");
+                    kw_lower.iter().any(|kw| kw.contains(&rk_lower))
+                });
+                if query_has_role && !has_role_keyword {
+                    return false;
+                }
+
+                // Standard title keyword count
                 let title_matches = kw_lower.iter().filter(|kw| title_lower.contains(kw.as_str())).count();
                 title_matches >= min_required
             });

@@ -101,24 +101,30 @@ impl CompanyCrawler {
 
     /// Extract the company slug from a Greenhouse careers URL.
     ///
-    /// Matches: `boards.greenhouse.io/{slug}` or `{slug}.greenhouse.io`
+    /// Matches two patterns:
+    /// - `boards.greenhouse.io/{slug}` → returns `{slug}`
+    /// - `{slug}.greenhouse.io` → returns `{slug}`
     fn extract_greenhouse_slug(url: &str) -> Option<String> {
-        if let Some(pos) = url.find("boards.greenhouse.io/") {
-            let rest = &url[pos + "boards.greenhouse.io/".len()..];
-            return rest.split('/').next().filter(|s| !s.is_empty()).map(|s| s.to_string());
-        }
-        if let Some(_pos) = url.find(".greenhouse.io") {
-            // Extract subdomain: https://{slug}.greenhouse.io/
-            if let Some(start) = url.find("://") {
-                let domain = &url[start + 3..];
-                if let Some(dot) = domain.find('.') {
-                    let slug = &domain[..dot];
-                    if !slug.is_empty() && slug != "boards" {
-                        return Some(slug.to_string());
-                    }
-                }
+        // Pattern 1: boards.greenhouse.io/{slug}
+        let marker = "boards.greenhouse.io/";
+        if let Some(pos) = url.find(marker) {
+            let after = &url[pos + marker.len()..];
+            let slug = after.split('/').next().unwrap_or("");
+            if !slug.is_empty() {
+                return Some(slug.to_string());
             }
         }
+
+        // Pattern 2: {slug}.greenhouse.io
+        let host_start = url.find("://").map(|p| p + 3).unwrap_or(0);
+        let domain = &url[host_start..];
+        if let Some(dot) = domain.find('.') {
+            let subdomain = &domain[..dot];
+            if !subdomain.is_empty() && subdomain != "boards" && !subdomain.contains('/') {
+                return Some(subdomain.to_string());
+            }
+        }
+
         None
     }
 

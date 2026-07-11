@@ -231,7 +231,7 @@ pub fn run_results_viewer(results: &[MatchResult]) -> Result<()> {
                 .map(|c| format!(" @ {}", c.cyan()))
                 .unwrap_or_default();
 
-            let ago = relative_time(result.job.posted_at.or(Some(result.job.crawled_at)));
+            let ago = relative_time(result.job.posted_at);
 
             // Highlight selected row
             let line = if is_selected {
