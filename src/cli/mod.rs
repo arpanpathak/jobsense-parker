@@ -1,3 +1,5 @@
+//! CLI application logic — interactive menu and non-interactive command dispatch.
+
 mod views;
 
 use colored::Colorize;
@@ -11,6 +13,7 @@ use crate::storage;
 
 pub use views::{banner, print_help, show_scan_history};
 
+/// Main application struct that ties together the matcher, crawlers, and storage.
 pub struct App {
     matcher: Matcher,
     coordinator: CrawlerCoordinator,
@@ -20,6 +23,7 @@ pub struct App {
 }
 
 impl App {
+    /// Create a new app instance, loading persisted state (resume, results, history).
     pub fn new() -> Self {
         let prefs = storage::load_preferences().unwrap_or_default();
         let resume = storage::load_resume().unwrap_or(None);
@@ -51,6 +55,7 @@ impl App {
 
     // ─── Main Loop ────────────────────────────────────────────────────
 
+    /// Start the interactive menu loop.
     pub async fn run(&mut self) {
         banner();
 
@@ -73,20 +78,24 @@ impl App {
 
     // ─── Non-interactive commands ─────────────────────────────────────
 
+    /// Run a scan using keywords derived from the loaded resume.
     pub async fn run_scan(&mut self) {
         self.prepare_keywords();
         self.cmd_scan().await;
     }
 
+    /// Search with a custom query string (space-separated keywords).
     pub async fn run_search(&mut self, query: &str) {
         self.config.keywords = query.split_whitespace().map(|s| s.to_string()).collect();
         self.cmd_search(query).await;
     }
 
+    /// Load a resume from a file path.
     pub fn load_resume_file(&mut self, path: &str) {
         self.cmd_load_resume(path);
     }
 
+    /// Print a summary of cached results to stdout.
     pub fn show_results(&self) {
         if self.results.is_empty() {
             println!("  No results cached. Run a scan first.");
@@ -100,6 +109,7 @@ impl App {
 
     // ─── Menu ─────────────────────────────────────────────────────────
 
+    /// Show the main menu and return the user's chosen command.
     fn prompt_command(&self) -> Command {
         let resume_status = if self.matcher.has_resume() {
             "loaded".green().to_string()
@@ -163,6 +173,12 @@ impl App {
 
     // ─── Command: Load Resume ─────────────────────────────────────────
 
+    /// Handle the "Load Resume" command.
+    ///
+    /// Determines whether `input` is a file or raw text by checking if
+    /// the path exists on disk. PDF files are extracted with `pdf_extract`;
+    /// JSON/YAML files are deserialised; all others fall back to
+    /// [`Resume::from_text`].
     fn cmd_load_resume(&mut self, input: &str) {
         let trimmed = input.trim();
         if trimmed.is_empty() {
@@ -170,13 +186,11 @@ impl App {
             return;
         }
 
-        let is_pdf = trimmed.ends_with(".pdf") || trimmed.ends_with(".PDF");
-        let is_json = trimmed.ends_with(".json");
-        let is_yaml = trimmed.ends_with(".yaml") || trimmed.ends_with(".yml");
-        let looks_like_path = is_pdf || is_json || is_yaml
-            || trimmed.contains('/') || trimmed.contains('\\');
+        let path = std::path::Path::new(trimmed);
+        let path_exists = path.exists();
 
-        let resume = if is_pdf {
+        let resume = if path_exists && trimmed.ends_with(".pdf") {
+            // PDF file — extract text from it
             match pdf_extract::extract_text(trimmed) {
                 Ok(pdf_text) => {
                     println!("  Extracted {} chars from PDF.", pdf_text.len());
@@ -187,7 +201,8 @@ impl App {
                     Resume::from_text(trimmed)
                 }
             }
-        } else if looks_like_path {
+        } else if path_exists {
+            // Existing file — read and try to parse as JSON/YAML, fall back to plain text
             match std::fs::read_to_string(trimmed) {
                 Ok(content) => {
                     serde_json::from_str::<Resume>(&content)
@@ -203,6 +218,7 @@ impl App {
                 }
             }
         } else {
+            // Not a file — treat as raw text (JSON, YAML, or plain text)
             serde_json::from_str::<Resume>(trimmed)
                 .or_else(|_| serde_yaml::from_str::<Resume>(trimmed))
                 .unwrap_or_else(|_| Resume::from_text(trimmed))
@@ -223,6 +239,7 @@ impl App {
 
     // ─── Command: Show Resume ─────────────────────────────────────────
 
+    /// Display the currently loaded resume to the user.
     fn cmd_show_resume(&self) {
         match self.matcher.resume() {
             None => println!("  No resume loaded."),
@@ -232,6 +249,7 @@ impl App {
 
     // ─── Command: Scan ────────────────────────────────────────────────
 
+    /// Prepare search keywords from the loaded resume (skills + roles).
     fn prepare_keywords(&mut self) {
         if !self.matcher.has_resume() {
             println!("  No resume loaded. Scanning without matching.");
@@ -251,6 +269,7 @@ impl App {
         };
     }
 
+    /// Execute a scan against all sources with the current config.
     async fn cmd_scan(&mut self) {
         self.prepare_keywords();
 
@@ -312,6 +331,7 @@ impl App {
 
     // ─── Command: Search ──────────────────────────────────────────────
 
+    /// Execute a search with a user-supplied query string.
     async fn cmd_search(&mut self, query: &str) {
         if query.trim().is_empty() {
             println!("  Empty query, cancelling.");
@@ -371,6 +391,7 @@ impl App {
 
     // ─── Command: View Results ────────────────────────────────────────
 
+    /// Paginated viewer for the current match results.
     fn cmd_view_results(&self) {
         if self.results.is_empty() {
             println!("  No results yet. Run a scan or search first.");
@@ -446,6 +467,7 @@ impl App {
 
     // ─── Command: Filter Results ──────────────────────────────────────
 
+    /// Interactive filter/sort menu for the current results.
     fn cmd_filter_results(&mut self) {
         if self.results.is_empty() {
             println!("  No results to filter.");
@@ -503,6 +525,10 @@ impl App {
 
 // ─── File Picker ─────────────────────────────────────────────────────────
 
+/// Interactive file-picker dialog for selecting a resume file.
+///
+/// Navigate directories with arrow keys and fuzzy-find. Supports
+/// PDF, JSON, YAML, and TXT extensions.
 fn pick_resume_file() -> Option<String> {
     let mut current_dir = std::env::current_dir().ok()?;
 

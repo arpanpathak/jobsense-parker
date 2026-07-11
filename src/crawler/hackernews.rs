@@ -1,3 +1,6 @@
+//! Crawler for Hacker News — fetches the monthly "Who is Hiring?" thread
+//! and extracts individual job comments.
+
 use anyhow::Result;
 use chrono::Utc;
 use uuid::Uuid;
@@ -6,6 +9,7 @@ use super::fetcher::Fetcher;
 use crate::models::{JobPost, JobSource, SearchConfig};
 use super::SourceCrawler;
 
+/// Crawler that extracts job listings from the Hacker News "Who is Hiring?" thread.
 pub struct HackerNewsCrawler;
 
 #[async_trait::async_trait]

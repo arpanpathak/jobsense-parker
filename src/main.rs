@@ -1,3 +1,9 @@
+//! CLI entry point for jobsense-parker.
+//!
+//! Supports two modes:
+//! * **Non-interactive** — pass flags like `--resume`, `--scan`, `--search`, `--results`, `--history`
+//! * **Interactive** — run without arguments to open the terminal menu
+
 use std::env;
 
 use jobsense_parker::cli::{self, App};

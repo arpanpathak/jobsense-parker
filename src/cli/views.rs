@@ -1,7 +1,11 @@
+//! Terminal rendering helpers — banner, resume display, results pagination,
+//! scan history, and CLI help text.
+
 use colored::Colorize;
 
 use crate::models::{MatchResult, Resume, ScanRecord};
 
+/// Render the startup banner.
 pub fn banner() {
     println!();
     println!(
@@ -32,6 +36,7 @@ pub fn banner() {
     println!();
 }
 
+/// Display the parsed contents of a resume.
 pub fn show_resume(r: &Resume) {
     println!();
     println!("  Current Resume");
@@ -68,6 +73,7 @@ pub fn show_resume(r: &Resume) {
     println!();
 }
 
+/// Render a single page of match results with navigation.
 pub fn show_results_page(results: &[MatchResult], page: usize, total_pages: usize) {
     let page_size = 10;
     let start = page * page_size;
@@ -129,6 +135,7 @@ pub fn show_results_page(results: &[MatchResult], page: usize, total_pages: usiz
     }
 }
 
+/// Render the scan history (last 10 records).
 pub fn show_scan_history(records: &[ScanRecord]) {
     if records.is_empty() {
         println!("  No scan history yet.");
@@ -150,6 +157,7 @@ pub fn show_scan_history(records: &[ScanRecord]) {
     println!();
 }
 
+/// Print the CLI usage help text.
 pub fn print_help() {
     println!();
     println!("  Usage: jobsense-parker [COMMAND]");

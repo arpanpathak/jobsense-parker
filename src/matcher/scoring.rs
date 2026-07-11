@@ -1,6 +1,19 @@
+//! Scoring logic used by the [`Matcher`](super::Matcher) to compute match scores.
+//!
+//! The final score is a weighted combination of skill matches, keyword matches,
+//! title overlap, location match, and job-type match.
+
 use crate::models::{JobPost, Resume};
 use strsim::jaro_winkler;
 
+/// Compute a composite match score between 0.0 and 1.0.
+///
+/// Scoring weights:
+/// * Skill ratio: 50%
+/// * Keyword ratio: 25%
+/// * Role-title match: 10%
+/// * Location match: 10%
+/// * Job-type match: 5%
 pub fn compute_score(
     matched_skills: &[String],
     all_skills: &[String],
@@ -57,6 +70,8 @@ pub fn compute_score(
     score.clamp(0.0, 1.0)
 }
 
+/// Check whether `keyword` approximately matches any word in `text`
+/// using the Jaro-Winkler distance (threshold: 0.85).
 pub fn fuzzy_match(keyword: &str, text: &str) -> bool {
     let threshold = 0.85;
     let keyword = keyword.trim();
@@ -73,6 +88,7 @@ pub fn fuzzy_match(keyword: &str, text: &str) -> bool {
     })
 }
 
+/// Concatenate all relevant fields of a job post into a single searchable string.
 pub fn build_job_text(job: &JobPost) -> String {
     let mut parts = vec![job.title.clone(), job.description.clone()];
     if let Some(c) = &job.company {

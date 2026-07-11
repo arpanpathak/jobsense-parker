@@ -1,3 +1,5 @@
+//! Crawler for Reddit — searches hiring-related subreddits for job posts.
+
 use anyhow::Result;
 use chrono::Utc;
 use scraper::{Html, Selector};
@@ -7,6 +9,7 @@ use super::fetcher::Fetcher;
 use crate::models::{JobPost, JobSource, SearchConfig};
 use super::SourceCrawler;
 
+/// Crawler that searches multiple hiring subreddits for job posts.
 pub struct RedditCrawler;
 
 #[async_trait::async_trait]
@@ -92,6 +95,7 @@ impl SourceCrawler for RedditCrawler {
     }
 }
 
+/// Simple URL encoding that replaces spaces with `+`.
 fn urlencode(s: &str) -> String {
     s.replace(' ', "+")
 }

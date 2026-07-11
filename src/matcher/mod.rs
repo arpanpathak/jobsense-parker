@@ -1,3 +1,8 @@
+//! Resume-to-job scoring engine.
+//!
+//! The [`Matcher`] struct holds a loaded resume and compares it against
+//! job posts, producing a [`MatchResult`] with a score between 0.0 and 1.0.
+
 pub mod scoring;
 
 use std::collections::HashSet;
@@ -5,12 +10,14 @@ use std::collections::HashSet;
 use crate::models::{JobPost, MatchResult, Resume};
 use scoring::{build_job_text, compute_score, fuzzy_match};
 
+/// Compares a resume against job posts and produces scored results.
 pub struct Matcher {
     resume: Option<Resume>,
     threshold: f64,
 }
 
 impl Matcher {
+    /// Create a new matcher with no loaded resume.
     pub fn new() -> Self {
         Self {
             resume: None,
@@ -18,18 +25,24 @@ impl Matcher {
         }
     }
 
+    /// Load (or replace) the resume to match against.
     pub fn load_resume(&mut self, resume: Resume) {
         self.resume = Some(resume);
     }
 
+    /// Whether a resume has been loaded.
     pub fn has_resume(&self) -> bool {
         self.resume.is_some()
     }
 
+    /// Returns a reference to the loaded resume, if any.
     pub fn resume(&self) -> Option<&Resume> {
         self.resume.as_ref()
     }
 
+    /// Score a single job post against the loaded resume.
+    ///
+    /// Returns `None` if no resume is loaded.
     pub fn score(&self, job: &JobPost) -> Option<MatchResult> {
         let resume = self.resume.as_ref()?;
 
@@ -81,6 +94,9 @@ impl Matcher {
         })
     }
 
+    /// Score all job posts and return results sorted by score descending.
+    ///
+    /// Results below [`threshold`] are filtered out.
     pub fn score_all(&self, jobs: &[JobPost]) -> Vec<MatchResult> {
         let mut results: Vec<MatchResult> = jobs
             .iter()
@@ -93,6 +109,7 @@ impl Matcher {
     }
 }
 
+/// Deduplicate items in a vector while preserving insertion order.
 fn dedup_ordered<T: std::hash::Hash + Eq + Clone>(items: Vec<T>) -> Vec<T> {
     let mut seen = HashSet::new();
     items
@@ -115,7 +132,7 @@ mod tests {
             location: None,
             description: desc.into(),
             url: "https://example.com/job".into(),
-            source: JobSource::Indeed,
+            source: JobSource::Custom("Indeed".into()),
             posted_at: None,
             crawled_at: Utc::now(),
             salary: None,
