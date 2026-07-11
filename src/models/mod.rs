@@ -218,102 +218,119 @@ impl Resume {
     /// ```
     pub fn from_text(text: &str) -> Self {
         let lower = text.to_lowercase();
+        Self {
+            skills: Self::extract_skills(&lower),
+            role_titles: Self::extract_roles(&lower),
+            experience_years: Self::extract_experience_years(&lower),
+            preferred_location: Self::extract_location(&lower),
+            preferred_job_type: Self::extract_job_type(&lower),
+            keywords: Self::extract_keywords(text),
+            min_salary: None,
+        }
+    }
 
-        // ── Skills (context-based, no hard-coded list) ──────────────────
+    /// Extract skills from context cues like `"experience with Rust"` or
+    /// `"Technologies: Rust, Python, Docker"`.
+    fn extract_skills(text: &str) -> Vec<String> {
+        let mut skills: Vec<String> = Vec::new();
 
-        // "experience with Rust", "proficient in Python", "knowledge of Docker",
-        // "familiar with React", "worked with AWS", "expertise in K8s", etc.
+        // Pattern: "experience with X", "proficient in X", "knowledge of X", etc.
         let ctx_re = Regex::new(
             r"(?i)(?:experience|proficient|skills?|knowledge|worked|familiar|expertise|strong|fluent|background|expert|using|including)\s*(?:with|in|at|using|of|on|including)\s+([a-z][a-z+#.]+(?:\s+[a-z][a-z+#.]+)?)"
         ).unwrap();
+        for cap in ctx_re.captures_iter(text) {
+            let s = cap.get(1).unwrap().as_str().trim().to_string();
+            if s.len() >= 2 {
+                skills.push(s);
+            }
+        }
 
-        let mut skills: Vec<String> = ctx_re
-            .captures_iter(&lower)
-            .map(|c| c.get(1).unwrap().as_str().trim().to_string())
-            .filter(|s| s.len() >= 2)
-            .collect();
-
-        // Also grab tokens from lines like "Technologies: Rust, Python, Docker"
+        // Pattern: "Technologies: Rust, Python", "Languages: Go, TypeScript"
         let list_re = Regex::new(
             r"(?i)(?:technolog(y|ies)|tools?|tech\s*stack|languages?|frameworks?|platforms?)[:\s]+(.+)"
         ).unwrap();
-        if let Some(caps) = list_re.captures(&lower) {
+        if let Some(caps) = list_re.captures(text) {
             let list_part = caps.get(2).unwrap().as_str();
             for item in list_part.split([',', ';', '|', '\n']).filter_map(|s| {
                 let t = s.trim().trim_matches(|c: char| c == '.' || c == ' ').to_string();
-                if t.len() >= 2 && !t.contains(char::is_whitespace) { Some(t) } else { None }
+                (t.len() >= 2 && !t.contains(char::is_whitespace)).then_some(t)
             }) {
                 skills.push(item);
             }
         }
 
-        skills.sort();
+        skills.sort_unstable();
         skills.dedup();
+        skills
+    }
 
-        // ── Roles (context-based) ───────────────────────────────────────
-
-        let mut role_titles: Vec<String> = Vec::new();
+    /// Extract role titles from patterns like `"Senior Software Engineer"`,
+    /// `"Role: Lead Developer"`, or `"Data Scientist"`.
+    fn extract_roles(text: &str) -> Vec<String> {
+        let mut roles: Vec<String> = Vec::new();
 
         // "Role: Senior Engineer", "Position: Lead Developer"
-        let role_ctx_re = Regex::new(
+        let ctx_re = Regex::new(
             r"(?i)(?:role|position|title)[:\s]+([a-z]+\s+(?:engineer|developer|architect|manager|lead|intern|analyst|consultant|scientist|designer|director|head))"
         ).unwrap();
-        for cap in role_ctx_re.captures_iter(&lower) {
-            role_titles.push(cap.get(1).unwrap().as_str().trim().to_string());
+        for cap in ctx_re.captures_iter(text) {
+            roles.push(cap.get(1).unwrap().as_str().trim().to_string());
         }
 
-        // "Software Engineer", "Senior Frontend Developer", "Data Scientist"
-        let title_role_re = Regex::new(
+        // "Senior Software Engineer", "Frontend Developer", "Data Scientist"
+        let title_re = Regex::new(
             r"(?i)(?:(?:senior|staff|principal|lead|junior|intern|head)\s+)?(?:software|data|full.?stack|frontend|backend|devops|platform|security|systems|network|site\s*reliability|machine\s*learning|ai|ml)\s+(?:engineer|developer|architect|manager|scientist|analyst)"
         ).unwrap();
-        for cap in title_role_re.captures_iter(&lower) {
+        for cap in title_re.captures_iter(text) {
             let role = cap.get(0).unwrap().as_str().trim().to_string();
-            if !role_titles.contains(&role) {
-                role_titles.push(role);
+            if !roles.contains(&role) {
+                roles.push(role);
             }
         }
 
-        role_titles.sort();
-        role_titles.dedup();
+        roles.sort_unstable();
+        roles.dedup();
+        roles
+    }
 
-        // ── Experience years ────────────────────────────────────────────
+    /// Extract years of experience from patterns like `"5 years"`, `"10+ yrs"`.
+    fn extract_experience_years(text: &str) -> Option<f32> {
+        let re = Regex::new(r"(?i)(\d+)\+?\s*(?:years?|yrs?)\s*(?:of\s+)?(?:experience|exp)").unwrap();
+        re.captures(text)
+            .and_then(|c| c.get(1)?.as_str().parse::<f32>().ok())
+    }
 
-        let exp_re = Regex::new(r"(?i)(\d+)\+?\s*(?:years?|yrs?)\s*(?:of\s+)?(?:experience|exp)").unwrap();
-        let experience_years = exp_re.captures(&lower).and_then(|c| {
-            c.get(1)?.as_str().parse::<f32>().ok()
-        });
-
-        // ── Preferred location ──────────────────────────────────────────
-
-        let loc_re = Regex::new(
+    /// Extract preferred location from patterns like `"based in NYC"`, `"located in SF"`.
+    fn extract_location(text: &str) -> Option<String> {
+        let re = Regex::new(
             r"(?i)(?:based|located|living|situated)\s+(?:in|at|near)\s+([a-z][a-z\s.-]+?)(?:[,.!]|$)"
         ).unwrap();
-        let preferred_location = loc_re.captures(&lower).and_then(|c| {
+        re.captures(text).and_then(|c| {
             let loc = c.get(1)?.as_str().trim().to_string();
-            if loc.len() > 50 { None } else { Some(loc) }
-        });
+            (loc.len() <= 50).then_some(loc)
+        })
+    }
 
-        // ── Preferred job type ──────────────────────────────────────────
-
-        let type_re = Regex::new(
+    /// Extract preferred job type from patterns like `"looking for remote"` or
+    /// fall back to scanning for keywords like "full-time", "contract".
+    fn extract_job_type(text: &str) -> Option<String> {
+        let re = Regex::new(
             r"(?i)(?:looking|seeking|want|prefer|open|available)\s+(?:for|a|an)?\s*(full[- ]time|part[- ]time|contract|remote|hybrid|onsite)"
         ).unwrap();
-        let preferred_job_type = type_re.captures(&lower).and_then(|c| {
-            Some(c.get(1)?.as_str().to_string())
-        });
-
-        // If no explicit job-type sentence, scan for the keywords directly
-        let preferred_job_type = preferred_job_type.or_else(|| {
-            for t in &["full-time", "full time", "part-time", "part time", "contract", "remote", "hybrid", "onsite"] {
-                if lower.contains(t) {
-                    return Some(t.to_string());
-                }
+        if let Some(cap) = re.captures(text) {
+            return cap.get(1).map(|m| m.as_str().to_string());
+        }
+        // Fallback: scan for keywords directly
+        for t in &["full-time", "full time", "part-time", "part time", "contract", "remote", "hybrid", "onsite"] {
+            if text.contains(t) {
+                return Some(t.to_string());
             }
-            None
-        });
+        }
+        None
+    }
 
-        // ── Keywords (significant tokens) ───────────────────────────────
-
+    /// Extract significant keywords (3+ chars, no stop words).
+    fn extract_keywords(text: &str) -> Vec<String> {
         let stop_words = [
             "the", "and", "for", "are", "but", "not", "you", "all", "can", "had", "her",
             "was", "one", "our", "out", "has", "have", "been", "some", "same", "also",
@@ -324,25 +341,15 @@ impl Resume {
             "because", "before", "does", "doing", "done", "much", "many", "most",
             "must", "need", "take", "make", "made", "well", "work", "year", "years",
         ];
-
         let mut keywords: Vec<String> = text
             .split(|c: char| !c.is_alphanumeric() && c != '+' && c != '#')
             .filter(|w| w.len() >= 3)
             .map(|w| w.to_lowercase())
             .filter(|w| !stop_words.contains(&w.as_str()))
             .collect();
-        keywords.sort();
+        keywords.sort_unstable();
         keywords.dedup();
-
-        Self {
-            skills,
-            experience_years,
-            role_titles,
-            keywords,
-            preferred_location,
-            preferred_job_type,
-            min_salary: None,
-        }
+        keywords
     }
 }
 

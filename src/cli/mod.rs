@@ -368,6 +368,70 @@ impl App {
 
     // ─── Shared crawl + spinner logic ─────────────────────────────────
 
+    /// Crawl all cached company career sites and extend `jobs` with results.
+    async fn crawl_company_sites(&mut self, jobs: &mut Vec<JobPost>) {
+        if self.company_db.companies.is_empty() {
+            return;
+        }
+        let pb = ProgressBar::new_spinner();
+        pb.set_style(
+            ProgressStyle::default_spinner()
+                .template("{spinner:.green} {msg}")
+                .unwrap(),
+        );
+        pb.set_message(format!(
+            "Crawling {} company career sites...",
+            self.company_db.companies.len()
+        ));
+        pb.enable_steady_tick(std::time::Duration::from_millis(100));
+
+        let company_jobs = CompanyCrawler::crawl_all(&mut self.company_db, &self.config).await;
+        pb.finish_and_clear();
+
+        if !company_jobs.is_empty() {
+            eprintln!("  {} {} jobs from company career sites", "+".green(), company_jobs.len());
+            jobs.extend(company_jobs);
+        }
+        let _ = storage::save_company_database(&self.company_db);
+    }
+
+    /// Score jobs by keyword relevance when no resume is loaded.
+    /// Keywords in the title are weighted 3x vs description, with an exact-phrase bonus.
+    fn score_jobs_by_keywords(&self, jobs: Vec<JobPost>) -> Vec<MatchResult> {
+        if self.config.keywords.is_empty() {
+            return jobs.into_iter().map(|j| MatchResult {
+                score: 0.5,
+                matched_skills: vec![],
+                matched_keywords: vec![],
+                missing_skills: vec![],
+                job: j,
+            }).collect();
+        }
+        let kw_lower: Vec<String> = self.config.keywords.iter().map(|k| k.to_lowercase()).collect();
+        let query_phrase = kw_lower.join(" ");
+        let max_kw = kw_lower.len() as f64;
+        let max_score = max_kw * 3.0 + max_kw;
+
+        jobs.into_iter().map(|j| {
+            let title_lower = j.title.to_lowercase();
+            let desc_lower = j.description.to_lowercase();
+
+            let title_matches = kw_lower.iter().filter(|kw| title_lower.contains(kw.as_str())).count() as f64;
+            let desc_matches = kw_lower.iter().filter(|kw| desc_lower.contains(kw.as_str())).count() as f64;
+            let phrase_bonus = if title_lower.contains(&query_phrase) { 2.0 } else { 0.0 };
+
+            let raw = (title_matches * 3.0 + desc_matches) / max_score + phrase_bonus * 0.1;
+            let score = raw.clamp(0.05, 0.99);
+
+            let matched_keywords: Vec<String> = kw_lower.iter()
+                .filter(|kw| title_lower.contains(kw.as_str()) || desc_lower.contains(kw.as_str()))
+                .cloned()
+                .collect();
+
+            MatchResult { score, matched_skills: vec![], matched_keywords, missing_skills: vec![], job: j }
+        }).collect()
+    }
+
     /// Run a crawl with a progress spinner showing status in real-time.
     /// Also crawls company career sites and auto-discovers new companies.
     async fn run_with_spinner(&mut self, action: &str, keywords: &[String], save_query: bool) {
@@ -405,38 +469,10 @@ impl App {
         }
 
         // ── Phase 2: Company career site crawl ───────────────────────
-        if !self.company_db.companies.is_empty() {
-            let pb2 = ProgressBar::new_spinner();
-            pb2.set_style(
-                ProgressStyle::default_spinner()
-                    .template("{spinner:.green} {msg}")
-                    .unwrap(),
-            );
-            pb2.set_message(format!(
-                "Crawling {} company career sites...",
-                self.company_db.companies.len()
-            ));
-            pb2.enable_steady_tick(std::time::Duration::from_millis(100));
-
-            let company_jobs = CompanyCrawler::crawl_all(&mut self.company_db, &self.config).await;
-            pb2.finish_and_clear();
-
-            if !company_jobs.is_empty() {
-                eprintln!(
-                    "  {} {} jobs from company career sites",
-                    "+".green(),
-                    company_jobs.len()
-                );
-                jobs.extend(company_jobs);
-            }
-
-            // Persist updated company DB (with crawl timestamps)
-            let _ = storage::save_company_database(&self.company_db);
-        }
+        self.crawl_company_sites(&mut jobs).await;
 
         // ── Process results ──────────────────────────────────────────
         let raw_count = jobs.len();
-
         if jobs.is_empty() {
             println!("\n  No jobs found. Try different keywords or sources.\n");
             return;
@@ -448,46 +484,11 @@ impl App {
             raw_count
         );
 
-        if self.matcher.has_resume() {
-            self.results = self.matcher.score_all(&jobs);
+        self.results = if self.matcher.has_resume() {
+            self.matcher.score_all(&jobs)
         } else {
-            // Score by keyword relevance even without a resume.
-            // This gives meaningful ranking: jobs mentioning more keywords
-            // in their title get a higher score.
-            let kw_lower: Vec<String> = self.config.keywords.iter().map(|k| k.to_lowercase()).collect();
-            let query_phrase = kw_lower.join(" ");
-
-            self.results = jobs
-                .into_iter()
-                .map(|j| {
-                    let title_lower = j.title.to_lowercase();
-                    let desc_lower = j.description.to_lowercase();
-
-                    // Count keyword matches in title (weighted 3x)
-                    let title_matches: usize = kw_lower.iter().filter(|kw| title_lower.contains(kw.as_str())).count();
-                    // Count keyword matches in description
-                    let desc_matches: usize = kw_lower.iter().filter(|kw| desc_lower.contains(kw.as_str())).count();
-                    // Exact phrase match in title (big bonus)
-                    let phrase_bonus = if title_lower.contains(&query_phrase) { 2.0 } else { 0.0 };
-
-                    let score = if kw_lower.is_empty() {
-                        0.5
-                    } else {
-                        let max_kw = kw_lower.len() as f64;
-                        let raw = (title_matches as f64 * 3.0 + desc_matches as f64 * 1.0) / (max_kw * 3.0 + max_kw) + phrase_bonus * 0.1;
-                        raw.clamp(0.05, 0.99)
-                    };
-
-                    MatchResult {
-                        score,
-                        matched_skills: vec![],
-                        matched_keywords: kw_lower.iter().filter(|kw| title_lower.contains(kw.as_str()) || desc_lower.contains(kw.as_str())).cloned().collect(),
-                        missing_skills: vec![],
-                        job: j,
-                    }
-                })
-                .collect();
-        }
+            self.score_jobs_by_keywords(jobs)
+        };
 
         // Save query to history
         if save_query {

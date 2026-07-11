@@ -21,57 +21,10 @@ impl SourceCrawler for HackerNewsCrawler {
 
     async fn crawl(&self, config: &SearchConfig) -> Result<Vec<JobPost>> {
         let fetcher = Fetcher::new()?;
-
-        // Try to find the "Who is Hiring?" thread starting from the current
-        // month and going back up to 3 months (thread is usually posted on
-        // the 1st or 2nd of each month, so it may not exist yet early in
-        // the month).
-        let now = Utc::now();
-        let mut months_to_try = Vec::new();
-        for offset in 0..=2 {
-            let dt = now - chrono::Months::new(offset);
-            months_to_try.push((dt.format("%B").to_string(), dt.format("%Y").to_string()));
+        let (story_id, story_title) = Self::find_story(&fetcher, config).await;
+        if story_id.is_empty() {
+            return Ok(vec![]);
         }
-
-        let keyword_q = if config.keywords.is_empty() {
-            String::new()
-        } else {
-            let joined = config.keywords.join(" ");
-            format!("%20{joined}")
-        };
-
-        let mut story_id: Option<String> = None;
-        let mut story_title = String::new();
-
-        for (month, year) in &months_to_try {
-            let search_url = format!(
-                "https://hn.algolia.com/api/v1/search?query=Who%20is%20Hiring%20{month}%20{year}{keyword_q}&tags=story&hitsPerPage=5"
-            );
-
-            let json = match fetcher.fetch(&search_url).await {
-                Ok(j) => j,
-                Err(_) => continue,
-            };
-            let parsed: serde_json::Value = match serde_json::from_str(&json) {
-                Ok(p) => p,
-                Err(_) => continue,
-            };
-
-            if let Some(hits) = parsed["hits"].as_array() {
-                if let Some(hit) = hits.first() {
-                    story_id = hit["objectID"].as_str().map(|s| s.to_string());
-                    story_title = hit["title"].as_str().unwrap_or("Who is Hiring?").to_string();
-                    if story_id.is_some() {
-                        break;
-                    }
-                }
-            }
-        }
-
-        let story_id = match story_id {
-            Some(id) => id,
-            None => return Ok(vec![]), // No thread found for recent months
-        };
 
         let item_url = format!("https://hacker-news.firebaseio.com/v0/item/{story_id}.json");
         let item_json = fetcher.fetch(&item_url).await?;
@@ -145,6 +98,45 @@ impl SourceCrawler for HackerNewsCrawler {
         }
 
         Ok(posts)
+    }
+}
+
+impl HackerNewsCrawler {
+    /// Find the most recent "Who is Hiring?" thread by searching Algolia,
+    /// trying the current month and up to 2 months back.
+    async fn find_story(fetcher: &Fetcher, config: &SearchConfig) -> (String, String) {
+        let now = Utc::now();
+        let keyword_q = if config.keywords.is_empty() {
+            String::new()
+        } else {
+            format!("%20{}", config.keywords.join(" "))
+        };
+
+        for offset in 0..=2 {
+            let dt = now - chrono::Months::new(offset);
+            let month = dt.format("%B").to_string();
+            let year = dt.format("%Y").to_string();
+            let url = format!(
+                "https://hn.algolia.com/api/v1/search?query=Who%20is%20Hiring%20{month}%20{year}{keyword_q}&tags=story&hitsPerPage=5"
+            );
+
+            let json = match fetcher.fetch(&url).await {
+                Ok(j) => j,
+                Err(_) => continue,
+            };
+            let parsed: serde_json::Value = match serde_json::from_str(&json) {
+                Ok(p) => p,
+                Err(_) => continue,
+            };
+            if let Some(hit) = parsed["hits"].as_array().and_then(|h| h.first()) {
+                let id = hit["objectID"].as_str().unwrap_or("").to_string();
+                if !id.is_empty() {
+                    let title = hit["title"].as_str().unwrap_or("Who is Hiring?").to_string();
+                    return (id, title);
+                }
+            }
+        }
+        (String::new(), String::new())
     }
 }
 

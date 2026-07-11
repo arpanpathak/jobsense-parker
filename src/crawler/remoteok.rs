@@ -53,82 +53,19 @@ impl SourceCrawler for RemoteOkCrawler {
                 Err(_) => continue,
             };
 
-            // First element is metadata (has "last_updated"), skip it
             for item in parsed.iter().skip(1) {
                 let slug = item["slug"].as_str().unwrap_or("");
                 if slug.is_empty() || seen.contains(slug) {
                     continue;
                 }
                 seen.insert(slug.to_string());
-
-                let title = item["position"]
-                    .as_str()
-                    .unwrap_or("")
-                    .trim()
-                    .to_string();
-                if title.is_empty() {
-                    continue;
-                }
-
-                let company = item["company"].as_str().map(|s| s.trim().to_string());
-
-                let location = item["location"]
-                    .as_str()
-                    .map(|s| s.trim().to_string())
-                    .filter(|s| !s.is_empty());
-
-                let raw_desc = item["description"].as_str().unwrap_or("");
-                // Strip HTML tags for a plain-text description
-                let description = strip_tag_cloud(&strip_html(raw_desc));
-
-                let url = item["url"]
-                    .as_str()
-                    .unwrap_or("")
-                    .to_string();
-
-                let salary_min = item["salary_min"].as_i64().unwrap_or(0);
-                let salary_max = item["salary_max"].as_i64().unwrap_or(0);
-                let salary = if salary_min > 0 || salary_max > 0 {
-                    Some(format_salary(salary_min, salary_max))
-                } else {
-                    None
-                };
-
-                let posted_at = item["epoch"]
-                    .as_i64()
-                    .and_then(|epoch| {
-                        DateTime::from_timestamp(epoch, 0)
-                    });
-
-                let tags: Vec<String> = item["tags"]
-                    .as_array()
-                    .map(|arr| {
-                        arr.iter()
-                            .filter_map(|v| v.as_str().map(|s| s.to_string()))
-                            .collect()
-                    })
-                    .unwrap_or_default();
-
-                posts.push(JobPost {
-                    id: Uuid::new_v4().to_string(),
-                    title,
-                    company,
-                    location,
-                    description,
-                    url,
-                    source: JobSource::RemoteOk,
-                    posted_at,
-                    crawled_at: Utc::now(),
-                    salary,
-                    job_type: None,
-                    tags,
-                });
-
-                if posts.len() >= config.max_results {
-                    break;
+                if let Some(post) = Self::parse_item(item) {
+                    posts.push(post);
+                    if posts.len() >= config.max_results {
+                        break;
+                    }
                 }
             }
-
             if posts.len() >= config.max_results {
                 break;
             }
@@ -139,6 +76,52 @@ impl SourceCrawler for RemoteOkCrawler {
         posts.truncate(config.max_results);
 
         Ok(posts)
+    }
+}
+
+impl RemoteOkCrawler {
+    /// Parse a single Remote OK JSON item into a [`JobPost`], or return `None`
+    /// if essential fields are missing.
+    fn parse_item(item: &serde_json::Value) -> Option<JobPost> {
+        let slug = item["slug"].as_str().unwrap_or("");
+        if slug.is_empty() {
+            return None;
+        }
+        let title = item["position"].as_str()?.trim().to_string();
+        if title.is_empty() {
+            return None;
+        }
+        let company = item["company"].as_str().map(|s| s.trim().to_string());
+        let location = item["location"]
+            .as_str()
+            .map(|s| s.trim().to_string())
+            .filter(|s| !s.is_empty());
+        let raw_desc = item["description"].as_str().unwrap_or("");
+        let description = strip_tag_cloud(&strip_html(raw_desc));
+        let url = item["url"].as_str().unwrap_or("").to_string();
+        let salary_min = item["salary_min"].as_i64().unwrap_or(0);
+        let salary_max = item["salary_max"].as_i64().unwrap_or(0);
+        let salary = (salary_min > 0 || salary_max > 0).then(|| format_salary(salary_min, salary_max));
+        let posted_at = item["epoch"].as_i64().and_then(|e| DateTime::from_timestamp(e, 0));
+        let tags: Vec<String> = item["tags"]
+            .as_array()
+            .map(|arr| arr.iter().filter_map(|v| v.as_str().map(String::from)).collect())
+            .unwrap_or_default();
+
+        Some(JobPost {
+            id: Uuid::new_v4().to_string(),
+            title,
+            company,
+            location,
+            description,
+            url,
+            source: JobSource::RemoteOk,
+            posted_at,
+            crawled_at: Utc::now(),
+            salary,
+            job_type: None,
+            tags,
+        })
     }
 }
 
