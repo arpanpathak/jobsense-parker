@@ -174,6 +174,18 @@ impl CrawlerCoordinator {
         // Post-filter: throw out jobs that don't mention any search keyword.
         if !config.keywords.is_empty() {
             let before = all_posts.len();
+            let kw_count = config.keywords.len();
+            // Soft-AND: require at least N keywords to match based on query length.
+            // This prevents "senior software engineer" matching a janitor job
+            // that only mentions "engineer" in passing.
+            let min_required = if kw_count == 1 {
+                1
+            } else if kw_count <= 3 {
+                kw_count - 1 // 2 of 2, 2 of 3
+            } else {
+                kw_count / 2  // half for longer queries
+            };
+
             all_posts.retain(|job| {
                 let text = format!(
                     "{} {} {} {}",
@@ -183,14 +195,21 @@ impl CrawlerCoordinator {
                     job.tags.join(" ")
                 )
                 .to_lowercase();
-                config.keywords.iter().any(|kw| text.contains(&kw.to_lowercase()))
+                let matches = config
+                    .keywords
+                    .iter()
+                    .filter(|kw| text.contains(&kw.to_lowercase()))
+                    .count();
+                matches >= min_required
             });
             let removed = before - all_posts.len();
             if removed > 0 {
                 eprintln!(
-                    "  {} {} posts filtered out (didn't match keywords)",
+                    "  {} {} posts filtered out (didn't match enough keywords, needed {}/{})",
                     "-".yellow(),
-                    removed
+                    removed,
+                    min_required,
+                    kw_count
                 );
             }
         }

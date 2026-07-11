@@ -26,41 +26,88 @@ use super::fetcher::Fetcher;
 pub struct CompanyCrawler;
 
 impl CompanyCrawler {
-    /// Crawl every company in `db` whose careers page hasn't been crawled
-    /// recently (or at all). Returns discovered job posts and updates
-    /// `db.last_crawled` / `db.failed` on each company.
+    /// Crawl every company in `db` **concurrently** whose careers page
+    /// hasn't been crawled recently (or at all).
+    ///
+    /// With 80+ companies, sequential crawling would take minutes.
+    /// Concurrently, most finish in the time of the slowest single page.
+    ///
+    /// Returns discovered job posts and updates `db.last_crawled` /
+    /// `db.failed` on each company.
     pub async fn crawl_all(db: &mut CompanyDatabase, config: &SearchConfig) -> Vec<JobPost> {
-        let mut all_posts = Vec::new();
+        let companies: Vec<Company> = db
+            .companies
+            .iter()
+            .filter(|c| {
+                // Skip if crawled less than 1 hour ago
+                c.last_crawled
+                    .map(|last| Utc::now().signed_duration_since(last).num_hours() < 1)
+                    .unwrap_or(false)
+            })
+            .cloned()
+            .collect();
 
-        for company in &db.companies.clone() {
-            // Skip companies that were crawled in the last hour.
-            if let Some(last) = company.last_crawled {
-                if Utc::now().signed_duration_since(last).num_hours() < 1 {
-                    continue;
+        if companies.is_empty() {
+            return Vec::new();
+        }
+
+        // Fetch all company career pages concurrently
+        let futures: Vec<_> = companies
+            .iter()
+            .map(|company| {
+                let company = company.clone();
+                let config = config.clone();
+                async move {
+                    let result = Self::crawl_company(&company, &config).await;
+                    (company, result)
                 }
-            }
+            })
+            .collect();
 
-            match Self::crawl_company(company, config).await {
+        let results = futures::future::join_all(futures).await;
+        let mut all_posts = Vec::new();
+        let mut ok_count = 0usize;
+        let mut err_count = 0usize;
+
+        for (company, result) in results {
+            match result {
                 Ok(posts) => {
-                    eprintln!(
-                        "  {} {} jobs from {}",
-                        "+".green(),
-                        posts.len(),
-                        company.name.cyan()
-                    );
+                    ok_count += 1;
                     db.mark_crawled(&company.name);
                     all_posts.extend(posts);
                 }
                 Err(e) => {
-                    eprintln!(
-                        "  {} {} -- {}",
-                        "x".red(),
-                        company.name.cyan(),
-                        e
-                    );
+                    err_count += 1;
                     db.mark_failed(&company.name, &e.to_string());
                 }
             }
+        }
+
+        // One summary line instead of 80+ lines of noise
+        let total = ok_count + err_count;
+        if all_posts.is_empty() && err_count > 0 {
+            eprintln!(
+                "  {} {} company pages fetched ({} ok, {} failed) — 0 job listings found",
+                "-".yellow(),
+                total,
+                ok_count,
+                err_count
+            );
+        } else if all_posts.is_empty() {
+            eprintln!(
+                "  {} {} company pages fetched — 0 job listings (most use JS rendering)",
+                "-".yellow(),
+                total
+            );
+        } else {
+            eprintln!(
+                "  {} {} jobs from {} company pages ({} ok, {} failed)",
+                "+".green(),
+                all_posts.len(),
+                total,
+                ok_count,
+                err_count,
+            );
         }
 
         all_posts

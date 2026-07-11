@@ -451,14 +451,40 @@ impl App {
         if self.matcher.has_resume() {
             self.results = self.matcher.score_all(&jobs);
         } else {
+            // Score by keyword relevance even without a resume.
+            // This gives meaningful ranking: jobs mentioning more keywords
+            // in their title get a higher score.
+            let kw_lower: Vec<String> = self.config.keywords.iter().map(|k| k.to_lowercase()).collect();
+            let query_phrase = kw_lower.join(" ");
+
             self.results = jobs
                 .into_iter()
-                .map(|j| MatchResult {
-                    score: 0.5,
-                    matched_skills: vec![],
-                    matched_keywords: vec![],
-                    missing_skills: vec![],
-                    job: j,
+                .map(|j| {
+                    let title_lower = j.title.to_lowercase();
+                    let desc_lower = j.description.to_lowercase();
+
+                    // Count keyword matches in title (weighted 3x)
+                    let title_matches: usize = kw_lower.iter().filter(|kw| title_lower.contains(kw.as_str())).count();
+                    // Count keyword matches in description
+                    let desc_matches: usize = kw_lower.iter().filter(|kw| desc_lower.contains(kw.as_str())).count();
+                    // Exact phrase match in title (big bonus)
+                    let phrase_bonus = if title_lower.contains(&query_phrase) { 2.0 } else { 0.0 };
+
+                    let score = if kw_lower.is_empty() {
+                        0.5
+                    } else {
+                        let max_kw = kw_lower.len() as f64;
+                        let raw = (title_matches as f64 * 3.0 + desc_matches as f64 * 1.0) / (max_kw * 3.0 + max_kw) + phrase_bonus * 0.1;
+                        raw.clamp(0.05, 0.99)
+                    };
+
+                    MatchResult {
+                        score,
+                        matched_skills: vec![],
+                        matched_keywords: kw_lower.iter().filter(|kw| title_lower.contains(kw.as_str()) || desc_lower.contains(kw.as_str())).cloned().collect(),
+                        missing_skills: vec![],
+                        job: j,
+                    }
                 })
                 .collect();
         }
