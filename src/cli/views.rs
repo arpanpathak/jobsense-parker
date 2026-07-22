@@ -121,7 +121,7 @@ pub fn show_resume(r: &Resume) {
             "Domains:".bright_white(),
             r.domains
                 .iter()
-                .map(|d| format!("{:?}", d).green().to_string())
+                .map(|d| d.to_string().green().to_string())
                 .collect::<Vec<_>>()
                 .join(", ")
         );

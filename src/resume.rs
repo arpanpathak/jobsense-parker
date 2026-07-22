@@ -38,6 +38,26 @@ pub enum SkillDomain {
     Other,
 }
 
+impl std::fmt::Display for SkillDomain {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            Self::Language => write!(f, "Languages"),
+            Self::Framework => write!(f, "Frameworks"),
+            Self::Frontend => write!(f, "Frontend"),
+            Self::Backend => write!(f, "Backend"),
+            Self::Database => write!(f, "Databases"),
+            Self::CloudDevOps => write!(f, "Cloud/DevOps"),
+            Self::DataMl => write!(f, "Data/ML"),
+            Self::Mobile => write!(f, "Mobile"),
+            Self::Tools => write!(f, "Tools"),
+            Self::Platform => write!(f, "Platforms"),
+            Self::Protocol => write!(f, "Protocols"),
+            Self::Concept => write!(f, "Concepts"),
+            Self::Other => write!(f, "Other"),
+        }
+    }
+}
+
 /// A known tech skill with its domain classification.
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct KnownSkill {
@@ -1002,35 +1022,76 @@ fn extract_roles(text: &str) -> Vec<String> {
 }
 
 /// Infer seniority level from role titles and text.
+///
+/// Strategy: role titles are the PRIMARY signal (they're explicit about level).
+/// Text is the FALLBACK. And we check highest levels first so "senior engineer"
+/// doesn't get overridden by "intern" appearing somewhere irrelevant in the text.
 fn infer_seniority(roles: &[String], text: &str) -> Option<SeniorityLevel> {
     let combined = format!("{} {}", roles.join(" "), text).to_lowercase();
 
-    if combined.contains("intern") {
-        return Some(SeniorityLevel::Intern);
+    // ── Role-title-driven checks (strongest signal) ─────────────────
+    // If any role title explicitly says the level, trust it first.
+    for role in roles {
+        let r = role.to_lowercase();
+        if r.contains("vice president") || r.contains("vp ") || r.contains("chief") || r.contains("cto") || r.contains("ceo") {
+            return Some(SeniorityLevel::Executive);
+        }
+        if r.contains("director") {
+            return Some(SeniorityLevel::Director);
+        }
+        if r.contains("principal") {
+            return Some(SeniorityLevel::Principal);
+        }
+        if r.contains("staff") {
+            return Some(SeniorityLevel::Staff);
+        }
+        if r.contains("senior") || r.contains("sr ") {
+            return Some(SeniorityLevel::Senior);
+        }
+        if r.contains("lead") {
+            return Some(SeniorityLevel::Lead);
+        }
+        if r.contains("junior") || r.contains("jr ") || r.contains("jr,") {
+            return Some(SeniorityLevel::Junior);
+        }
+        if r.contains("intern") {
+            return Some(SeniorityLevel::Intern);
+        }
     }
-    if combined.contains("junior") || combined.contains("jr") {
-        return Some(SeniorityLevel::Junior);
-    }
-    if combined.contains("principal") || combined.contains("principle") {
-        return Some(SeniorityLevel::Principal);
-    }
-    if combined.contains("staff") {
-        return Some(SeniorityLevel::Staff);
+
+    // ── Text-fallback checks (weaker signal, check high→low) ────────
+    // Use word-boundary checks to avoid "internal" → "intern" false positive
+    if combined.contains("vp ") || combined.contains("vice president") || combined.contains("chief") || combined.contains("cto") || combined.contains("ceo") {
+        return Some(SeniorityLevel::Executive);
     }
     if combined.contains("director") {
         return Some(SeniorityLevel::Director);
     }
-    if combined.contains("vp ") || combined.contains("vice president") || combined.contains("chief") || combined.contains("cto") || combined.contains("ceo") {
-        return Some(SeniorityLevel::Executive);
+    if combined.contains("principal") {
+        return Some(SeniorityLevel::Principal);
     }
-    if combined.contains("lead") {
-        return Some(SeniorityLevel::Lead);
+    if combined.contains("staff") {
+        // "staff" is common in resumes ("staff engineer" vs "staff augmentation")
+        // Only trust if near engineering/technical context
+        let ctx = format!("staff {} {}", text, roles.join(" ")).to_lowercase();
+        if ctx.contains("staff engineer") || ctx.contains("staff software") || ctx.contains("staff scientist") {
+            return Some(SeniorityLevel::Staff);
+        }
     }
     if combined.contains("senior") || combined.contains("sr ") {
         return Some(SeniorityLevel::Senior);
     }
+    if combined.contains("lead") {
+        return Some(SeniorityLevel::Lead);
+    }
+    if combined.contains("junior") || combined.contains("jr ") {
+        return Some(SeniorityLevel::Junior);
+    }
+    // Only match "intern" as a standalone word, not "internal" or "internship"
+    if combined.contains(" intern ") || combined.starts_with("intern ") || combined.ends_with(" intern") || combined.contains("\nintern") {
+        return Some(SeniorityLevel::Intern);
+    }
 
-    // Default to mid-level if no indicator found
     None
 }
 
@@ -1093,30 +1154,45 @@ fn extract_job_type(text: &str) -> Option<String> {
     None
 }
 
-/// Detect domains from known skills.
+/// Detect domains from known skills — ranked by number of skills per domain.
+///
+/// Only returns domains that are meaningfully represented (at least 2 skills),
+/// sorted by strength (most skills first). This prevents showing ALL domains
+/// when someone has a diverse skill set — you only see your top areas.
 fn detect_domains(known_skills: &[KnownSkill]) -> Vec<SkillDomain> {
-    let mut domains: Vec<SkillDomain> = known_skills
-        .iter()
-        .map(|s| s.domain)
-        .collect::<std::collections::HashSet<_>>()
-        .into_iter()
-        .collect();
-    domains.sort_by(|a, b| format!("{:?}", a).cmp(&format!("{:?}", b)));
-    domains
+    // Count skills per domain
+    let mut counts: std::collections::HashMap<SkillDomain, usize> = std::collections::HashMap::new();
+    for ks in known_skills {
+        *counts.entry(ks.domain).or_insert(0) += 1;
+    }
+
+    // Sort domains by count descending, keep only those with >= 2 skills
+    let mut domains: Vec<(SkillDomain, usize)> = counts.into_iter().collect();
+    domains.sort_by(|a, b| b.1.cmp(&a.1));
+
+    // Return top 4 domains max (too many domains is noise)
+    domains.into_iter()
+        .filter(|(_, count)| *count >= 2)
+        .take(4)
+        .map(|(d, _)| d)
+        .collect()
 }
 
-/// Extract education entries.
+/// Extract education entries — strict mode.
+///
+/// Only matches well-formed degree names (no fragment matches like "ms la").
+/// Full names ("Bachelor of Science") or abbreviations with "in" ("MS in CS").
 fn extract_education(text: &str) -> Vec<Education> {
     let mut education = Vec::new();
 
-    // Degree patterns
-    let degree_re = Regex::new(
-        r"(?i)((?:bachelor|master|ph\.?d|doctorate|associate|b\.?s\.?|m\.?s\.?|b\.?a\.?|m\.?a\.?|phd|bs|ba|ms|ma|b\.?tech|m\.?tech)\s+(?:of|in|\.)?\s*[a-z\s]{2,40}?(?:degree)?)"
+    // Pattern 1: Full degree names like "Bachelor of Science", "Master of Engineering"
+    let full_re = Regex::new(
+        r"(?i)((?:bachelor\s+(?:of|in)|master\s+(?:of|in)|ph\.?d\.?(?:\s+in)?|doctorate(?:\s+in)?|associate\s+(?:of|in))\s+[a-z]{4,}(?:\s+[a-z]{2,}){0,3})"
     ).unwrap();
 
-    for cap in degree_re.captures_iter(text) {
+    for cap in full_re.captures_iter(text) {
         let deg = cap.get(1).unwrap().as_str().trim().to_string();
-        if deg.len() > 3 && deg.len() < 60 {
+        if deg.len() >= 10 && deg.len() < 100 {
             let edu = Education {
                 degree: Some(deg),
                 field: None,
@@ -1126,18 +1202,40 @@ fn extract_education(text: &str) -> Vec<Education> {
         }
     }
 
-    // Try to extract institution names from nearby text
-    let institution_re = Regex::new(
-        r"(?i)((?:university|college|institute|school)\s+of\s+[a-z\s]{2,40}|[a-z]+\s+(?:university|college|institute))"
+    // Pattern 2: Abbreviations ONLY with "in" or "of" + field name
+    // e.g. "B.S. in Computer Science", "MS in Data Science" — NOT "ms la"
+    let abbr_re = Regex::new(
+        r"(?i)\b(b\.?\s*s\.?|m\.?\s*s\.?|b\.?\s*a\.?|m\.?\s*a\.?|bs|ba|ms|ma|b\.?tech|m\.?tech)\s+(?:in|of)\s+([a-z]{4,}(?:\s+[a-z]{2,}){0,3})"
     ).unwrap();
 
-    if let Some(cap) = institution_re.captures(text) {
-        let inst = cap.get(1).unwrap().as_str().trim().to_string();
-        if let Some(edu) = education.last_mut() {
-            edu.institution = Some(inst);
+    for cap in abbr_re.captures_iter(text) {
+        let degree_prefix = cap.get(1).unwrap().as_str().trim().to_string();
+        let field = cap.get(2).unwrap().as_str().trim().to_string();
+        let degree_str = format!("{} in {}", degree_prefix, field);
+        if field.len() >= 4 && degree_str.len() < 100 {
+            education.push(Education {
+                degree: Some(degree_str),
+                field: Some(field),
+                institution: None,
+            });
         }
     }
 
+    // Extract institution names — only if >= 8 chars (looks real)
+    let institution_re = Regex::new(
+        r"(?i)((?:university|college|institute|school)\s+of\s+[a-z]{4,}(?:\s+[a-z]{2,}){0,3}|[a-z]{4,}\s+(?:university|college|institute))"
+    ).unwrap();
+
+    for cap in institution_re.captures_iter(text) {
+        let inst = cap.get(1).unwrap().as_str().trim().to_string();
+        if inst.len() >= 8 && !education.is_empty() {
+            if let Some(edu) = education.last_mut() {
+                edu.institution = Some(inst);
+            }
+        }
+    }
+
+    education.dedup_by(|a, b| a.degree == b.degree);
     education
 }
 
