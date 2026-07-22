@@ -24,9 +24,10 @@
 //! ```
 
 use chrono::{DateTime, Utc};
-use regex::Regex;
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
+
+use crate::resume::{self as resume_engine, ResumeIntelligence, SeniorityLevel, SkillDomain};
 
 // ─── Job Source ────────────────────────────────────────────────────────────
 
@@ -121,24 +122,14 @@ pub struct JobPost {
 
 /// The user's parsed resume — skills, roles, keywords, and preferences.
 ///
+/// Powered by the [`resume_engine`] module which uses a 500+ tech skill dictionary,
+/// context-aware extraction, seniority inference, domain detection, and education
+/// extraction to produce rich structured intelligence from raw resume text.
+///
 /// Can be constructed from a plain-text string via [`Resume::from_text`],
-/// from a JSON file, or from a YAML file. The parser uses regex patterns
-/// to extract structured fields without any hard-coded skill list.
+/// from a JSON file, or from a YAML file.
 ///
-/// # Example (JSON format)
-///
-/// ```json
-/// {
-///   "skills": ["rust", "python", "docker", "kubernetes"],
-///   "role_titles": ["software engineer", "senior engineer"],
-///   "experience_years": 5.0,
-///   "preferred_location": "San Francisco",
-///   "preferred_job_type": "remote",
-///   "keywords": ["rust", "python", "backend", "distributed", "systems"]
-/// }
-/// ```
-///
-/// # Example (plain text — auto-extracted)
+/// # Example (plain text)
 ///
 /// ```text
 /// I am a Senior Software Engineer with 5 years of experience in Rust and
@@ -146,210 +137,77 @@ pub struct JobPost {
 /// Looking for remote opportunities.
 /// ```
 ///
-/// Parsing this text produces a `Resume` with:
+/// Parsing produces:
 /// - skills: `["rust", "python", "docker", "kubernetes"]`
 /// - role_titles: `["senior software engineer"]`
 /// - experience_years: `Some(5.0)`
-/// - preferred_location: `Some("san francisco")`
-/// - preferred_job_type: `Some("remote")`
+/// - seniority: `Some(Senior)`
+/// - domains: `[Backend, Language, CloudDevOps]`
+/// - education: any degrees found
+/// - certifications: any certs found
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Resume {
-    /// Recognised technical skills (e.g. `"rust"`, `"docker"`, `"aws"`).
-    ///
-    /// Extracted from context patterns like:
-    /// - `"experience with Rust"`
-    /// - `"proficient in Python"`
-    /// - `"Technologies: Rust, Python, Docker"`
+    /// Recognised technical skills from the 500+ skill dictionary + context patterns.
     pub skills: Vec<String>,
-    /// Years of professional experience extracted from text.
-    ///
-    /// Matches patterns like `"5 years"`, `"10+ years"`, `"3 yrs of experience"`.
+    /// Years of professional experience.
     pub experience_years: Option<f32>,
-    /// Role/career level indicators (e.g. `"engineer"`, `"senior"`, `"lead"`).
-    ///
-    /// Extracted from patterns like `"Senior Software Engineer"` in title
-    /// lines or `"Role: Lead Developer"` headers.
+    /// Role/career level indicators.
     pub role_titles: Vec<String>,
-    /// All significant keywords extracted from the resume text.
-    ///
-    /// These are all alphanumeric tokens (3+ chars) with common stop words
-    /// filtered out. Used for broad matching against job descriptions.
+    /// Meaningful keywords for job matching (tech terms + domain terms filtered).
     pub keywords: Vec<String>,
-    /// Preferred work location, if mentioned in the resume.
-    ///
-    /// Matches patterns like `"based in NYC"`, `"located in San Francisco"`.
+    /// Preferred work location.
     pub preferred_location: Option<String>,
-    /// Preferred employment type, if mentioned (e.g. `"remote"`, `"full-time"`).
+    /// Preferred employment type.
     pub preferred_job_type: Option<String>,
-    /// Minimum acceptable salary, if known. Currently unused in scoring.
+    /// Minimum acceptable salary, if known.
     pub min_salary: Option<u64>,
+    /// Inferred seniority level (Intern, Junior, Mid, Senior, Staff, Principal, etc.)
+    pub seniority: Option<SeniorityLevel>,
+    /// Detected domains of expertise (e.g. Backend, Frontend, DataMl, CloudDevOps)
+    pub domains: Vec<SkillDomain>,
+    /// Education entries extracted from the resume.
+    pub education: Vec<resume_engine::Education>,
+    /// Certifications extracted.
+    pub certifications: Vec<String>,
 }
 
 impl Resume {
-    /// Parse a plain-text resume and extract structured fields.
+    /// Parse a plain-text resume into structured intelligence using the
+    /// skill-dictionary-driven engine.
     ///
-    /// Uses regex patterns to infer skills, roles, experience years, location,
-    /// job type, and keywords. No hard-coded skill list — everything is
-    /// context-derived.
-    ///
-    /// # Extraction Rules
-    ///
-    /// | Field | Pattern | Example Input → Output |
-    /// |-------|---------|----------------------|
-    /// | Skills | `"experience with X"`, `"proficient in X"` | `"experience with Rust"` → `"rust"` |
-    /// | Skills | `"Technologies: X, Y, Z"` | `"Technologies: Rust, Python"` → `["rust", "python"]` |
-    /// | Roles | `"Senior X Engineer"` in context | `"Senior Software Engineer"` → `"senior software engineer"` |
-    /// | Exp | `"N years of experience"` | `"5 years of experience"` → `Some(5.0)` |
-    /// | Location | `"based in X"`, `"located in X"` | `"based in NYC"` → `Some("nyc")` |
-    /// | Job type | `"looking for remote"` | `"looking for remote"` → `Some("remote")` |
-    ///
-    /// # Example
-    ///
-    /// ```
-    /// use jobsense_parker::models::Resume;
-    ///
-    /// let text = "Senior Software Engineer with 5 years of experience. \
-    ///             Proficient in Rust, Python, and Docker. Based in NYC.";
-    /// let resume = Resume::from_text(text);
-    ///
-    /// assert!(resume.skills.contains(&"rust".to_string()));
-    /// assert!(resume.role_titles.contains(&"senior software engineer".to_string()));
-    /// assert_eq!(resume.experience_years, Some(5.0));
-    /// ```
+    /// This is smarter than the old regex-only approach:
+    /// - Recognises 500+ known tech skills (vs. only context-pattern matching)
+    /// - Infers seniority level from titles
+    /// - Detects domains of expertise
+    /// - Extracts education and certifications
+    /// - Produces clean, meaningful keywords (no garbage stop words)
     pub fn from_text(text: &str) -> Self {
-        let lower = text.to_lowercase();
-        Self {
-            skills: Self::extract_skills(&lower),
-            role_titles: Self::extract_roles(&lower),
-            experience_years: Self::extract_experience_years(&lower),
-            preferred_location: Self::extract_location(&lower),
-            preferred_job_type: Self::extract_job_type(&lower),
-            keywords: Self::extract_keywords(text),
-            min_salary: None,
-        }
+        let intelligence = resume_engine::parse_resume(text);
+        Self::from_intelligence(intelligence)
     }
 
-    /// Extract skills from context cues like `"experience with Rust"` or
-    /// `"Technologies: Rust, Python, Docker"`.
-    fn extract_skills(text: &str) -> Vec<String> {
-        let mut skills: Vec<String> = Vec::new();
-
-        // Pattern: "experience with X", "proficient in X", "knowledge of X", etc.
-        let ctx_re = Regex::new(
-            r"(?i)(?:experience|proficient|skills?|knowledge|worked|familiar|expertise|strong|fluent|background|expert|using|including)\s*(?:with|in|at|using|of|on|including)\s+([a-z][a-z+#.]+(?:\s+[a-z][a-z+#.]+)?)"
-        ).unwrap();
-        for cap in ctx_re.captures_iter(text) {
-            let s = cap.get(1).unwrap().as_str().trim().to_string();
-            if s.len() >= 2 {
-                skills.push(s);
-            }
-        }
-
-        // Pattern: "Technologies: Rust, Python", "Languages: Go, TypeScript"
-        let list_re = Regex::new(
-            r"(?i)(?:technolog(y|ies)|tools?|tech\s*stack|languages?|frameworks?|platforms?)[:\s]+(.+)"
-        ).unwrap();
-        if let Some(caps) = list_re.captures(text) {
-            let list_part = caps.get(2).unwrap().as_str();
-            for item in list_part.split([',', ';', '|', '\n']).filter_map(|s| {
-                let t = s.trim().trim_matches(|c: char| c == '.' || c == ' ').to_string();
-                (t.len() >= 2 && !t.contains(char::is_whitespace)).then_some(t)
-            }) {
-                skills.push(item);
-            }
-        }
-
-        skills.sort_unstable();
-        skills.dedup();
-        skills
-    }
-
-    /// Extract role titles from patterns like `"Senior Software Engineer"`,
-    /// `"Role: Lead Developer"`, or `"Data Scientist"`.
-    fn extract_roles(text: &str) -> Vec<String> {
-        let mut roles: Vec<String> = Vec::new();
-
-        // "Role: Senior Engineer", "Position: Lead Developer"
-        let ctx_re = Regex::new(
-            r"(?i)(?:role|position|title)[:\s]+([a-z]+\s+(?:engineer|developer|architect|manager|lead|intern|analyst|consultant|scientist|designer|director|head))"
-        ).unwrap();
-        for cap in ctx_re.captures_iter(text) {
-            roles.push(cap.get(1).unwrap().as_str().trim().to_string());
-        }
-
-        // "Senior Software Engineer", "Frontend Developer", "Data Scientist"
-        let title_re = Regex::new(
-            r"(?i)(?:(?:senior|staff|principal|lead|junior|intern|head)\s+)?(?:software|data|full.?stack|frontend|backend|devops|platform|security|systems|network|site\s*reliability|machine\s*learning|ai|ml)\s+(?:engineer|developer|architect|manager|scientist|analyst)"
-        ).unwrap();
-        for cap in title_re.captures_iter(text) {
-            let role = cap.get(0).unwrap().as_str().trim().to_string();
-            if !roles.contains(&role) {
-                roles.push(role);
-            }
-        }
-
-        roles.sort_unstable();
-        roles.dedup();
-        roles
-    }
-
-    /// Extract years of experience from patterns like `"5 years"`, `"10+ yrs"`.
-    fn extract_experience_years(text: &str) -> Option<f32> {
-        let re = Regex::new(r"(?i)(\d+)\+?\s*(?:years?|yrs?)\s*(?:of\s+)?(?:experience|exp)").unwrap();
-        re.captures(text)
-            .and_then(|c| c.get(1)?.as_str().parse::<f32>().ok())
-    }
-
-    /// Extract preferred location from patterns like `"based in NYC"`, `"located in SF"`.
-    fn extract_location(text: &str) -> Option<String> {
-        let re = Regex::new(
-            r"(?i)(?:based|located|living|situated)\s+(?:in|at|near)\s+([a-z][a-z\s.-]+?)(?:[,.!]|$)"
-        ).unwrap();
-        re.captures(text).and_then(|c| {
-            let loc = c.get(1)?.as_str().trim().to_string();
-            (loc.len() <= 50).then_some(loc)
-        })
-    }
-
-    /// Extract preferred job type from patterns like `"looking for remote"` or
-    /// fall back to scanning for keywords like "full-time", "contract".
-    fn extract_job_type(text: &str) -> Option<String> {
-        let re = Regex::new(
-            r"(?i)(?:looking|seeking|want|prefer|open|available)\s+(?:for|a|an)?\s*(full[- ]time|part[- ]time|contract|remote|hybrid|onsite)"
-        ).unwrap();
-        if let Some(cap) = re.captures(text) {
-            return cap.get(1).map(|m| m.as_str().to_string());
-        }
-        // Fallback: scan for keywords directly
-        for t in &["full-time", "full time", "part-time", "part time", "contract", "remote", "hybrid", "onsite"] {
-            if text.contains(t) {
-                return Some(t.to_string());
-            }
-        }
-        None
-    }
-
-    /// Extract significant keywords (3+ chars, no stop words).
-    fn extract_keywords(text: &str) -> Vec<String> {
-        let stop_words = [
-            "the", "and", "for", "are", "but", "not", "you", "all", "can", "had", "her",
-            "was", "one", "our", "out", "has", "have", "been", "some", "same", "also",
-            "its", "than", "them", "into", "two", "more", "these", "like", "over",
-            "such", "that", "this", "with", "from", "your", "which", "each", "will",
-            "about", "between", "under", "very", "just", "their", "would", "after",
-            "could", "should", "other", "than", "then", "there", "where", "while",
-            "because", "before", "does", "doing", "done", "much", "many", "most",
-            "must", "need", "take", "make", "made", "well", "work", "year", "years",
-        ];
-        let mut keywords: Vec<String> = text
-            .split(|c: char| !c.is_alphanumeric() && c != '+' && c != '#')
-            .filter(|w| w.len() >= 3)
-            .map(|w| w.to_lowercase())
-            .filter(|w| !stop_words.contains(&w.as_str()))
+    /// Build a `Resume` from the rich intelligence extracted by the engine.
+    pub fn from_intelligence(i: ResumeIntelligence) -> Self {
+        let skills: Vec<String> = i
+            .known_skills
+            .iter()
+            .map(|ks| ks.name.clone())
+            .chain(i.inferred_skills.iter().cloned())
             .collect();
-        keywords.sort_unstable();
-        keywords.dedup();
-        keywords
+
+        Self {
+            skills,
+            role_titles: i.role_titles,
+            experience_years: i.experience_years,
+            preferred_location: i.preferred_location,
+            preferred_job_type: i.preferred_job_type,
+            keywords: i.keywords,
+            min_salary: None,
+            seniority: i.seniority,
+            domains: i.domains,
+            education: i.education,
+            certifications: i.certifications,
+        }
     }
 }
 

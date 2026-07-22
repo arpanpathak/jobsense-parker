@@ -31,13 +31,13 @@ use crate::models::{CompanyDatabase, MatchResult, Resume, ScanRecord, UserPrefer
 const DATA_DIR: &str = ".jobsense-parker";
 
 /// Returns the path to the data directory (does not guarantee it exists).
-fn data_dir() -> Result<PathBuf> {
+pub fn data_dir() -> Result<PathBuf> {
     let home = dirs_next::home_dir().context("Cannot determine home directory")?;
     Ok(home.join(DATA_DIR))
 }
 
 /// Returns the path to the data directory, creating it if necessary.
-fn ensure_dir() -> Result<PathBuf> {
+pub fn ensure_dir() -> Result<PathBuf> {
     let dir = data_dir()?;
     std::fs::create_dir_all(&dir).context("Failed to create data directory")?;
     Ok(dir)

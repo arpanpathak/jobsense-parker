@@ -150,6 +150,10 @@ mod tests {
             preferred_location: None,
             preferred_job_type: None,
             min_salary: None,
+            seniority: None,
+            domains: vec![],
+            education: vec![],
+            certifications: vec![],
         }
     }
 

@@ -51,6 +51,7 @@ use colored::Colorize;
 use chrono::Utc;
 use console::Term;
 
+use crate::applicant;
 use crate::models::{CompanyDatabase, MatchResult, Resume, ScanRecord};
 
 // ─── OSC 8 Hyperlink ───────────────────────────────────────────────────────
@@ -103,14 +104,32 @@ pub fn banner() {
 
 // ─── Resume ────────────────────────────────────────────────────────────────
 
-/// Display the parsed contents of a resume.
+/// Display the parsed contents of a resume (with enriched intelligence).
 pub fn show_resume(r: &Resume) {
     println!();
-    println!("  Current Resume");
-    println!("  {}", "─".repeat(48).dimmed());
+    println!("  {}", "╔══════════════════════════════════════════════════════╗".bright_blue());
+    println!("  {}  Resume Intelligence                               {}", "║".bright_blue(), "║".bright_blue());
+    println!("  {}", "╚══════════════════════════════════════════════════════╝".bright_blue());
+    println!();
+
+    if let Some(s) = r.seniority {
+        println!("  {}   {}", "Level:".bright_white(), s.to_string().cyan());
+    }
+    if !r.domains.is_empty() {
+        println!(
+            "  {}   {}",
+            "Domains:".bright_white(),
+            r.domains
+                .iter()
+                .map(|d| format!("{:?}", d).green().to_string())
+                .collect::<Vec<_>>()
+                .join(", ")
+        );
+    }
     if !r.skills.is_empty() {
         println!(
-            "  Skills:  {}",
+            "  {} {}",
+            "Skills:".bright_white(),
             r.skills
                 .iter()
                 .map(|s| s.green().to_string())
@@ -120,7 +139,8 @@ pub fn show_resume(r: &Resume) {
     }
     if !r.role_titles.is_empty() {
         println!(
-            "  Roles:   {}",
+            "  {}   {}",
+            "Roles:".bright_white(),
             r.role_titles
                 .iter()
                 .map(|s| s.cyan().to_string())
@@ -129,14 +149,33 @@ pub fn show_resume(r: &Resume) {
         );
     }
     if let Some(y) = r.experience_years {
-        println!("  Exp:     {} years", y);
+        println!("  {}      {} years", "Exp:".bright_white(), y);
+    }
+    if !r.education.is_empty() {
+        println!(
+            "  {}    {}",
+            "Edu:".bright_white(),
+            r.education.iter().map(|e| e.to_string()).collect::<Vec<_>>().join("; ")
+        );
+    }
+    if !r.certifications.is_empty() {
+        println!(
+            "  {}   {}",
+            "Certs:".bright_white(),
+            r.certifications.join(", ").yellow()
+        );
     }
     if let Some(l) = &r.preferred_location {
-        println!("  Loc:     {l}");
+        println!("  {}    {}", "Loc:".bright_white(), l);
     }
     if let Some(t) = &r.preferred_job_type {
-        println!("  Type:    {t}");
+        println!("  {}    {}", "Type:".bright_white(), t);
     }
+    println!(
+        "  {} {} meaningful keywords for matching",
+        "Keywords:".bright_white(),
+        r.keywords.len()
+    );
     println!();
 }
 
@@ -156,6 +195,8 @@ const KEYBINDINGS: &str = r"
   ║  g            First page              ║
   ║  G            Last page               ║
   ║  Enter / o    Open job URL in browser ║
+  ║  a            Auto-apply (gen cover   ║
+  ║               letter + open URL)      ║
   ║  q / Esc      Back to menu            ║
   ║  ?            Toggle this help        ║
   ╚═══════════════════════════════════════╝
@@ -174,9 +215,10 @@ const KEYBINDINGS: &str = r"
 /// | `g` | First page |
 /// | `G` | Last page |
 /// | `Enter` / `o` | Open selected job URL in browser |
+/// | `a` | Auto-apply: generate cover letter, open URL, track application |
 /// | `q` / `Esc` | Back to menu |
 /// | `?` | Toggle keybinding help |
-pub fn run_results_viewer(results: &[MatchResult]) -> Result<()> {
+pub fn run_results_viewer(results: &[MatchResult], resume: Option<&Resume>) -> Result<()> {
     if results.is_empty() {
         println!("  No results to display.");
         return Ok(());
@@ -288,7 +330,7 @@ pub fn run_results_viewer(results: &[MatchResult]) -> Result<()> {
 
         // ── Footer ───────────────────────────────────────────────────
         let footer = format!(
-            "  [j↓ k↑  n→ p←  g/G  Enter:open  ?:help  q:quit]  ▸ {}",
+            "  [j↓ k↑  n→ p←  g/G  a:apply  Enter:open  ?:help  q:quit]  ▸ {}",
             results[start + selected].job.title
         );
         println!("  {}", footer.dimmed());
@@ -351,6 +393,19 @@ pub fn run_results_viewer(results: &[MatchResult]) -> Result<()> {
                 let job = &results[start + selected].job;
                 if let Err(e) = open_url(&job.url) {
                     eprintln!("  Failed to open URL: {e}");
+                }
+            }
+            console::Key::Char('a') => {
+                let result = &results[start + selected];
+                match resume {
+                    Some(r) => {
+                        applicant::apply_to_job(result, r);
+                    }
+                    None => {
+                        println!("  No resume loaded. Load a resume first to auto-apply.");
+                        // Pause so user can see the message
+                        std::thread::sleep(std::time::Duration::from_secs(2));
+                    }
                 }
             }
             console::Key::Char('?') => {

@@ -490,14 +490,21 @@ impl App {
             self.score_jobs_by_keywords(jobs)
         };
 
-        // Sort by score DESC, then by date DESC (newest first) as tiebreaker.
-        // This ensures fresh, relevant jobs appear at the top.
+        // Sort by score DESC, then by posted_at DESC (most recent first) as tiebreaker.
+        // `posted_at` is the actual publication date from the source (vs `crawled_at`
+        // which is always "now" and meaningless for freshness).
         self.results.sort_by(|a, b| {
             let score_cmp = b.score.partial_cmp(&a.score).unwrap_or(std::cmp::Ordering::Equal);
             if score_cmp != std::cmp::Ordering::Equal {
                 return score_cmp;
             }
-            b.job.crawled_at.cmp(&a.job.crawled_at)
+            // Compare posted_at; if both are None, fall back to crawled_at
+            match (b.job.posted_at, a.job.posted_at) {
+                (Some(b_date), Some(a_date)) => b_date.cmp(&a_date),
+                (Some(_), None) => std::cmp::Ordering::Greater,
+                (None, Some(_)) => std::cmp::Ordering::Less,
+                (None, None) => b.job.crawled_at.cmp(&a.job.crawled_at),
+            }
         });
 
         // Save query to history
@@ -662,9 +669,11 @@ impl App {
             return;
         }
 
+        let resume = self.matcher.resume().cloned();
+
         // Enter raw mode via console Term for the vim-style viewer.
         // The viewer handles its own screen rendering and key reading.
-        if let Err(e) = views::run_results_viewer(&self.results) {
+        if let Err(e) = views::run_results_viewer(&self.results, resume.as_ref()) {
             eprintln!("  Viewer error: {e}");
         }
     }
@@ -713,15 +722,27 @@ impl App {
                     .sort_by(|a, b| a.score.partial_cmp(&b.score).unwrap_or(std::cmp::Ordering::Equal));
                 println!("  ✓ Sorted by score (low → high).");
             }
-            // ── Sort by date ───────────────────────────────────────────
+            // ── Sort by date (using posted_at, fall back to crawled_at) ──
             2 => {
-                self.results
-                    .sort_by(|a, b| b.job.crawled_at.cmp(&a.job.crawled_at));
+                self.results.sort_by(|a, b| {
+                    match (b.job.posted_at, a.job.posted_at) {
+                        (Some(bd), Some(ad)) => bd.cmp(&ad),
+                        (Some(_), None) => std::cmp::Ordering::Greater,
+                        (None, Some(_)) => std::cmp::Ordering::Less,
+                        (None, None) => b.job.crawled_at.cmp(&a.job.crawled_at),
+                    }
+                });
                 println!("  ✓ Sorted by date (newest first).");
             }
             3 => {
-                self.results
-                    .sort_by(|a, b| a.job.crawled_at.cmp(&b.job.crawled_at));
+                self.results.sort_by(|a, b| {
+                    match (a.job.posted_at, b.job.posted_at) {
+                        (Some(ad), Some(bd)) => ad.cmp(&bd),
+                        (Some(_), None) => std::cmp::Ordering::Greater,
+                        (None, Some(_)) => std::cmp::Ordering::Less,
+                        (None, None) => a.job.crawled_at.cmp(&b.job.crawled_at),
+                    }
+                });
                 println!("  ✓ Sorted by date (oldest first).");
             }
             // ── Filter by source ───────────────────────────────────────

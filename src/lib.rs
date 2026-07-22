@@ -71,8 +71,10 @@
 //! - `scan_history.json` — scan records with timestamps, scores, counts
 //! - `last_results.json` — most recent match results
 
+pub mod applicant;
 pub mod cli;
 pub mod crawler;
 pub mod matcher;
 pub mod models;
+pub mod resume;
 pub mod storage;
