@@ -441,7 +441,7 @@ impl App {
             .collect::<Vec<_>>()
             .join(", ");
 
-        // ── Phase 1: Job board crawl ─────────────────────────────────
+        // ── Phase 1: Job board crawl (45s timeout) ──────────────────
         let pb = ProgressBar::new_spinner();
         pb.set_style(
             ProgressStyle::default_spinner()
@@ -454,22 +454,46 @@ impl App {
         ));
         pb.enable_steady_tick(std::time::Duration::from_millis(100));
 
-        let mut jobs = self.coordinator.crawl_all(&self.config).await;
+        let mut jobs = match tokio::time::timeout(
+            std::time::Duration::from_secs(45),
+            self.coordinator.crawl_all(&self.config),
+        ).await {
+            Ok(j) => j,
+            Err(_) => {
+                pb.finish_and_clear();
+                eprintln!("  {} Board crawl timed out (45s). Moving on.", "!".yellow());
+                vec![]
+            }
+        };
         pb.finish_and_clear();
+
+        if jobs.is_empty() {
+            eprintln!("  {} No jobs from boards. Skipping company crawl.", "-".yellow());
+            println!("\n  No jobs found. Try different keywords or sources.\n");
+            return;
+        }
 
         // ── Auto-discover companies from job posts ───────────────────
         let discovered = self.auto_discover_companies(&jobs);
         if discovered > 0 {
             eprintln!(
                 "  {} Auto-discovered {} new {}",
-                "🔍".to_string(),
+                "+".green(),
                 discovered,
                 if discovered == 1 { "company" } else { "companies" }
             );
         }
 
-        // ── Phase 2: Company career site crawl ───────────────────────
-        self.crawl_company_sites(&mut jobs).await;
+        // ── Phase 2: Company career site crawl (60s timeout) ─────────
+        match tokio::time::timeout(
+            std::time::Duration::from_secs(60),
+            self.crawl_company_sites(&mut jobs),
+        ).await {
+            Ok(_) => {}
+            Err(_) => {
+                eprintln!("  {} Company crawl timed out (60s). Using board results only.", "!".yellow());
+            }
+        }
 
         // ── Process results ──────────────────────────────────────────
         let raw_count = jobs.len();
