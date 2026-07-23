@@ -115,13 +115,13 @@ pub fn show_resume(r: &Resume) {
     if let Some(s) = r.seniority {
         println!("  {}   {}", "Level:".bright_white(), s.to_string().cyan());
     }
-    if !r.domains.is_empty() {
+    if !r.focus_areas.is_empty() {
         println!(
             "  {}   {}",
-            "Domains:".bright_white(),
-            r.domains
+            "Focus:".bright_white(),
+            r.focus_areas
                 .iter()
-                .map(|d| d.to_string().green().to_string())
+                .map(|a| a.green().to_string())
                 .collect::<Vec<_>>()
                 .join(", ")
         );

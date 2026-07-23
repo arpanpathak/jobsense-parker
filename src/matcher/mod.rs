@@ -151,7 +151,7 @@ mod tests {
             preferred_job_type: None,
             min_salary: None,
             seniority: None,
-            domains: vec![],
+            focus_areas: vec![],
             education: vec![],
             certifications: vec![],
         }

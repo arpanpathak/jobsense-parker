@@ -27,7 +27,7 @@ use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 
-use crate::resume::{self as resume_engine, ResumeIntelligence, SeniorityLevel, SkillDomain};
+use crate::resume::{self as resume_engine, ResumeIntelligence, SeniorityLevel};
 
 // ─── Job Source ────────────────────────────────────────────────────────────
 
@@ -163,8 +163,9 @@ pub struct Resume {
     pub min_salary: Option<u64>,
     /// Inferred seniority level (Intern, Junior, Mid, Senior, Staff, Principal, etc.)
     pub seniority: Option<SeniorityLevel>,
-    /// Detected domains of expertise (e.g. Backend, Frontend, DataMl, CloudDevOps)
-    pub domains: Vec<SkillDomain>,
+    /// Focus areas derived dynamically from resume text — what you actually work on.
+    /// No hardcoded categories. Derived from job titles, frequent phrases, and context.
+    pub focus_areas: Vec<String>,
     /// Education entries extracted from the resume.
     pub education: Vec<resume_engine::Education>,
     /// Certifications extracted.
@@ -204,7 +205,7 @@ impl Resume {
             keywords: i.keywords,
             min_salary: None,
             seniority: i.seniority,
-            domains: i.domains,
+            focus_areas: i.focus_areas,
             education: i.education,
             certifications: i.certifications,
         }

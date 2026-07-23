@@ -144,11 +144,10 @@ pub fn generate_cover_letter(result: &MatchResult, resume: &Resume) -> String {
         )
     };
 
-    let domains = if resume.domains.is_empty() {
+    let focus = if resume.focus_areas.is_empty() {
         String::new()
     } else {
-        let d: Vec<String> = resume.domains.iter().map(|d| format!("{:?}", d)).collect();
-        format!("\n\nMy expertise spans {} — I bring a broad perspective to the role.", d.join(", "))
+        format!("\n\nMy expertise focuses on {}.", resume.focus_areas.join(", "))
     };
 
     format!(
@@ -160,7 +159,7 @@ I am writing to express my strong interest in the {title} position at {company}.
 As a {seniority} professional with {exp}, I am confident that my background \
 aligns well with what you are looking for.
 
-My relevant skills include: {matched}.{missing}{domains}
+My relevant skills include: {matched}.{missing}{focus}
 
 I am excited about the opportunity to contribute to {company}'s mission \
 and would welcome the chance to discuss how my experience can add value to your team.
@@ -177,7 +176,7 @@ Best regards,
         exp = exp,
         matched = matched,
         missing = missing,
-        domains = domains,
+        focus = focus,
     )
 }
 

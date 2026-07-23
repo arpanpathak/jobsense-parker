@@ -783,6 +783,10 @@ impl Default for SkillDictionary {
 // ─── Extraction Results ──────────────────────────────────────────────────────
 
 /// Enriched intelligence extracted from a resume.
+///
+/// Focus areas are derived dynamically from the resume text, not from
+/// hardcoded skill→domain mappings. This means no more "Cloud/DevOps"
+/// labels if your resume never says "DevOps".
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct ResumeIntelligence {
     /// Known tech skills found in the resume (with domain classification).
@@ -799,8 +803,10 @@ pub struct ResumeIntelligence {
     pub preferred_location: Option<String>,
     /// Preferred job type.
     pub preferred_job_type: Option<String>,
-    /// Domain categories detected (e.g., Backend, Frontend, DataMl).
-    pub domains: Vec<SkillDomain>,
+    /// Focus areas derived from the resume content — what you actually work on.
+    /// Dynamically computed from job titles, frequent tech terms, and role context.
+    /// No hardcoded categories.
+    pub focus_areas: Vec<String>,
     /// Degrees extracted.
     pub education: Vec<Education>,
     /// Certifications extracted.
@@ -890,8 +896,9 @@ pub fn parse_resume(text: &str) -> ResumeIntelligence {
     // 7. Extract job type
     let preferred_job_type = extract_job_type(&lower);
 
-    // 8. Detect domains
-    let domains = detect_domains(&known_skills);
+    // 8. Derive focus areas dynamically from resume text
+    // (no hardcoded skill→domain categories — reads what the resume says)
+    let focus_areas = derive_focus_areas(text, &role_titles);
 
     // 9. Extract education
     let education = extract_education(&lower);
@@ -900,7 +907,7 @@ pub fn parse_resume(text: &str) -> ResumeIntelligence {
     let certifications = extract_certifications(&lower);
 
     // 11. Build meaningful keywords (filtered to be useful)
-    let keywords = build_keywords(&known_skills, &role_titles, &inferred_skills, &domains, &lower);
+    let keywords = build_keywords(&known_skills, &role_titles, &inferred_skills, &lower);
 
     ResumeIntelligence {
         known_skills: known_skills
@@ -916,7 +923,7 @@ pub fn parse_resume(text: &str) -> ResumeIntelligence {
         experience_years,
         preferred_location,
         preferred_job_type,
-        domains,
+        focus_areas,
         education,
         certifications,
         keywords,
@@ -990,35 +997,121 @@ fn looks_like_tech_term(term: &str) -> bool {
         || lower.chars().filter(|c| c.is_uppercase()).count() >= 2
 }
 
-/// Extract role titles from resume text.
+/// Extract role titles dynamically from resume text.
+///
+/// Instead of matching against a fixed list of valid titles (which misses
+/// "Distributed Systems Engineer", "Systems Programming" or anything that
+/// doesn't fit a predefined pattern), this finds job titles by looking at
+/// the resume's natural structure:
+///
+/// 1. Lines near date ranges (the line above a date is almost always a title)
+/// 2. Explicit labels ("Title: X", "Role: X")
+/// 3. Lines with role-identifying words + capitalisation
 fn extract_roles(text: &str) -> Vec<String> {
     let mut roles: Vec<String> = Vec::new();
 
+    // ── Method 1: Explicit labels ───────────────────────────────────
     // "Role: Senior Engineer", "Position: Lead Developer"
-    let ctx_re = Regex::new(
-        r"(?i)(?:role|position|title|current|designation)[:\s]+([a-z]+(?:\s+[a-z]+){1,4})"
+    let label_re = Regex::new(
+        r"(?i)(?:role|position|title|current|designation)[:\s]+([a-z][a-z\s\-/&]{3,60}?)(?:\s*[|\(]|\s*$)"
     ).unwrap();
-    for cap in ctx_re.captures_iter(text) {
+    for cap in label_re.captures_iter(text) {
         let role = cap.get(1).unwrap().as_str().trim().to_string();
-        if role.len() >= 5 {
+        if role.len() >= 5 && role.len() <= 70 {
             roles.push(role);
         }
     }
 
-    // Full role titles: "Senior Software Engineer", "Frontend Developer", etc.
-    let title_re = Regex::new(
-        r"(?i)(?:(?:senior|staff|principal|lead|junior|intern|head|vp|vice\s+president|director|manager)\s+)?(?:software|data|full.?stack|frontend|backend|devops|platform|security|systems|network|site\s*reliability|machine\s*learning|ai|ml|cloud|infrastructure|product|program|project|technical|solution|support|qa|quality|test|embedded|firmware|mobile|ios|android|blockchain|research|applied|analytics|solutions|engineering|site\s*reliability|sre)\s+(?:engineer|developer|architect|manager|scientist|analyst|designer|director|lead|intern|specialist|consultant|coordinator|associate|administrator|programmer)"
+    // ── Method 2: Date-driven titles ────────────────────────────────
+    // The line BEFORE a date range in a resume is typically a job title.
+    // Pattern: "Jan 2020 - Present", "2020-2023", "Mar 2020 – Present"
+    let date_re = Regex::new(
+        r"(?im)^([^\n]{3,80})\n(?:.*?\n)?(?:jan(?:uary)?|feb(?:ruary)?|mar(?:ch)?|apr(?:il)?|may|jun(?:e)?|jul(?:y)?|aug(?:ust)?|sep(?:tember)?|oct(?:ober)?|nov(?:ember)?|dec(?:ember)?)?\s*\d{4}\s*[–\-to]+\s*(?:present|current|now|\d{4})"
     ).unwrap();
-    for cap in title_re.captures_iter(text) {
-        let role = cap.get(0).unwrap().as_str().trim().to_string();
-        if !roles.contains(&role) {
-            roles.push(role);
+    for cap in date_re.captures_iter(text) {
+        let candidate = cap.get(1).unwrap().as_str().trim().to_string();
+        if looks_like_role_line(&candidate) && !roles.contains(&candidate) {
+            roles.push(candidate);
+        }
+    }
+
+    // ── Method 3: Broad role keyword + capitalisation ───────────────
+    // Catches any line that looks like it could be a job title,
+    // without requiring specific words.
+    let role_keywords = [
+        "engineer", "developer", "architect", "programmer", "scientist",
+        "analyst", "designer", "manager", "director", "lead", "head",
+        "specialist", "consultant", "coordinator", "administrator",
+        "intern", "researcher", "instructor", "associate",
+    ];
+
+    for line in text.lines() {
+        let trimmed = line.trim();
+        if trimmed.is_empty() || trimmed.len() > 80 {
+            continue;
+        }
+        let lower_line = trimmed.to_lowercase();
+
+        // Check if any word in the line is a role keyword
+        let words: Vec<&str> = lower_line.split_whitespace().collect();
+        let has_keyword = role_keywords.iter().any(|kw| words.contains(kw));
+
+        if has_keyword && looks_like_role_line(trimmed) {
+            let title = trimmed.to_string();
+            if !roles.contains(&title) {
+                roles.push(title);
+            }
         }
     }
 
     roles.sort_unstable();
     roles.dedup();
     roles
+}
+
+/// Heuristic: does this line look like a job title?
+/// Job titles have capitalised words, aren't section headers, aren't
+/// bullet points, and have meaningful length.
+fn looks_like_role_line(line: &str) -> bool {
+    let lower = line.to_lowercase().trim().to_string();
+
+    // Exclude section headers
+    let section_headers = [
+        "experience", "education", "skills", "summary", "objective",
+        "projects", "publications", "certifications", "references",
+        "volunteer", "leadership", "languages", "interests",
+        "achievements", "awards", "honors", "contact", "profile",
+        "technical", "work", "employment", "background", "qualifications",
+        "training", "courses", "patents",
+    ];
+    if section_headers.iter().any(|h| lower == *h || lower.starts_with(&format!("{}:", h))) {
+        return false;
+    }
+
+    if line.len() < 5 || line.len() > 80 {
+        return false;
+    }
+
+    // Must have at least one uppercase letter or digit
+    if !line.chars().any(|c| c.is_uppercase()) && !line.chars().any(|c| c.is_ascii_digit()) {
+        return false;
+    }
+
+    // Must have at least 2 words (or 1 word >= 5 chars)
+    let word_count = line.split_whitespace().count();
+    if word_count < 2 && line.len() < 5 {
+        return false;
+    }
+
+    // Exclude bullet points / list items
+    let trimmed = line.trim_start();
+    if trimmed.starts_with('-') || trimmed.starts_with('•')
+        || trimmed.starts_with('*') || trimmed.starts_with("·") {
+        return false;
+    }
+
+    // At least one word has 3+ chars
+    line.split_whitespace().any(|w| w.len() >= 3)
 }
 
 /// Infer seniority level from role titles and text.
@@ -1159,23 +1252,106 @@ fn extract_job_type(text: &str) -> Option<String> {
 /// Only returns domains that are meaningfully represented (at least 2 skills),
 /// sorted by strength (most skills first). This prevents showing ALL domains
 /// when someone has a diverse skill set — you only see your top areas.
-fn detect_domains(known_skills: &[KnownSkill]) -> Vec<SkillDomain> {
-    // Count skills per domain
-    let mut counts: std::collections::HashMap<SkillDomain, usize> = std::collections::HashMap::new();
-    for ks in known_skills {
-        *counts.entry(ks.domain).or_insert(0) += 1;
+/// Derive focus areas dynamically from the resume text.
+///
+/// This is NOT hardcoded skill→domain mapping. Instead, it looks at what
+/// the resume actually talks about: job titles, frequently mentioned tech
+/// areas, and role context. Whatever your resume emphasises, that's what
+/// shows up — no "DevOps" label unless you actually write "DevOps".
+fn derive_focus_areas(text: &str, role_titles: &[String]) -> Vec<String> {
+    let mut areas: Vec<String> = Vec::new();
+
+    // 1. Extract multi-word phrases that look like focus areas
+    // Look for patterns like "distributed systems", "systems programming",
+    // "machine learning", "data infrastructure", etc.
+    let phrase_re = Regex::new(
+        r"(?i)(?:focus|area|expertise|specializ|field|domain|discipline|responsib|work\s+on|work\s+in|work\s+with|build|design|develop|architect|lead|manage|drive)\s*(?:ed|ing|es)?\s*:?\s*([a-z][a-z\s\-/]{3,60}?)(?:[.!,]|$)"
+    ).unwrap();
+
+    for cap in phrase_re.captures_iter(text) {
+        let phrase = cap.get(1).unwrap().as_str().trim().to_string();
+        if phrase.len() >= 8 && phrase.len() <= 80 {
+            let words: Vec<&str> = phrase.split_whitespace().collect();
+            if words.len() >= 2 {
+                areas.push(phrase);
+            }
+        }
     }
 
-    // Sort domains by count descending, keep only those with >= 2 skills
-    let mut domains: Vec<(SkillDomain, usize)> = counts.into_iter().collect();
-    domains.sort_by(|a, b| b.1.cmp(&a.1));
+    // 2. Extract bigrams/trigrams that appear 2+ times in the resume
+    // (high-frequency phrases indicate what the resume is about)
+    let words: Vec<&str> = text.split_whitespace()
+        .map(|w| w.trim_matches(|c: char| !c.is_alphanumeric()))
+        .filter(|w| w.len() >= 4 && !is_stop_word(w))
+        .collect();
 
-    // Return top 4 domains max (too many domains is noise)
-    domains.into_iter()
-        .filter(|(_, count)| *count >= 2)
-        .take(4)
-        .map(|(d, _)| d)
-        .collect()
+    let mut bigram_counts: std::collections::HashMap<String, usize> = std::collections::HashMap::new();
+    for window in words.windows(2) {
+        let bigram = format!("{} {}", window[0], window[1]);
+        *bigram_counts.entry(bigram.to_lowercase()).or_insert(0) += 1;
+    }
+
+    let mut frequent: Vec<(String, usize)> = bigram_counts.into_iter()
+        .filter(|(phrase, count)| *count >= 2 && !is_stop_phrase(phrase))
+        .collect();
+    frequent.sort_by(|a, b| b.1.cmp(&a.1));
+
+    for (phrase, _) in frequent.iter().take(5) {
+        if !areas.contains(phrase) {
+            areas.push(phrase.clone());
+        }
+    }
+
+    // 3. Extract technology groupings from role titles + context
+    // If a role title has "systems" or "distributed" or "infrastructure",
+    // those describe focus areas
+    for role in role_titles {
+        let r = role.to_lowercase();
+        // Extract adjective/noun pairs that describe the work
+        let desc_re = Regex::new(r"(?i)(distributed\s+systems|systems\s+\w+|data\s+\w+|platform\s+\w+|cloud\s+\w+|infrastructure\s+\w+|network\s+\w+|security\s+\w+|backend\s+\w+|frontend\s+\w+|full.?stack|machine\s+learning|deep\s+learning|site\s+reliability|software\s+\w+|embedded\s+\w+|mobile\s+\w+|web\s+\w+)").unwrap();
+        for cap in desc_re.captures_iter(&r) {
+            let area = cap.get(1).unwrap().as_str().to_string();
+            if !areas.contains(&area) {
+                areas.push(area);
+            }
+        }
+    }
+
+    // Clean up and dedup
+    areas.retain(|a| a.len() >= 6);
+    areas.sort_unstable();
+    areas.dedup();
+
+    // Take top 6 max
+    areas.truncate(6);
+    areas
+}
+
+fn is_stop_word(word: &str) -> bool {
+    let stops = [
+        "the", "and", "for", "are", "but", "not", "you", "all", "can",
+        "was", "one", "our", "out", "has", "have", "been", "some", "same",
+        "its", "than", "them", "into", "two", "more", "these", "like",
+        "such", "that", "this", "with", "from", "your", "which", "each",
+        "will", "about", "between", "very", "just", "their", "would",
+        "could", "should", "then", "there", "where", "while", "because",
+        "before", "does", "doing", "done", "much", "many", "most",
+        "need", "take", "make", "well", "also", "back", "still", "get",
+        "use", "used", "using", "way", "new", "first", "last", "own",
+        "see", "may", "though", "every", "good", "great", "best",
+    ];
+    stops.contains(&word)
+}
+
+fn is_stop_phrase(phrase: &str) -> bool {
+    let stops = [
+        "work with", "work on", "work in", "work for", "work as",
+        "experience with", "experience in", "proficient in",
+        "strong experience", "solid experience", "extensive experience",
+        "responsible for", "responsible the", "including the",
+        "well as", "such as", "as well", "order to",
+    ];
+    stops.contains(&phrase.to_lowercase().as_str())
 }
 
 /// Extract education entries — strict mode.
@@ -1285,7 +1461,6 @@ fn build_keywords(
     known_skills: &[KnownSkill],
     role_titles: &[String],
     inferred_skills: &[String],
-    domains: &[SkillDomain],
     text: &str,
 ) -> Vec<String> {
     let mut keywords: Vec<String> = Vec::new();
@@ -1312,26 +1487,13 @@ fn build_keywords(
         keywords.push(s.to_lowercase());
     }
 
-    // 4. Domain-specific keywords
-    for domain in domains {
-        let domain_kws = match domain {
-            SkillDomain::Language => vec!["programming", "software development"],
-            SkillDomain::Frontend => vec!["frontend", "web development", "ui", "ux"],
-            SkillDomain::Backend => vec!["backend", "api", "server", "service"],
-            SkillDomain::Database => vec!["database", "data storage", "query"],
-            SkillDomain::CloudDevOps => vec!["cloud", "devops", "infrastructure", "deployment"],
-            SkillDomain::DataMl => vec!["data", "machine learning", "analytics"],
-            SkillDomain::Mobile => vec!["mobile", "app development"],
-            SkillDomain::Tools => vec![],
-            SkillDomain::Platform => vec![],
-            SkillDomain::Protocol => vec![],
-            SkillDomain::Concept => vec![],
-            SkillDomain::Framework => vec![],
-            SkillDomain::Other => vec![],
-        };
-        for kw in domain_kws {
-            if !keywords.contains(&kw.to_string()) {
-                keywords.push(kw.to_string());
+    // 4. Focus-area derived keywords from frequent resume phrases
+    let focus_areas = derive_focus_areas(text, role_titles);
+    for area in &focus_areas {
+        keywords.push(area.to_lowercase());
+        for word in area.split_whitespace() {
+            if word.len() >= 3 && !is_junk_word(word) {
+                keywords.push(word.to_lowercase());
             }
         }
     }
