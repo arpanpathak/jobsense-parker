@@ -69,8 +69,13 @@ pub struct KnownSkill {
 pub struct SkillDictionary {
     /// Map of lowercase skill name → KnownSkill
     skills: HashMap<String, KnownSkill>,
-    /// Regex that matches any known skill as a word boundary.
+    /// Regex that matches any known skill.
+    /// Word-boundary-safe skills use `\b`; special-char skills (c++, .net, etc.)
+    /// match without boundaries and are verified manually in `find_skills`.
     combined_re: Regex,
+    /// Skills that matched without `\b` boundaries and need manual verification.
+    /// The `regex` crate doesn't support look-around, so we verify in code.
+    unbounded: std::collections::HashSet<String>,
 }
 
 impl SkillDictionary {
@@ -88,70 +93,116 @@ impl SkillDictionary {
             );
         }
 
-        // Build combined regex with PROPER boundary assertions per skill.
+        // Build combined regex matching all known skills.
         //
-        // BUG FIXED: `\b` word boundaries break on skills with non-word chars
-        // like `+`, `#`, `.`. `\b(c\+\+)\b` never matches `C++` because `\b`
-        // after `++` requires a word char, but `+` is non-word and so is the
-        // space after — no boundary exists. Same for `.net`, `c#`, etc.
+        // NOTE: The `regex` crate does NOT support look-around assertions
+        // like `(?<!\w)` or `(?!\w)`. It uses a DFA engine.
         //
-        // Fix: for each skill, use the correct boundary assertion:
-        //   - starts with word char → `\b` prefix
-        //   - starts with non-word  → `(?<!\w)` prefix
-        //   - ends with word char   → `\b` suffix
-        //   - ends with non-word    → `(?!\w)` suffix
+        // Strategy: use `\b` for skills that start AND end with word chars
+        // (the majority). For skills with non-word chars at edges (c++, .net,
+        // c#, f#, etc.), match WITHOUT boundaries — the `find_skills` method
+        // verifies word boundaries manually in a post-filter step.
         let names: Vec<&str> = skills.keys().map(|s| s.as_str()).collect();
         let mut sorted = names.clone();
         sorted.sort_by(|a, b| b.len().cmp(&a.len()));
 
-        let mut parts: Vec<String> = Vec::with_capacity(sorted.len());
+        let mut bounded_parts: Vec<String> = Vec::new();
+        let mut unbounded_parts: Vec<String> = Vec::new();
+
         for name in &sorted {
             let escaped = regex::escape(name);
             let starts_with_word = name.chars().next().map_or(false, |c| c.is_alphanumeric() || c == '_');
             let ends_with_word = name.chars().last().map_or(false, |c| c.is_alphanumeric() || c == '_');
 
-            let mut part = String::new();
-            if starts_with_word {
-                part.push_str(r"\b");
+            if starts_with_word && ends_with_word {
+                // Normal skill — can use \b boundaries
+                bounded_parts.push(format!(r"\b{}\b", escaped));
             } else {
-                part.push_str(r"(?<!\w)");
+                // Special-char skill (c++, .net, c#, etc.) — match without
+                // boundaries; find_skills() verifies them manually
+                unbounded_parts.push(escaped);
             }
-            part.push_str(&escaped);
-            if ends_with_word {
-                part.push_str(r"\b");
-            } else {
-                part.push_str(r"(?!\w)");
-            }
-            parts.push(part);
         }
 
-        let combined = format!(r"(?i)(?:{})", parts.join("|"));
+        let mut combined = String::from(r"(?i)");
+        if !bounded_parts.is_empty() {
+            combined.push_str(&format!(r"(?:{})", bounded_parts.join("|")));
+        }
+        if !unbounded_parts.is_empty() {
+            if !bounded_parts.is_empty() {
+                combined.push('|');
+            }
+            combined.push_str(&format!(r"(?:{})", unbounded_parts.join("|")));
+        }
+
+        // Track which skills are unbounded (need manual boundary check)
+        let unbounded: std::collections::HashSet<String> = sorted.iter()
+            .filter(|name| {
+                let sw = name.chars().next().map_or(false, |c| c.is_alphanumeric() || c == '_');
+                let ew = name.chars().last().map_or(false, |c| c.is_alphanumeric() || c == '_');
+                !(sw && ew)
+            })
+            .map(|s| s.to_string())
+            .collect();
+
         let combined_re = Regex::new(&combined).unwrap();
 
         Self {
             skills,
             combined_re,
+            unbounded,
         }
     }
 
     /// Find all known tech skills in text.
+    ///
+    /// For skills with non-word chars (c++, .net, c#, etc.), the regex
+    /// matches without `\b` boundaries. We verify those boundaries here:
+    /// the matched text must NOT be preceded or followed by a word char
+    /// (letter, digit, underscore), otherwise it's a false positive like
+    /// the `c` in `docker` or `c++` in `abc++def`.
     pub fn find_skills(&self, text: &str) -> Vec<KnownSkill> {
         let mut found: Vec<KnownSkill> = Vec::new();
         let mut seen = std::collections::HashSet::new();
 
         for cap in self.combined_re.captures_iter(text) {
-            let matched = cap.get(0).unwrap().as_str().to_lowercase();
-            if seen.insert(matched.clone()) {
-                // Check direct lookup first
-                if let Some(ks) = self.skills.get(&matched) {
-                    found.push(ks.clone());
-                } else {
-                    // It matched via the multi-word pattern group - do a linear scan
-                    for (name, ks) in &self.skills {
-                        if name == &matched {
-                            found.push(ks.clone());
-                            break;
-                        }
+            let m = cap.get(0).unwrap();
+            let matched_lower = m.as_str().to_lowercase();
+
+            if !seen.insert(matched_lower.clone()) {
+                continue;
+            }
+
+            // For unbounded skills, verify word boundaries manually.
+            // The `regex` crate doesn't support look-around assertions,
+            // so we check: char before match is non-word (or start), and
+            // char after match is non-word (or end).
+            if self.unbounded.contains(&matched_lower) {
+                let bytes = text.as_bytes();
+                let start = m.start();
+                let end = m.end();
+
+                let pre_ok = start == 0
+                    || !bytes[start - 1].is_ascii_alphanumeric()
+                        && bytes[start - 1] != b'_';
+                let post_ok = end >= bytes.len()
+                    || !bytes[end].is_ascii_alphanumeric()
+                        && bytes[end] != b'_';
+
+                if !pre_ok || !post_ok {
+                    continue;
+                }
+            }
+
+            // Look up in dictionary
+            if let Some(ks) = self.skills.get(&matched_lower) {
+                found.push(ks.clone());
+            } else {
+                // Fallback linear scan (should rarely be needed now)
+                for (name, ks) in &self.skills {
+                    if name == &matched_lower {
+                        found.push(ks.clone());
+                        break;
                     }
                 }
             }
