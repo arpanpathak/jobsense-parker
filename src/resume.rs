@@ -1024,14 +1024,22 @@ fn extract_roles(text: &str) -> Vec<String> {
 
     // ── Method 2: Date-driven titles ────────────────────────────────
     // The line BEFORE a date range in a resume is typically a job title.
-    // Pattern: "Jan 2020 - Present", "2020-2023", "Mar 2020 – Present"
-    let date_re = Regex::new(
-        r"(?im)^([^\n]{3,80})\n(?:.*?\n)?(?:jan(?:uary)?|feb(?:ruary)?|mar(?:ch)?|apr(?:il)?|may|jun(?:e)?|jul(?:y)?|aug(?:ust)?|sep(?:tember)?|oct(?:ober)?|nov(?:ember)?|dec(?:ember)?)?\s*\d{4}\s*[–\-to]+\s*(?:present|current|now|\d{4})"
+    // Uses a simple two-step scan (NO complex regex that can freeze):
+    // Step 1: find lines that look like date ranges
+    // Step 2: grab the line before each date range
+    // This avoids catastrophic backtracking from chained lazy quantifiers.
+    let simple_date_re = Regex::new(
+        r"(?i)\b\d{4}\s*[–\-to]+\s*(?:\d{4}|present|current|now)\b"
     ).unwrap();
-    for cap in date_re.captures_iter(text) {
-        let candidate = cap.get(1).unwrap().as_str().trim().to_string();
-        if looks_like_role_line(&candidate) && !roles.contains(&candidate) {
-            roles.push(candidate);
+
+    let lines: Vec<&str> = text.lines().collect();
+    for (i, line) in lines.iter().enumerate() {
+        if i == 0 { continue; }
+        if simple_date_re.is_match(line) {
+            let candidate = lines[i - 1].trim().to_string();
+            if looks_like_role_line(&candidate) && !roles.contains(&candidate) {
+                roles.push(candidate);
+            }
         }
     }
 
