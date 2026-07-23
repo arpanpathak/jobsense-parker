@@ -33,24 +33,21 @@ use strsim::jaro_winkler;
 ///
 /// # Scoring breakdown
 ///
-/// - **Skill ratio** (50%): fraction of resume skills found in job text
-/// - **Keyword ratio** (25%): fraction of resume keywords found in job text
+/// - **Title skill match** (35%): fraction of resume skills found in the job TITLE
+///   (skills in the title are 3x more relevant than in the description)
+/// - **Description skill match** (25%): fraction of resume skills found in the
+///   job description / combined text
+/// - **Keyword ratio** (20%): fraction of resume keywords found in job text
 /// - **Role-title match** (10%): bonus if job title contains a role from resume
-/// - **Location match** (10%): bonus if job location aligns with preferred location
+/// - **Location match** (5%): bonus if job location aligns with preferred location
 /// - **Job-type match** (5%): bonus if job type matches preferred type
 ///
-/// # Example
+/// # Why the split?
 ///
-/// If your resume has skills `["rust", "python", "docker"]` and a job
-/// description mentions "rust" and "docker":
-///
-/// ```text
-/// skill_ratio  = 2/3 × 0.50 = 0.333
-/// keyword_ratio = ...        = 0.125
-/// title_match  = bonus       = 0.100  (if job title says "Engineer")
-///                             ─────
-///                             0.558  (55.8% match)
-/// ```
+/// A skill in the job TITLE (e.g., "Senior Rust Engineer") is a much stronger
+/// signal than the same skill buried in the description. The old scoring treated
+/// both equally, so "Senior Vice President" at a tech company could score as
+/// high as "Rust Engineer" because the description mentioned every tech stack.
 pub fn compute_score(
     matched_skills: &[String],
     all_skills: &[String],
@@ -64,25 +61,32 @@ pub fn compute_score(
     }
 
     let mut score = 0.0;
+    let title_lower = job.title.to_lowercase();
 
-    // ── Skill ratio (50%) ───────────────────────────────────────────────
-    let skill_ratio = if all_skills.is_empty() {
-        0.0
-    } else {
-        matched_skills.len() as f64 / all_skills.len() as f64
-    };
-    score += skill_ratio * 0.50;
+    // ── Title skill match (35%) ──────────────────────────────────────────
+    // Skills appearing in the job title are 3x more relevant. This prevents
+    // "Senior Vice President" from scoring high just because the description
+    // has a tech stack dump.
+    if !all_skills.is_empty() {
+        let title_skill_matches = all_skills.iter().filter(|s| {
+            title_lower.contains(&s.to_lowercase())
+        }).count();
+        let title_ratio = title_skill_matches as f64 / all_skills.len() as f64;
+        score += title_ratio * 0.35;
 
-    // ── Keyword ratio (25%) ─────────────────────────────────────────────
-    let kw_ratio = if all_keywords.is_empty() {
-        0.0
-    } else {
-        matched_keywords.len() as f64 / all_keywords.len() as f64
-    };
-    score += kw_ratio * 0.25;
+        // Description-only skill match (25%)
+        let desc_only_matches = matched_skills.len().saturating_sub(title_skill_matches);
+        let desc_ratio = desc_only_matches as f64 / all_skills.len() as f64;
+        score += desc_ratio.min(1.0) * 0.25;
+    }
+
+    // ── Keyword ratio (20%) ─────────────────────────────────────────────
+    if !all_keywords.is_empty() {
+        let kw_ratio = matched_keywords.len() as f64 / all_keywords.len() as f64;
+        score += kw_ratio * 0.20;
+    }
 
     // ── Role-title match (10%) ──────────────────────────────────────────
-    let title_lower = job.title.to_lowercase();
     let title_match = resume.role_titles.iter().any(|r| {
         let rl = r.to_lowercase();
         title_lower.contains(&rl) || fuzzy_match(&rl, &title_lower)
@@ -91,12 +95,12 @@ pub fn compute_score(
         score += 0.10;
     }
 
-    // ── Location match (10%) ────────────────────────────────────────────
+    // ── Location match (5%) ─────────────────────────────────────────────
     if let (Some(pref_loc), Some(job_loc)) = (&resume.preferred_location, &job.location) {
         let pl = pref_loc.to_lowercase();
         let jl = job_loc.to_lowercase();
         if pl.contains(&jl) || jl.contains(&pl) || fuzzy_match(&pl, &jl) {
-            score += 0.10;
+            score += 0.05;
         }
     }
 
@@ -158,17 +162,19 @@ pub fn fuzzy_match(keyword: &str, text: &str) -> bool {
 /// and `job_type` into one space-separated string for skill matching.
 ///
 /// **`tags` are deliberately excluded** because job boards like Remote OK
-/// dump platform-level tag clouds onto every job listing. A "Senior Vice
-/// President" role can match "ai, angular, c#, python, react, rust..." purely
-/// from tags, making skill matching meaningless.
+/// dump platform-level tag clouds onto every job listing.
+///
+/// Also strips marker sections like \"Tags:\", \"Technologies:\" etc. from
+/// descriptions so platform tag dumps don't inflate skill matches.
 ///
 /// # Example output
 ///
 /// ```text
-/// "Senior Rust Engineer We are looking for a Rust engineer... Stripe San Francisco $200k full-time"
+/// \"Senior Rust Engineer We are looking for a Rust engineer... Stripe San Francisco $200k full-time\"
 /// ```
 pub fn build_job_text(job: &JobPost) -> String {
-    let mut parts = vec![job.title.clone(), job.description.clone()];
+    let desc = strip_tag_cloud(&job.description);
+    let mut parts = vec![job.title.clone(), desc];
     if let Some(c) = &job.company {
         parts.push(c.clone());
     }
@@ -182,4 +188,34 @@ pub fn build_job_text(job: &JobPost) -> String {
         parts.push(jt.clone());
     }
     parts.join(" ").trim().to_string()
+}
+
+/// Strip tag-cloud sections from job descriptions.
+///
+/// Many job boards append a comma-separated tag cloud of every keyword.
+/// These inflate skill matching scores. We detect common section markers
+/// and truncate before them.
+fn strip_tag_cloud(text: &str) -> String {
+    let lower = text.to_lowercase();
+    let markers = [
+        "tags:", "technologies:", "tech stack:", "skills:",
+        "requirements:", "nice to have:", "bonus points:",
+        "preferred qualifications:",
+    ];
+
+    let mut earliest = None;
+    for marker in &markers {
+        if let Some(pos) = lower.find(marker) {
+            match earliest {
+                None => earliest = Some(pos),
+                Some(current) if pos < current => earliest = Some(pos),
+                _ => {}
+            }
+        }
+    }
+
+    match earliest {
+        Some(pos) => text[..pos].trim().to_string(),
+        None => text.to_string(),
+    }
 }

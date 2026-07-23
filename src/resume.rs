@@ -88,18 +88,44 @@ impl SkillDictionary {
             );
         }
 
-        // Build combined regex: word-boundary match for any known skill
-        let mut pattern = String::from(r"(?i)\b(?:");
+        // Build combined regex with PROPER boundary assertions per skill.
+        //
+        // BUG FIXED: `\b` word boundaries break on skills with non-word chars
+        // like `+`, `#`, `.`. `\b(c\+\+)\b` never matches `C++` because `\b`
+        // after `++` requires a word char, but `+` is non-word and so is the
+        // space after — no boundary exists. Same for `.net`, `c#`, etc.
+        //
+        // Fix: for each skill, use the correct boundary assertion:
+        //   - starts with word char → `\b` prefix
+        //   - starts with non-word  → `(?<!\w)` prefix
+        //   - ends with word char   → `\b` suffix
+        //   - ends with non-word    → `(?!\w)` suffix
         let names: Vec<&str> = skills.keys().map(|s| s.as_str()).collect();
-        // Sort longest first so multi-word skills match before shorter substrings
         let mut sorted = names.clone();
         sorted.sort_by(|a, b| b.len().cmp(&a.len()));
-        pattern.push_str(&sorted.join("|"));
-        pattern.push_str(r")\b");
-        // Handle skills with dots/hyphens (like "c++", ".net", "node.js")
-        let pattern2 = r"(?i)\b(c\+\+|c#|f#|\.net|node\.js|react\.js|vue\.js|angular\.js|next\.js|three\.js|d3\.js|express\.js|socket\.io)\b";
-        let combined = format!(r"(?:{}|{})", pattern, pattern2);
 
+        let mut parts: Vec<String> = Vec::with_capacity(sorted.len());
+        for name in &sorted {
+            let escaped = regex::escape(name);
+            let starts_with_word = name.chars().next().map_or(false, |c| c.is_alphanumeric() || c == '_');
+            let ends_with_word = name.chars().last().map_or(false, |c| c.is_alphanumeric() || c == '_');
+
+            let mut part = String::new();
+            if starts_with_word {
+                part.push_str(r"\b");
+            } else {
+                part.push_str(r"(?<!\w)");
+            }
+            part.push_str(&escaped);
+            if ends_with_word {
+                part.push_str(r"\b");
+            } else {
+                part.push_str(r"(?!\w)");
+            }
+            parts.push(part);
+        }
+
+        let combined = format!(r"(?i)(?:{})", parts.join("|"));
         let combined_re = Regex::new(&combined).unwrap();
 
         Self {
