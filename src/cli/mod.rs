@@ -552,15 +552,15 @@ impl App {
         }
         let _ = storage::push_scan_record(&record);
 
-        // Show top results immediately
+        // Show brief summary, then return to menu immediately.
+        // User can select "View results" for the full paginated browser.
         if !self.results.is_empty() {
             println!(
-                "  {} {} matched results (top score: {:.0}%)\n",
+                "  {} {} matched results (top score: {:.0}%) — use 'View results' to browse\n",
                 "✓".bright_green(),
                 self.results.len(),
                 top_score * 100.0
             );
-            self.show_results();
         } else {
             println!("  No matches above threshold.\n");
         }
