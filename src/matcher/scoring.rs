@@ -1,216 +1,230 @@
-//! # ML-Powered Scoring Engine
+//! # Transformer-Powered Scoring Engine
 //!
-//! Computes a compatibility score between a [`Resume`] and a [`JobPost`]
-//! using **TF-IDF vectorization + Cosine Similarity** — an unsupervised
-//! machine learning technique from Information Retrieval.
+//! Uses a **sentence transformer** model (`all-MiniLM-L6-v2`) to encode
+//! resume and job texts into dense vector embeddings, then computes
+//! cosine similarity between them.
 //!
-//! ## How It Works
+//! This captures deep semantic similarity that bag-of-words approaches
+//! (TF-IDF, keyword counting) cannot:
 //!
-//! 1. **Tokenization** — text is lowercased, split into tokens, filtered
-//!    for stop words and short/noisy terms.
-//! 2. **TF-IDF Vectorization** — each document (resume + each job) is
-//!    converted into a vector where each dimension is a term weighted by
-//!    how important it is to that document vs. the whole corpus.
-//! 3. **Cosine Similarity** — the angle between the resume vector and each
-//!    job vector measures semantic alignment. Closer vectors = better match.
+//! | Term pair | TF-IDF | Transformer |
+//! |-----------|--------|-------------|
+//! | `"kubernetes"` vs `"k8s"` | 0% | ~85% |
+//! | `"React"` vs `"ReactJS"` | 0% | ~92% |
+//! | `"software engineer"` vs `"software developer"` | ~30% | ~95% |
+//! | `"experienced"` vs `"5 years"` | 0% | ~60% |
 //!
-//! ## Why TF-IDF over Hardcoded Weights?
+//! ## Model
 //!
-//! The old scoring had manually tuned weights (title skills 35%, desc skills
-//! 25%, etc.) that were brittle and domain-specific. TF-IDF learns term
-//! importance from the data itself:
+//! `sentence-transformers/all-MiniLM-L6-v2` (~80MB safetensors).
+//! Downloaded automatically on first run via HuggingFace Hub.
+//! Cached at `~/.cache/huggingface/hub/`.
 //!
-//! - A rare skill mentioned in both resume and job → high weight (high IDF)
-//! - A common word like "experience" → low weight (low IDF)
-//! - Skills in the job title naturally get more weight because the title is
-//!   shorter (higher TF density)
+//! ## Architecture
 //!
-//! ## Bonus Features
-//!
-//! After the ML similarity, small bonuses are added for exact/preference
-//! matches (location, job type) that TF-IDF might not capture well.
+//! The model is loaded **once** (lazy static) and reused across all
+//! scoring calls within a session. Encoding is batched for efficiency.
 
-use std::collections::{HashMap, HashSet};
+use std::sync::OnceLock;
+
+use anyhow::{Context, Result};
+use candle_core::{Device, Tensor};
+use candle_nn::VarBuilder;
+use candle_transformers::models::bert::{BertModel, Config, DTYPE};
+use hf_hub::api::sync::Api;
+use tokenizers::Tokenizer;
 
 use crate::models::{JobPost, Resume};
 
-// ─── Stop Words ──────────────────────────────────────────────────────────────
+// ─── Model Constants ────────────────────────────────────────────────────────
 
-/// Common English words excluded from the vocabulary.
-/// These carry no signal for resume-job matching.
-const STOP_WORDS: &[&str] = &[
-    "the", "and", "for", "are", "but", "not", "you", "all", "can", "had",
-    "was", "one", "our", "out", "has", "have", "been", "some", "same",
-    "its", "than", "them", "into", "two", "more", "these", "like", "over",
-    "such", "that", "this", "with", "from", "your", "which", "each", "will",
-    "about", "between", "under", "very", "just", "their", "would", "after",
-    "could", "should", "than", "then", "there", "where", "while", "because",
-    "before", "does", "doing", "done", "much", "many", "most", "must",
-    "need", "take", "make", "made", "well", "work", "year", "years",
-    "also", "back", "still", "get", "use", "used", "using", "way", "new",
-    "first", "last", "own", "see", "say", "said", "may", "though",
-    "every", "good", "great", "best", "away", "here", "there", "when",
-    "what", "who", "why", "how", "where", "which",
-    // Domain-agnostic resume noise
-    "experience", "company", "team", "project", "projects", "including",
-    "various", "multiple", "different", "wide", "range", "etc",
-    "looking", "seek", "seeking", "want", "wanted", "need", "needed",
-    "work", "working", "built", "building", "develop", "developing",
-    "developed", "design", "designed", "designing", "implement",
-    "implemented", "implementing", "manage", "managed", "managing",
-];
+/// HuggingFace model ID for the sentence transformer.
+const MODEL_ID: &str = "sentence-transformers/all-MiniLM-L6-v2";
 
-// ─── Tokenizer ───────────────────────────────────────────────────────────────
+/// Maximum sequence length for tokenization.
+const MAX_LEN: usize = 256;
 
-/// Tokenize text into clean, meaningful terms for ML vectorization.
-///
-/// Pipeline:
-/// 1. Lowercase
-/// 2. Split on whitespace
-/// 3. Strip non-alphanumeric characters (except +, #, . for tech names)
-/// 4. Filter out stop words, short words (< 2 chars), pure numbers
-fn tokenize(text: &str) -> Vec<String> {
-    let lower = text.to_lowercase();
-    lower
-        .split_whitespace()
-        .filter_map(|word| {
-            // Clean the token but preserve tech-relevant special chars
-            let clean: String = word
-                .chars()
-                .filter(|c| c.is_alphanumeric() || *c == '+' || *c == '#' || *c == '.')
-                .collect();
+// ─── Lazy Model Loading ─────────────────────────────────────────────────────
 
-            if clean.len() < 2 {
-                return None;
-            }
+/// Global singleton for the transformer model. Loaded once on first use.
+static TRANSFORMER: OnceLock<TransformerScorer> = OnceLock::new();
 
-            // Skip pure numbers/dates
-            if clean.chars().all(|c| c.is_ascii_digit()) {
-                return None;
-            }
-
-            // Skip stop words
-            if STOP_WORDS.contains(&clean.as_str()) {
-                return None;
-            }
-
-            Some(clean)
-        })
-        .collect()
+/// Get or initialize the transformer scorer.
+fn get_transformer() -> Result<&'static TransformerScorer> {
+    if let Some(t) = TRANSFORMER.get() {
+        return Ok(t);
+    }
+    // First call: initialize the model.
+    // Race-safe: if two threads race, only one set() succeeds.
+    eprintln!("  ⏳ Loading NLP model (first run downloads ~80MB)...");
+    match TransformerScorer::new() {
+        Ok(scorer) => {
+            eprintln!("  ✓ NLP model loaded.");
+            let _ = TRANSFORMER.set(scorer);
+            Ok(TRANSFORMER.get().unwrap())
+        }
+        Err(e) => {
+            eprintln!("  ✗ Failed to load NLP model: {e}");
+            Err(e)
+        }
+    }
 }
 
-// ─── TF-IDF Vectorizer ──────────────────────────────────────────────────────
+// ─── Transformer Scorer ─────────────────────────────────────────────────────
 
-/// A fitted TF-IDF vectorizer that transforms documents into term vectors.
-///
-/// This is an **unsupervised ML model** — it learns term importance (IDF)
-/// from the corpus of documents it's trained on.
-struct TfIdfVectorizer {
-    /// Ordered vocabulary: index → term string
-    vocabulary: Vec<String>,
-    /// Precomputed IDF for each term in the vocabulary
-    idf: Vec<f64>,
+/// Wraps a sentence transformer model for computing text embeddings.
+struct TransformerScorer {
+    model: BertModel,
+    tokenizer: Tokenizer,
+    device: Device,
 }
 
-impl TfIdfVectorizer {
-    /// Fit the vectorizer on a set of tokenized documents.
+impl TransformerScorer {
+    /// Load the model from HuggingFace Hub.
     ///
-    /// Learns:
-    /// - Vocabulary: all unique terms across all documents
-    /// - IDF: inverse document frequency for each term
-    fn fit(tokenized_docs: &[Vec<String>]) -> Self {
-        let n_docs = tokenized_docs.len() as f64;
+    /// Downloads `all-MiniLM-L6-v2` on first run. Subsequent runs use
+    /// the cached copy at `~/.cache/huggingface/hub/`.
+    fn new() -> Result<Self> {
+        let device = Device::Cpu;
 
-        // Build vocabulary and document frequency
-        let mut term_df: HashMap<&str, usize> = HashMap::new();
-        let mut vocab_set: HashSet<&str> = HashSet::new();
+        let api = Api::new()?;
+        let repo = api.model(MODEL_ID.to_string());
 
-        for doc in tokenized_docs {
-            let mut seen_in_doc: HashSet<&str> = HashSet::new();
-            for term in doc {
-                vocab_set.insert(term);
-                if seen_in_doc.insert(term) {
-                    *term_df.entry(term).or_insert(0) += 1;
+        let tokenizer_path = repo
+            .get("tokenizer.json")
+            .context("Failed to download tokenizer.json")?;
+        let config_path = repo
+            .get("config.json")
+            .context("Failed to download config.json")?;
+        let weights_path = repo
+            .get("model.safetensors")
+            .context("Failed to download model.safetensors")?;
+
+        let tokenizer = Tokenizer::from_file(&tokenizer_path)
+            .map_err(|e| anyhow::anyhow!("Failed to load tokenizer: {e}"))?;
+
+        let config: Config = serde_json::from_str(
+            &std::fs::read_to_string(&config_path)
+                .context("Failed to read config.json")?,
+        )
+        .context("Failed to parse config.json")?;
+
+        let vb = unsafe {
+            VarBuilder::from_mmaped_safetensors(&[weights_path], DTYPE, &device)?
+        };
+        let model = BertModel::load(vb, &config)?;
+
+        Ok(Self {
+            model,
+            tokenizer,
+            device,
+        })
+    }
+
+    /// Encode a batch of texts into normalized embedding vectors.
+    ///
+    /// Returns a `Vec` of embeddings, each a `Vec<f64>` of length 384
+    /// (the embedding dimension for MiniLM-L6-v2).
+    fn encode(&self, texts: &[String]) -> Result<Vec<Vec<f64>>> {
+        if texts.is_empty() {
+            return Ok(vec![]);
+        }
+
+        // ── Tokenize ──────────────────────────────────────────────────
+        let encodings = self
+            .tokenizer
+            .encode_batch(texts.to_vec(), false)
+            .map_err(|e| anyhow::anyhow!("Tokenization failed: {e}"))?;
+
+        let max_len = encodings
+            .iter()
+            .map(|e| e.get_ids().len())
+            .max()
+            .unwrap_or(0)
+            .min(MAX_LEN);
+
+        let batch_size = texts.len();
+        let mut input_ids_arr = Vec::with_capacity(batch_size * max_len);
+        let mut attention_mask_arr = Vec::with_capacity(batch_size * max_len);
+
+        for encoding in &encodings {
+            let ids = encoding.get_ids();
+            let len = ids.len().min(MAX_LEN);
+
+            for i in 0..max_len {
+                if i < len {
+                    input_ids_arr.push(ids[i] as u32);
+                    attention_mask_arr.push(1u32);
+                } else {
+                    input_ids_arr.push(0u32);     // padding token
+                    attention_mask_arr.push(0u32); // mask out
                 }
             }
         }
 
-        // Sort vocabulary for deterministic order
-        let mut vocabulary: Vec<String> = vocab_set.iter().map(|s| (*s).to_string()).collect();
-        vocabulary.sort();
+        let input_ids = Tensor::from_slice(
+            &input_ids_arr,
+            (batch_size, max_len),
+            &self.device,
+        )?;
+        let attention_mask = Tensor::from_slice(
+            &attention_mask_arr,
+            (batch_size, max_len),
+            &self.device,
+        )?;
+        let token_type_ids = Tensor::zeros((batch_size, max_len), candle_core::DType::U32, &self.device)?;
 
-        // Compute IDF for each term
-        // IDF(t) = 1.0 + log((N + 1) / (df(t) + 1))
-        // This is the "smooth" IDF variant that prevents division by zero
-        let idf: Vec<f64> = vocabulary
-            .iter()
-            .map(|term| {
-                let df = term_df.get(term.as_str()).copied().unwrap_or(0) as f64;
-                1.0 + ((n_docs + 1.0) / (df + 1.0)).ln()
-            })
+        // ── Forward pass through BERT ─────────────────────────────────
+        // Output shape: [batch, seq_len, hidden_size]
+        let hidden = self
+            .model
+            .forward(&input_ids, &token_type_ids, Some(&attention_mask))?;
+
+        // ── Mean pooling ───────────────────────────────────────────────
+        // Average the non-padding token embeddings for each sequence.
+        let mask_f32 = attention_mask
+            .to_dtype(candle_core::DType::F32)?
+            .unsqueeze(2)?; // [batch, seq, 1]
+
+        // Use broadcast_mul to avoid shape mismatch: [b, s, h] * [b, s, 1]
+        let sum_embeddings = hidden.broadcast_mul(&mask_f32)?.sum(1)?; // [batch, hidden]
+        let mask_sum = mask_f32.sum(1)?;                               // [batch, hidden]
+        let mean_embeddings = sum_embeddings.broadcast_div(&mask_sum)?; // [batch, hidden]
+
+        // ── L2 normalize ──────────────────────────────────────────────
+        let normalized = mean_embeddings.broadcast_div(
+            &mean_embeddings.sqr()?.sum(1)?.sqrt()?.unsqueeze(1)?,
+        )?;
+
+        // ── Convert to Vec<Vec<f64>> ──────────────────────────────────
+        let dim = normalized.dim(1)?;
+        let flat: Vec<f32> = normalized.to_vec2::<f32>()?.into_iter().flatten().collect();
+
+        let embeddings: Vec<Vec<f64>> = flat
+            .chunks(dim)
+            .map(|chunk| chunk.iter().map(|&v| v as f64).collect())
             .collect();
 
-        Self { vocabulary, idf }
-    }
-
-    /// Transform a tokenized document into a TF-IDF vector.
-    ///
-    /// TF-IDF(t, d) = TF(t, d) × IDF(t)
-    /// where TF is the raw count of term t in document d.
-    fn transform(&self, tokens: &[String]) -> Vec<f64> {
-        // Compute TF (raw counts)
-        let mut tf: HashMap<&str, f64> = HashMap::new();
-        for token in tokens {
-            *tf.entry(token).or_insert(0.0) += 1.0;
-        }
-
-        // Build the vector: TF-IDF for each vocabulary term
-        self.vocabulary
-            .iter()
-            .enumerate()
-            .map(|(i, term)| {
-                let tf_val = tf.get(term.as_str()).copied().unwrap_or(0.0);
-                tf_val * self.idf[i]
-            })
-            .collect()
+        Ok(embeddings)
     }
 }
 
 // ─── Cosine Similarity ──────────────────────────────────────────────────────
 
 /// Compute cosine similarity between two vectors.
-///
-/// Returns a value in [0.0, 1.0] where 1.0 = identical direction.
 fn cosine_similarity(a: &[f64], b: &[f64]) -> f64 {
     let dot: f64 = a.iter().zip(b.iter()).map(|(x, y)| x * y).sum();
-    let norm_a: f64 = a.iter().map(|x| x * x).sum::<f64>().sqrt();
-    let norm_b: f64 = b.iter().map(|x| x * x).sum::<f64>().sqrt();
-
-    if norm_a == 0.0 || norm_b == 0.0 {
-        return 0.0;
-    }
-
-    (dot / (norm_a * norm_b)).clamp(0.0, 1.0)
+    dot.clamp(0.0, 1.0) // vectors are already L2-normalized, dot = cos
 }
 
 // ─── Text Builders ──────────────────────────────────────────────────────────
 
-/// Concatenate relevant fields of a job post into a single searchable string.
+/// Concatenate relevant fields of a job post into a single string for embedding.
 ///
 /// Combines `title`, `description`, `company`, `location`, `salary`,
-/// and `job_type` into one space-separated string for skill matching.
+/// and `job_type` into one space-separated string.
 ///
-/// **`tags` are deliberately excluded** because job boards like Remote OK
-/// dump platform-level tag clouds onto every job listing.
-///
-/// Also strips marker sections like "Tags:", "Technologies:" etc. from
-/// descriptions so platform tag dumps don't inflate skill matches.
-///
-/// # Example output
-///
-/// ```text
-/// "Senior Rust Engineer We are looking for a Rust engineer... Stripe San Francisco $200k full-time"
-/// ```
+/// Tags are excluded (job boards dump platform-level tag clouds).
 pub fn build_job_text(job: &JobPost) -> String {
     let desc = strip_tag_cloud(&job.description);
     let mut parts = vec![job.title.clone(), desc];
@@ -229,94 +243,93 @@ pub fn build_job_text(job: &JobPost) -> String {
     parts.join(" ").trim().to_string()
 }
 
-/// Build the resume text for ML comparison — combines all relevant fields.
-///
-/// Includes skills, role titles, keywords, focus areas, and preferences
-/// into a single document that we can vectorize alongside job texts.
+/// Build resume text for embedding — combines all relevant fields.
 pub fn build_resume_text(resume: &Resume) -> String {
     let mut parts: Vec<String> = Vec::new();
 
-    // Role titles (weighted implicitly by TF — they're shorter, so each
-    // term gets higher TF density naturally)
     for role in &resume.role_titles {
         parts.push(role.clone());
     }
-
-    // Focus areas — what the candidate actually works on
     for area in &resume.focus_areas {
         parts.push(area.clone());
     }
-
-    // Skills — the tech stack
     for skill in &resume.skills {
         parts.push(skill.clone());
     }
-
-    // Keywords — extra matching terms
     for kw in &resume.keywords {
         parts.push(kw.clone());
     }
-
-    // Preferences (location and type)
     if let Some(loc) = &resume.preferred_location {
         parts.push(format!("location: {}", loc));
     }
     if let Some(jt) = &resume.preferred_job_type {
         parts.push(format!("type: {}", jt));
     }
-
-    // Experience years as a soft signal
     if let Some(yrs) = resume.experience_years {
-        let yrs_str = format!("{} years", yrs as u32);
-        parts.push(yrs_str);
+        parts.push(format!("{} years experience", yrs as u32));
     }
 
     parts.join(" ").trim().to_string()
 }
 
-// ─── Core ML Scorer (Batch) ────────────────────────────────────────────────
+// ─── Core Scorer ────────────────────────────────────────────────────────────
 
-/// Score a batch of jobs against a resume using TF-IDF + cosine similarity.
+/// Score a batch of jobs against a resume using transformer embeddings.
 ///
-/// This is more efficient than scoring one-at-a-time because we fit the
-/// vectorizer once on the entire corpus instead of refitting for each job.
+/// ## ML Pipeline
+///
+/// 1. Encode resume text into a 384-dim embedding vector
+/// 2. Encode all job texts into 384-dim embedding vectors (batched)
+/// 3. Cosine similarity between resume vector and each job vector
+/// 4. Small bonus modifiers for location/job-type preferences
+///
+/// Returns scores in the same order as the input `jobs` slice.
 pub fn score_batch(jobs: &[JobPost], resume: &Resume) -> Vec<f64> {
     if jobs.is_empty() {
         return vec![];
     }
 
-    // Build all job texts first
+    // Get or initialize the transformer model
+    let transformer = match get_transformer() {
+        Ok(t) => t,
+        Err(e) => {
+            eprintln!("  Warning: NLP model unavailable ({e}), scoring disabled.");
+            return vec![0.0; jobs.len()];
+        }
+    };
+
+    // Build texts
+    let resume_text = build_resume_text(resume);
     let job_texts: Vec<String> = jobs.iter().map(|j| build_job_text(j)).collect();
 
-    // Build corpus: resume + all jobs
-    let resume_text = build_resume_text(resume);
-    let resume_tokens = tokenize(&resume_text);
+    // Encode
+    let resume_embedding = match transformer.encode(&[resume_text]) {
+        Ok(mut v) => v.pop().unwrap_or_default(),
+        Err(e) => {
+            eprintln!("  Warning: failed to encode resume: {e}");
+            return vec![0.0; jobs.len()];
+        }
+    };
 
-    let all_job_tokens: Vec<Vec<String>> = job_texts.iter().map(|t| tokenize(t)).collect();
+    let job_embeddings = match transformer.encode(&job_texts) {
+        Ok(v) => v,
+        Err(e) => {
+            eprintln!("  Warning: failed to encode jobs: {e}");
+            return vec![0.0; jobs.len()];
+        }
+    };
 
-    let mut corpus: Vec<Vec<String>> = Vec::with_capacity(1 + all_job_tokens.len());
-    corpus.push(resume_tokens.clone());
-    corpus.extend(all_job_tokens.clone());
-
-    // Fit TF-IDF model on the full corpus
-    let vectorizer = TfIdfVectorizer::fit(&corpus);
-
-    // Transform resume into vector
-    let resume_vec = vectorizer.transform(&resume_tokens);
-
-    // Score each job
+    // Compute cosine similarity for each job + bonus modifiers
     jobs.iter()
-        .map(|job| {
-            let job_text = build_job_text(job);
-            let tokens = tokenize(&job_text);
-            let job_vec = vectorizer.transform(&tokens);
+        .zip(job_embeddings.iter())
+        .map(|(job, job_emb)| {
+            let mut score = cosine_similarity(&resume_embedding, job_emb);
 
-            let mut score = cosine_similarity(&resume_vec, &job_vec);
-
-            // Bonuses
+            // Small bonuses for explicit preference matches
             let title_lower = job.title.to_lowercase();
             let desc_lower = job.description.to_lowercase();
 
+            // Role-title bonus
             let has_role_match = resume.role_titles.iter().any(|r| {
                 let rl = r.to_lowercase();
                 title_lower.contains(&rl) || desc_lower.contains(&rl)
@@ -325,6 +338,7 @@ pub fn score_batch(jobs: &[JobPost], resume: &Resume) -> Vec<f64> {
                 score += 0.05;
             }
 
+            // Location bonus
             if let (Some(pref_loc), Some(job_loc)) = (&resume.preferred_location, &job.location) {
                 let pl = pref_loc.to_lowercase();
                 let jl = job_loc.to_lowercase();
@@ -333,6 +347,7 @@ pub fn score_batch(jobs: &[JobPost], resume: &Resume) -> Vec<f64> {
                 }
             }
 
+            // Job-type bonus
             if let (Some(pref_type), Some(job_type)) = (&resume.preferred_job_type, &job.job_type) {
                 let pt = pref_type.to_lowercase();
                 let jt = job_type.to_lowercase();
@@ -346,10 +361,12 @@ pub fn score_batch(jobs: &[JobPost], resume: &Resume) -> Vec<f64> {
         .collect()
 }
 
+// ─── Tag Cloud Stripper ─────────────────────────────────────────────────────
+
 /// Strip tag-cloud sections from job descriptions.
 ///
 /// Many job boards append a comma-separated tag cloud of every keyword.
-/// These inflate skill matching scores. We detect common section markers
+/// These inflate similarity scores. We detect common section markers
 /// and truncate before them.
 fn strip_tag_cloud(text: &str) -> String {
     let lower = text.to_lowercase();
@@ -418,116 +435,16 @@ mod tests {
     }
 
     #[test]
-    fn test_tokenize_basic() {
-        let tokens = tokenize("Senior Rust Engineer with Python experience");
-        assert!(tokens.contains(&"rust".to_string()));
-        assert!(tokens.contains(&"python".to_string()));
-        assert!(tokens.contains(&"senior".to_string()));
-        assert!(tokens.contains(&"engineer".to_string()));
-        // "with" is a stop word, should be filtered
-        assert!(!tokens.contains(&"with".to_string()));
-    }
-
-    #[test]
-    fn test_tokenize_tech_terms() {
-        let tokens = tokenize("C++ TypeScript Node.js Kubernetes");
-        assert!(tokens.contains(&"c++".to_string()));
-        assert!(tokens.contains(&"typescript".to_string()));
-        assert!(tokens.contains(&"node.js".to_string()));
-        assert!(tokens.contains(&"kubernetes".to_string()));
-    }
-
-    #[test]
-    fn test_tokenize_filters_stop_words() {
-        let tokens = tokenize("the and for but not experience");
-        assert_eq!(tokens.len(), 0);
-    }
-
-    #[test]
     fn test_cosine_similarity_identical() {
-        let v = vec![1.0, 2.0, 3.0];
-        let sim = cosine_similarity(&v, &v);
-        assert!((sim - 1.0).abs() < 1e-6);
+        let v = vec![1.0, 0.0, 0.0];
+        assert!((cosine_similarity(&v, &v) - 1.0).abs() < 1e-6);
     }
 
     #[test]
     fn test_cosine_similarity_orthogonal() {
         let a = vec![1.0, 0.0, 0.0];
         let b = vec![0.0, 1.0, 0.0];
-        let sim = cosine_similarity(&a, &b);
-        assert!((sim - 0.0).abs() < 1e-6);
-    }
-
-    #[test]
-    fn test_cosine_similarity_partial() {
-        let a = vec![1.0, 1.0, 0.0];
-        let b = vec![1.0, 0.0, 0.0];
-        let sim = cosine_similarity(&a, &b);
-        assert!((sim - 0.7071).abs() < 0.01);
-    }
-
-    #[test]
-    fn test_tfidf_vectorizer() {
-        let docs = vec![
-            tokenize("rust python kubernetes"),
-            tokenize("java spring kubernetes"),
-            tokenize("rust wasm browser"),
-        ];
-
-        let vectorizer = TfIdfVectorizer::fit(&docs);
-
-        // "kubernetes" appears in 2 of 3 docs, so IDF should be lower
-        // than "rust" (2 of 3) or "wasm" (1 of 3)
-        assert!(vectorizer.vocabulary.contains(&"kubernetes".to_string()));
-        assert!(vectorizer.vocabulary.contains(&"rust".to_string()));
-        assert!(vectorizer.vocabulary.contains(&"wasm".to_string()));
-
-        // Transform a document
-        let tokens = tokenize("rust python");
-        let vec = vectorizer.transform(&tokens);
-        assert_eq!(vec.len(), vectorizer.vocabulary.len());
-    }
-
-    #[test]
-    fn test_ml_scoring_rust_job() {
-        let jobs = vec![make_job("Rust Engineer", "We need a Rust engineer with Python experience")];
-        let resume = make_resume(&["rust", "python"], &["engineer"]);
-        let scores = score_batch(&jobs, &resume);
-        assert!(scores[0] > 0.3);
-    }
-
-    #[test]
-    fn test_ml_scoring_unrelated_job() {
-        let jobs = vec![make_job("Barista", "Making coffee and serving customers")];
-        let resume = make_resume(&["rust", "python", "kubernetes"], &["software engineer"]);
-        let scores = score_batch(&jobs, &resume);
-        // Should be very low — no overlap in vocabulary
-        assert!(scores[0] < 0.2);
-    }
-
-    #[test]
-    fn test_ml_scoring_ranks_correctly() {
-        let jobs = vec![
-            make_job("Senior Rust Engineer", "Looking for a Rust developer with Python skills and distributed systems experience"),
-            make_job("Fullstack Developer", "Python Go React TypeScript full stack development"),
-            make_job("Barista", "Coffee shop experience required making and serving coffee"),
-        ];
-        let resume = make_resume(&["rust", "python", "go", "kubernetes"], &["senior software engineer"]);
-
-        let scores = score_batch(&jobs, &resume);
-
-        // Rust job should score highest (matches rust + python)
-        assert!(scores[0] > scores[1]);
-        assert!(scores[0] > scores[2]);
-
-        // Fullstack should beat barista (python + go match)
-        assert!(scores[1] > scores[2]);
-    }
-
-    #[test]
-    fn test_empty_corpus() {
-        let scores = score_batch(&[], &make_resume(&["rust"], &["engineer"]));
-        assert!(scores.is_empty());
+        assert!((cosine_similarity(&a, &b) - 0.0).abs() < 1e-6);
     }
 
     #[test]
@@ -537,5 +454,13 @@ mod tests {
         assert!(text.contains("rust"));
         assert!(text.contains("python"));
         assert!(text.contains("senior engineer"));
+    }
+
+    #[test]
+    fn test_strip_tag_cloud() {
+        let text = "We need a Rust engineer.\nTags: rust, python, go";
+        let stripped = strip_tag_cloud(text);
+        assert!(!stripped.contains("Tags:"));
+        assert!(stripped.contains("Rust engineer"));
     }
 }

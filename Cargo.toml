@@ -58,3 +58,10 @@ futures = "0.3"
 
 # PDF text extraction
 pdf-extract = "0.12"
+
+# ─── ML: Sentence Transformer Embeddings via candle ─────────────────────
+candle-core = "0.9"
+candle-nn = "0.9"
+candle-transformers = "0.9"
+tokenizers = "0.21"
+hf-hub = "0.4"

@@ -85,6 +85,9 @@ pub struct SkillDictionary {
     section_markers: Vec<&'static str>,
     /// Common English words that should never be extracted as skills.
     stop_words: Vec<&'static str>,
+    /// Words that should NEVER be extracted as skills (months, locations,
+    /// company names, verbs, roman numerals, generic nouns, etc.)
+    not_skills: Vec<&'static str>,
 }
 
 impl SkillDictionary {
@@ -134,7 +137,75 @@ impl SkillDictionary {
                 "various", "multiple", "different", "wide", "range",
                 "etc", "etc.",
             ],
+            not_skills: vec![
+                // Months
+                "january", "february", "march", "april", "may", "june",
+                "july", "august", "september", "october", "november", "december",
+                "jan", "feb", "mar", "apr", "jun", "jul", "aug", "sep",
+                "oct", "nov", "dec",
+                // Locations
+                "seattle", "san francisco", "new york", "london", "berlin",
+                "munich", "paris", "tokyo", "shanghai", "beijing",
+                "bangalore", "mumbai", "delhi", "hyderabad", "chennai",
+                "pune", "kolkata", "india", "germany", "china",
+                "japan", "uk", "usa", "us", "eu", "europe", "asia",
+                "remote", "hybrid", "onsite",
+                // Big tech companies
+                "microsoft", "google", "amazon", "apple", "meta", "netflix",
+                "ibm", "oracle", "cisco", "intel", "dell", "hp", "sap",
+                "salesforce", "adobe", "uber", "airbnb", "twitter", "linkedin",
+                "slack", "spotify", "dropbox", "palantir", "datadog",
+                "snowflake", "cloudflare", "tesla", "spacex", "nvidia",
+                "amd", "vmware", "servicenow", "workday", "atlassian",
+                "reddit", "discord", "pinterest", "shopify",
+                "stripe", "square", "coinbase", "robinhood",
+                "vercel", "netlify", "heroku", "digitalocean",
+                // Generic verbs
+                "built", "implemented", "developed", "designed",
+                "engineered", "created", "managed", "led", "delivered",
+                "deployed", "launched", "maintained", "improved",
+                "optimized", "reduced", "increased", "achieved",
+                "architected", "configured", "integrated", "migrated",
+                "writing", "learning", "reading", "building",
+                "processing", "computing", "rendering",
+                // Generic role words
+                "engineer", "developer", "manager", "director", "lead",
+                "senior", "staff", "principal", "junior", "intern",
+                "architect", "scientist", "analyst", "consultant",
+                "specialist", "coordinator", "associate", "administrator",
+                "internship", "full-time", "part-time", "contract",
+                // Generic nouns
+                "software", "hardware", "system", "systems", "platform",
+                "infrastructure", "application", "service", "services",
+                "solution", "solutions", "technology", "technologies",
+                "framework", "library", "tool", "tools", "database",
+                "network", "security", "cloud", "data", "product",
+                "program", "project", "customer", "client", "user",
+                "team", "teams", "code", "codes", "api", "apis",
+                // Roman numerals / short noise
+                "ii", "iii", "iv", "v", "vi",
+                "i", "ii", "iii", "iv",
+                // Company suffixes
+                "inc", "llc", "ltd", "gmbh", "corp", "co",
+                // Day abbreviations
+                "sun", "mon", "tue", "wed", "thu", "fri", "sat",
+            ],
         }
+    }
+
+    /// Check if a word is a known non-skill (location, month, company, verb, etc.)
+    fn is_not_skill(&self, word: &str) -> bool {
+        let lower = word.trim().to_lowercase();
+        // Very short words without special chars are never skills
+        if lower.len() <= 2 && !lower.contains(|c: char| c == '+' || c == '#' || c == '.') {
+            return true;
+        }
+        // Purely numeric/metric values are never skills
+        if lower.chars().all(|c| c.is_ascii_digit() || c == '.' || c == ',' || c == '+' || c == '/' || c == '-') {
+            return true;
+        }
+        // Check the anti-list
+        self.not_skills.iter().any(|s| *s == lower)
     }
 
     /// Extract tech skills from text using context-weighted analysis.
@@ -631,78 +702,73 @@ fn looks_like_role_line(line: &str) -> bool {
     line.split_whitespace().any(|w| w.len() >= 3)
 }
 
-/// Infer seniority level from role titles and text.
+/// Infer seniority level from role titles ONLY.
 ///
-/// Strategy: role titles are the PRIMARY signal (they're explicit about level).
-/// Text is the FALLBACK. And we check highest levels first so "senior engineer"
-/// doesn't get overridden by "intern" appearing somewhere irrelevant in the text.
-fn infer_seniority(roles: &[String], text: &str) -> Option<SeniorityLevel> {
-    let combined = format!("{} {}", roles.join(" "), text).to_lowercase();
-
-    // ── Role-title-driven checks (strongest signal) ─────────────────
-    // If any role title explicitly says the level, trust it first.
+/// The text-fallback approach was removed because it caused false
+/// positives: e.g. "Worked closely with the CTO" in a project summary
+/// would tag the candidate as Executive.
+///
+/// Now seniority is inferred ONLY from actual role titles extracted
+/// by extract_roles(). These represent actual job positions held,
+/// not random mentions in text.
+fn infer_seniority(roles: &[String], _text: &str) -> Option<SeniorityLevel> {
+    // Role-title-driven checks only — no text-fallback.
+    // Check highest levels first so "senior" in "Senior VP" doesn't
+    // override "vp".
     for role in roles {
         let r = role.to_lowercase();
-        if r.contains("vice president") || r.contains("vp ") || r.contains("chief") || r.contains("cto") || r.contains("ceo") {
+
+        if contains_word(&r, "vice president")
+            || contains_word(&r, "vp")
+            || contains_word(&r, "chief")
+            || contains_word(&r, "cto")
+            || contains_word(&r, "ceo")
+        {
             return Some(SeniorityLevel::Executive);
         }
-        if r.contains("director") {
+        if contains_word(&r, "director") {
             return Some(SeniorityLevel::Director);
         }
-        if r.contains("principal") {
+        if contains_word(&r, "principal") {
             return Some(SeniorityLevel::Principal);
         }
-        if r.contains("staff") {
-            return Some(SeniorityLevel::Staff);
+        if contains_word(&r, "staff") {
+            // "staff" needs technical context: "staff engineer" vs "staff augmentation"
+            if r.contains("staff engineer")
+                || r.contains("staff software")
+                || r.contains("staff scientist")
+            {
+                return Some(SeniorityLevel::Staff);
+            }
         }
-        if r.contains("senior") || r.contains("sr ") {
+        if contains_word(&r, "senior") || r.contains("sr,") || r.starts_with("sr ") {
             return Some(SeniorityLevel::Senior);
         }
-        if r.contains("lead") {
+        if contains_word(&r, "lead") {
             return Some(SeniorityLevel::Lead);
         }
-        if r.contains("junior") || r.contains("jr ") || r.contains("jr,") {
+        if contains_word(&r, "junior") || r.contains("jr,") || r.starts_with("jr ") {
             return Some(SeniorityLevel::Junior);
         }
-        if r.contains("intern") {
+        if contains_word(&r, "intern") {
             return Some(SeniorityLevel::Intern);
         }
     }
 
-    // ── Text-fallback checks (weaker signal, check high→low) ────────
-    // Use word-boundary checks to avoid "internal" → "intern" false positive
-    if combined.contains("vp ") || combined.contains("vice president") || combined.contains("chief") || combined.contains("cto") || combined.contains("ceo") {
-        return Some(SeniorityLevel::Executive);
-    }
-    if combined.contains("director") {
-        return Some(SeniorityLevel::Director);
-    }
-    if combined.contains("principal") {
-        return Some(SeniorityLevel::Principal);
-    }
-    if combined.contains("staff") {
-        // "staff" is common in resumes ("staff engineer" vs "staff augmentation")
-        // Only trust if near engineering/technical context
-        let ctx = format!("staff {} {}", text, roles.join(" ")).to_lowercase();
-        if ctx.contains("staff engineer") || ctx.contains("staff software") || ctx.contains("staff scientist") {
-            return Some(SeniorityLevel::Staff);
-        }
-    }
-    if combined.contains("senior") || combined.contains("sr ") {
-        return Some(SeniorityLevel::Senior);
-    }
-    if combined.contains("lead") {
-        return Some(SeniorityLevel::Lead);
-    }
-    if combined.contains("junior") || combined.contains("jr ") {
-        return Some(SeniorityLevel::Junior);
-    }
-    // Only match "intern" as a standalone word, not "internal" or "internship"
-    if combined.contains(" intern ") || combined.starts_with("intern ") || combined.ends_with(" intern") || combined.contains("\nintern") {
-        return Some(SeniorityLevel::Intern);
-    }
-
     None
+}
+
+/// Check if `text` contains `word` as a standalone word (not as a substring).
+/// This avoids "vps" matching "vp", "internal" matching "intern", etc.
+fn contains_word(text: &str, word: &str) -> bool {
+    if text == word {
+        return true;
+    }
+    text.starts_with(&format!("{} ", word))
+        || text.ends_with(&format!(" {}", word))
+        || text.contains(&format!(" {} ", word))
+        || text.starts_with(&format!("{}.", word))
+        || text.starts_with(&format!("{},", word))
 }
 
 /// Extract years of experience.
