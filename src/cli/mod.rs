@@ -368,33 +368,6 @@ impl App {
 
     // ─── Shared crawl + spinner logic ─────────────────────────────────
 
-    /// Crawl all cached company career sites and extend `jobs` with results.
-    async fn crawl_company_sites(&mut self, jobs: &mut Vec<JobPost>) {
-        if self.company_db.companies.is_empty() {
-            return;
-        }
-        let pb = ProgressBar::new_spinner();
-        pb.set_style(
-            ProgressStyle::default_spinner()
-                .template("{spinner:.green} {msg}")
-                .unwrap(),
-        );
-        pb.set_message(format!(
-            "Crawling {} company career sites...",
-            self.company_db.companies.len()
-        ));
-        pb.enable_steady_tick(std::time::Duration::from_millis(100));
-
-        let company_jobs = CompanyCrawler::crawl_all(&mut self.company_db, &self.config).await;
-        pb.finish_and_clear();
-
-        if !company_jobs.is_empty() {
-            eprintln!("  {} {} jobs from company career sites", "+".green(), company_jobs.len());
-            jobs.extend(company_jobs);
-        }
-        let _ = storage::save_company_database(&self.company_db);
-    }
-
     /// Score jobs by keyword relevance when no resume is loaded.
     /// Keywords in the title are weighted 3x vs description, with an exact-phrase bonus.
     fn score_jobs_by_keywords(&self, jobs: Vec<JobPost>) -> Vec<MatchResult> {
@@ -441,39 +414,74 @@ impl App {
             .collect::<Vec<_>>()
             .join(", ");
 
-        // ── Phase 1: Job board crawl (45s timeout) ──────────────────
+        // ── Run board crawl + company crawl IN PARALLEL ──────────────
+        // No reason to wait for boards to finish before hitting career sites.
+        // They're independent I/O operations — run them concurrently.
+        // Total time = max(board_time, company_time), not board_time + company_time.
+
+        // Split borrows so tokio::join! can run both concurrently
+        let coordinator = &self.coordinator;
+        let config = &self.config;
+        let company_db = &mut self.company_db;
+
+        let spinner_msg = format!(
+            "{} jobs for: {} (boards + {} company sites)...",
+            action, kw_display, company_db.companies.len()
+        );
+
         let pb = ProgressBar::new_spinner();
         pb.set_style(
             ProgressStyle::default_spinner()
                 .template("{spinner:.green} {msg}")
                 .unwrap(),
         );
-        pb.set_message(format!(
-            "{} jobs for: {} (Remote OK, Reddit, Hacker News)...",
-            action, kw_display
-        ));
+        pb.set_message(spinner_msg);
         pb.enable_steady_tick(std::time::Duration::from_millis(100));
 
-        let mut jobs = match tokio::time::timeout(
-            std::time::Duration::from_secs(45),
-            self.coordinator.crawl_all(&self.config),
-        ).await {
+        let (board_result, company_result) = tokio::join!(
+            // Board crawl (45s timeout)
+            tokio::time::timeout(
+                std::time::Duration::from_secs(45),
+                coordinator.crawl_all(config),
+            ),
+            // Company crawl (60s timeout)
+            tokio::time::timeout(
+                std::time::Duration::from_secs(60),
+                CompanyCrawler::crawl_all(company_db, config),
+            ),
+        );
+
+        pb.finish_and_clear();
+
+        // Unpack results
+        let mut jobs: Vec<JobPost> = match board_result {
             Ok(j) => j,
             Err(_) => {
-                pb.finish_and_clear();
-                eprintln!("  {} Board crawl timed out (45s). Moving on.", "!".yellow());
+                eprintln!("  {} Board crawl timed out (45s).", "!".yellow());
                 vec![]
             }
         };
-        pb.finish_and_clear();
 
+        let company_jobs: Vec<JobPost> = match company_result {
+            Ok(j) => j,
+            Err(_) => {
+                eprintln!("  {} Company crawl timed out (60s).", "!".yellow());
+                vec![]
+            }
+        };
+
+        // Merge
+        if !company_jobs.is_empty() {
+            jobs.extend(company_jobs);
+        }
+        let _ = storage::save_company_database(&self.company_db);
+
+        // ── Auto-discover companies from board job posts ─────────────
         if jobs.is_empty() {
-            eprintln!("  {} No jobs from boards. Skipping company crawl.", "-".yellow());
             println!("\n  No jobs found. Try different keywords or sources.\n");
             return;
         }
 
-        // ── Auto-discover companies from job posts ───────────────────
         let discovered = self.auto_discover_companies(&jobs);
         if discovered > 0 {
             eprintln!(
@@ -482,17 +490,6 @@ impl App {
                 discovered,
                 if discovered == 1 { "company" } else { "companies" }
             );
-        }
-
-        // ── Phase 2: Company career site crawl (60s timeout) ─────────
-        match tokio::time::timeout(
-            std::time::Duration::from_secs(60),
-            self.crawl_company_sites(&mut jobs),
-        ).await {
-            Ok(_) => {}
-            Err(_) => {
-                eprintln!("  {} Company crawl timed out (60s). Using board results only.", "!".yellow());
-            }
         }
 
         // ── Process results ──────────────────────────────────────────
