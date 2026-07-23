@@ -37,9 +37,8 @@ colored = "2"
 # Date/time
 chrono = { version = "0.4", features = ["serde"] }
 
-# Text matching
+# Text matching (regex for legacy resume parsing)
 regex = "1"
-strsim = "0.11"
 
 # Error handling
 thiserror = "2"

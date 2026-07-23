@@ -2,13 +2,23 @@
 //!
 //! The [`Matcher`] struct holds a loaded resume and compares it against
 //! job posts, producing a [`MatchResult`] with a score between 0.0 and 1.0.
+//!
+//! ## How Scoring Works (ML)
+//!
+//! Scoring uses **TF-IDF vectorization + cosine similarity** — an unsupervised
+//! ML technique. The resume text and each job text are converted into term
+//! vectors weighted by term frequency × inverse document frequency. The cosine
+//! of the angle between vectors is the match score.
+//!
+//! This replaces the old heuristic weight-tuning approach ("slope") that used
+//! manually set percentages for skills, keywords, role titles, etc.
 
 pub mod scoring;
 
 use std::collections::HashSet;
 
 use crate::models::{JobPost, MatchResult, Resume};
-use scoring::{build_job_text, compute_score, fuzzy_match};
+use scoring::{build_job_text, score_batch};
 
 /// Compares a resume against job posts and produces scored results.
 pub struct Matcher {
@@ -40,73 +50,99 @@ impl Matcher {
         self.resume.as_ref()
     }
 
-    /// Score a single job post against the loaded resume.
-    ///
-    /// Returns `None` if no resume is loaded.
-    pub fn score(&self, job: &JobPost) -> Option<MatchResult> {
-        let resume = self.resume.as_ref()?;
-
-        let job_text = build_job_text(job);
-        let job_lower = job_text.to_lowercase();
-
-        let mut matched_skills = Vec::new();
-        let mut missing_skills = Vec::new();
-
-        for skill in &resume.skills {
-            let skill_lower = skill.to_lowercase();
-            if job_lower.contains(&skill_lower) || fuzzy_match(&skill_lower, &job_lower) {
-                matched_skills.push(skill.clone());
-            } else {
-                missing_skills.push(skill.clone());
-            }
-        }
-
-        let mut matched_keywords = Vec::new();
-        let all_keywords: Vec<String> = resume
-            .keywords
-            .iter()
-            .chain(resume.role_titles.iter())
-            .cloned()
-            .collect();
-
-        for kw in &all_keywords {
-            let kw_lower = kw.to_lowercase();
-            if job_lower.contains(&kw_lower) || fuzzy_match(&kw_lower, &job_lower) {
-                matched_keywords.push(kw.clone());
-            }
-        }
-
-        let score = compute_score(
-            &matched_skills,
-            &resume.skills,
-            &matched_keywords,
-            &all_keywords,
-            job,
-            resume,
-        );
-
-        Some(MatchResult {
-            job: job.clone(),
-            score,
-            matched_skills: dedup_ordered(matched_skills),
-            matched_keywords: dedup_ordered(matched_keywords),
-            missing_skills: dedup_ordered(missing_skills),
-        })
-    }
-
-    /// Score all job posts and return results sorted by score descending.
+    /// Score all job posts against the loaded resume using TF-IDF + cosine
+    /// similarity (ML), and return results sorted by score descending.
     ///
     /// Results below [`threshold`] are filtered out.
+    ///
+    /// Returns an empty vec if no resume is loaded.
     pub fn score_all(&self, jobs: &[JobPost]) -> Vec<MatchResult> {
+        let resume = match self.resume.as_ref() {
+            Some(r) => r,
+            None => return vec![],
+        };
+
+        if jobs.is_empty() {
+            return vec![];
+        }
+
+        // ── Step 1: Compute ML scores via TF-IDF + cosine similarity ──
+        // This fits a vectorizer on the full corpus and scores every job
+        // in one batch. It's the core ML step.
+        let ml_scores = score_batch(jobs, resume);
+
+        // ── Step 2: Build display details (matched/missing skills) ─────
+        // These are for the UI only — the score itself comes from ML.
         let mut results: Vec<MatchResult> = jobs
             .iter()
-            .filter_map(|j| self.score(j))
-            .filter(|r| r.score >= self.threshold)
+            .zip(ml_scores.iter())
+            .filter(|(_, score)| **score >= self.threshold)
+            .map(|(job, score)| {
+                let job_text = build_job_text(job);
+                let job_lower = job_text.to_lowercase();
+
+                let (matched_skills, missing_skills) = find_skill_matches(&resume.skills, &job_lower);
+                let matched_keywords = find_keyword_matches(
+                    &resume.keywords,
+                    &resume.role_titles,
+                    &job_lower,
+                );
+
+                MatchResult {
+                    job: job.clone(),
+                    score: *score,
+                    matched_skills: dedup_ordered(matched_skills),
+                    matched_keywords: dedup_ordered(matched_keywords),
+                    missing_skills: dedup_ordered(missing_skills),
+                }
+            })
             .collect();
 
-        results.sort_by(|a, b| b.score.partial_cmp(&a.score).unwrap_or(std::cmp::Ordering::Equal));
+        // Sort by score descending
+        results.sort_by(|a, b| {
+            b.score
+                .partial_cmp(&a.score)
+                .unwrap_or(std::cmp::Ordering::Equal)
+        });
+
         results
     }
+}
+
+/// Find which skills from the resume match in the job text (case-insensitive).
+/// Returns (matched, missing).
+fn find_skill_matches(skills: &[String], job_lower: &str) -> (Vec<String>, Vec<String>) {
+    let mut matched = Vec::new();
+    let mut missing = Vec::new();
+
+    for skill in skills {
+        let skill_lower = skill.to_lowercase();
+        if job_lower.contains(&skill_lower) {
+            matched.push(skill.clone());
+        } else {
+            missing.push(skill.clone());
+        }
+    }
+
+    (matched, missing)
+}
+
+/// Find which keywords from the resume match in the job text.
+fn find_keyword_matches(
+    keywords: &[String],
+    role_titles: &[String],
+    job_lower: &str,
+) -> Vec<String> {
+    let all_keywords: Vec<String> = keywords
+        .iter()
+        .chain(role_titles.iter())
+        .cloned()
+        .collect();
+
+    all_keywords
+        .into_iter()
+        .filter(|kw| job_lower.contains(&kw.to_lowercase()))
+        .collect()
 }
 
 /// Deduplicate items in a vector while preserving insertion order.
@@ -158,27 +194,22 @@ mod tests {
     }
 
     #[test]
-    fn test_exact_skill_match() {
-        let mut matcher = Matcher::new();
-        let resume = make_resume(&["rust", "python", "docker"], &["engineer"]);
-        matcher.load_resume(resume);
-    }
-
-    #[test]
     fn test_score_rust_job() {
         let mut matcher = Matcher::new();
         matcher.load_resume(make_resume(&["rust", "python"], &["engineer"]));
         let job = make_job("Rust Engineer", "We need a Rust engineer with Python experience");
-        let result = matcher.score(&job).unwrap();
-        assert!(result.score > 0.5);
-        assert!(result.matched_skills.contains(&"rust".to_string()));
+        let results = matcher.score_all(&[job]);
+        assert!(!results.is_empty());
+        assert!(results[0].score > 0.3);
+        assert!(results[0].matched_skills.contains(&"rust".to_string()));
     }
 
     #[test]
-    fn test_no_resume_returns_none() {
+    fn test_no_resume_returns_empty() {
         let matcher = Matcher::new();
         let job = make_job("Engineer", "some job");
-        assert!(matcher.score(&job).is_none());
+        let results = matcher.score_all(&[job]);
+        assert!(results.is_empty());
     }
 
     #[test]
@@ -189,8 +220,55 @@ mod tests {
             &["engineer"],
         ));
         let job = make_job("Frontend Engineer", "React developer position");
-        let result = matcher.score(&job).unwrap();
-        assert!(result.matched_skills.contains(&"react".to_string()));
-        assert!(!result.matched_skills.contains(&"rust".to_string()));
+        let results = matcher.score_all(&[job]);
+        assert!(!results.is_empty());
+        assert!(results[0].matched_skills.contains(&"react".to_string()));
+        assert!(!results[0].matched_skills.contains(&"rust".to_string()));
+    }
+
+    #[test]
+    fn test_ranks_rust_higher() {
+        let mut matcher = Matcher::new();
+        matcher.load_resume(make_resume(
+            &["rust", "python", "kubernetes"],
+            &["software engineer"],
+        ));
+        let jobs = vec![
+            make_job("Frontend Python Developer", "Python Django React TypeScript web development"),
+            make_job("Senior Rust Engineer", "Rust Python Kubernetes distributed systems"),
+            make_job("Barista", "Coffee shop experience making and serving"),
+        ];
+        let results = matcher.score_all(&jobs);
+        // Barista won't pass threshold (no overlap) — only 2 relevant jobs
+        assert_eq!(results.len(), 2);
+        // Rust job should rank first (more overlap: rust+python+kubernetes)
+        assert!(results[0].job.title.contains("Rust"));
+        // Python frontend should rank second
+        assert!(results[1].job.title.contains("Python"));
+    }
+
+    #[test]
+    fn test_threshold_filters_unrelated() {
+        let mut matcher = Matcher::new();
+        matcher.threshold = 0.5;
+        matcher.load_resume(make_resume(
+            &["rust", "python", "kubernetes"],
+            &["software engineer"],
+        ));
+        let jobs = vec![
+            make_job("Barista", "Coffee shop experience making coffee"),
+            make_job("Senior Rust Engineer", "Rust Python Kubernetes Go systems"),
+        ];
+        let results = matcher.score_all(&jobs);
+        assert!(results.iter().any(|r| r.job.title.contains("Rust")));
+        assert!(!results.iter().any(|r| r.job.title.contains("Barista")));
+    }
+
+    #[test]
+    fn test_empty_jobs_returns_empty() {
+        let mut matcher = Matcher::new();
+        matcher.load_resume(make_resume(&["rust"], &["engineer"]));
+        let results = matcher.score_all(&[]);
+        assert!(results.is_empty());
     }
 }
