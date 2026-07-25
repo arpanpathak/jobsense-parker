@@ -10,7 +10,7 @@ GitHub: [github.com/arpanpathak](https://github.com/arpanpathak)
 
 ## SUMMARY
 
-Systems Software Engineer with 7+ years architecting high-performance distributed systems, ML-driven platforms, and cloud-native infrastructure at **Amazon**, **Microsoft**, and **Oracle**. Deep expertise in **Rust**, **C++**, **systems programming**, and **machine learning** — building low-latency, high-throughput engines at global scale. Proven track record in eBPF/kernel-level networking, lock-free data structures, AI model deployment (BERT, XGBoost, Deep Learning), and Kubernetes infrastructure. Passionate about GPU-accelerated computing, performance engineering, and pushing the boundaries of what software can do at the hardware-software interface.
+Systems Software Engineer with 8+ years architecting high-performance distributed systems, ML-driven platforms, and cloud-native infrastructure at **Amazon**, **Microsoft**, and **Oracle**. Deep expertise in **Rust**, **C++**, **systems programming**, and **machine learning** — building low-latency, high-throughput engines at global scale. Proven track record in eBPF/kernel-level networking, lock-free data structures, AI model deployment (BERT, XGBoost, Deep Learning), and Kubernetes infrastructure. Passionate about GPU-accelerated computing, performance engineering, and pushing the boundaries of what software can do at the hardware-software interface.
 
 ---
 
