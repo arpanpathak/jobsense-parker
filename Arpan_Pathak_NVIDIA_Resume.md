@@ -1,8 +1,10 @@
 # Arpan Pathak
 
-**Seattle, Washington, USA**  
+**Seattle, Washington, USA** | Open to Relocation  
 Email: arpan.pathak47@gmail.com | Phone: +1 (206) 306-6059  
-LinkedIn: [linkedin.com/in/arpan-pathak-272341424](https://linkedin.com/in/arpan-pathak-272341424)
+LinkedIn: [linkedin.com/in/arpan-pathak-272341424](https://linkedin.com/in/arpan-pathak-272341424)  
+GitHub: [github.com/arpanpathak](https://github.com/arpanpathak)  
+**Visa: Requires H1B Transfer sponsorship**
 
 ---
 
@@ -57,14 +59,14 @@ Systems Software Engineer with 7+ years architecting high-performance distribute
 
 | Category | Technologies |
 |---|---|
-| **Systems Programming** | **Rust**, **C++**, **C**, **C#**, eBPF, Cilium, Lock-Free Data Structures, Memory Safety, Concurrency |
-| **Machine Learning & AI** | **PyTorch**, **TensorFlow**, **XGBoost**, **BERT/Transformers**, Deep Learning, Recommendation Systems, **MLOps**, Neural Networks, NLP, Computer Vision, Scikit-learn |
-| **Languages** | **Rust**, **Kotlin**, **Java**, **Go**, **Python**, **TypeScript**, **C++**, **C#**, Shell Script |
-| **Cloud-Native & Infrastructure** | **Kubernetes** (AKS, EKS), Docker, **Terraform**, AWS CDK, Istio, Cilium, Kubernetes Operators (Kubebuilder), **Kubernetes Gateway API** |
-| **Distributed Systems** | Consensus Protocols, Replication, Sharding, Apache Kafka, Apache Spark, Apache Flink, **AWS (EC2, ECS, Lambda, Kinesis, EMR, SageMaker)**, Azure (AKS, Bicep) |
+| **Languages** | Rust, Kotlin, Java, Go, Python, TypeScript, C++, C#, Shell Script |
+| **Distributed Systems & Cloud** | AWS (EC2, ECS, Lambda, Kinesis, EMR, SageMaker), Azure (AKS, Bicep), Kubernetes (EKS, AKS), Docker, Terraform, AWS CDK, Apache Kafka, Apache Spark, Apache Flink, Kubebuilder, Istio, Cilium, Kubernetes Gateway API |
 | **Distributed Data & Storage** | DynamoDB, PostgreSQL, Redis, MongoDB, Amazon Redshift, Amazon S3 |
-| **Observability** | Prometheus, Grafana, AWS CloudWatch, Azure Monitor |
-| **Core CS** | Data Structures & Algorithms, System Design, Networking (TCP/IP, UDP, TLS, DNS, HTTP/3), Performance Optimization |
+| **Frontend Engineering** | React.JS, JavaScript, Angular, HTML 5, SCSS |
+| **Observability** | AWS CloudWatch, Prometheus, Grafana, Azure Monitor |
+| **Machine Learning & AI** | TensorFlow, PyTorch, Scikit-learn, XGBoost, Transformer Models (BERT), Recommendation Systems, Deep Learning, Neural Networks, MLOps, Natural Language Processing (a.k.a Computer Linguistics), Computer Vision, Audio Signal Processing |
+| **Core CS Fundamentals** | Data Structures & Algorithms, Distributed Systems (consensus, replication, sharding), Concurrency, System Design, Networking (TCP/IP, UDP, TLS, DNS, HTTP 3, load balancing) |
+| **Systems Programming** | Rust, C++, C, C#, eBPF, Cilium, Lock-Free Data Structures, Memory Safety, Concurrency |
 
 ---
 
