@@ -57,16 +57,21 @@ Systems Software Engineer with 7+ years architecting high-performance distribute
 
 ## SKILLS
 
-| Category | Technologies |
-|---|---|
-| **Languages** | Rust, Kotlin, Java, Go, Python, TypeScript, C++, C#, Shell Script |
-| **Distributed Systems & Cloud** | AWS (EC2, ECS, Lambda, Kinesis, EMR, SageMaker), Azure (AKS, Bicep), Kubernetes (EKS, AKS), Docker, Terraform, AWS CDK, Apache Kafka, Apache Spark, Apache Flink, Kubebuilder, Istio, Cilium, Kubernetes Gateway API |
-| **Distributed Data & Storage** | DynamoDB, PostgreSQL, Redis, MongoDB, Amazon Redshift, Amazon S3 |
-| **Frontend Engineering** | React.JS, JavaScript, Angular, HTML 5, SCSS |
-| **Observability** | AWS CloudWatch, Prometheus, Grafana, Azure Monitor |
-| **Machine Learning & AI** | TensorFlow, PyTorch, Scikit-learn, XGBoost, Transformer Models (BERT), Recommendation Systems, Deep Learning, Neural Networks, MLOps, Natural Language Processing (a.k.a Computer Linguistics), Computer Vision, Audio Signal Processing |
-| **Core CS Fundamentals** | Data Structures & Algorithms, Distributed Systems (consensus, replication, sharding), Concurrency, System Design, Networking (TCP/IP, UDP, TLS, DNS, HTTP 3, load balancing) |
-| **Systems Programming** | Rust, C++, C, C#, eBPF, Cilium, Lock-Free Data Structures, Memory Safety, Concurrency |
+**Languages**: Rust, Kotlin, Java, Go, Python, TypeScript, C++, C#, Shell Script
+
+**Distributed Systems & Cloud**: AWS (EC2, ECS, Lambda, Kinesis, EMR, SageMaker), Azure (AKS, Bicep), Kubernetes (EKS, AKS), Docker, Terraform, AWS CDK, Apache Kafka, Apache Spark, Apache Flink, Kubebuilder, Istio, Cilium, Kubernetes Gateway API
+
+**Distributed Data & Storage**: DynamoDB, PostgreSQL, Redis, MongoDB, Amazon Redshift, Amazon S3
+
+**Frontend Engineering**: React.JS, JavaScript, Angular, HTML 5, SCSS
+
+**Observability**: AWS CloudWatch, Prometheus, Grafana, Azure Monitor
+
+**Machine Learning & AI**: TensorFlow, PyTorch, Scikit-learn, XGBoost, Transformer Models (BERT), Recommendation Systems, Deep Learning, Neural Networks, MLOps, Natural Language Processing (a.k.a Computer Linguistics), Computer Vision, Audio Signal Processing
+
+**Core CS Fundamentals**: Data Structures & Algorithms, Distributed Systems (consensus, replication, sharding), Concurrency, System Design, Networking (TCP/IP, UDP, TLS, DNS, HTTP 3, load balancing)
+
+**Systems Programming**: eBPF, Cilium, Lock-Free Data Structures, Memory Safety, Concurrency
 
 ---
 
