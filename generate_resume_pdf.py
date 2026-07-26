@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Convert resume markdown to a modern, clean PDF with project box support."""
+"""Convert resume markdown to a modern, clean PDF with color-highlighted metrics and dates."""
 
 import re
 import sys
@@ -10,6 +10,19 @@ PDF_FILE = MD_FILE.replace(".md", ".pdf")
 
 with open(MD_FILE, "r") as f:
     md = f.read()
+
+
+def highlight_metrics(text):
+    """Wrap metrics and numbers in colored spans."""
+    # Dollar amounts: $5.4M, $1.2M, $184,000
+    text = re.sub(r'(\$\d+[.,]?\d*[KMB]?[/]?(month|year)?)', r'<span class="metric">\1</span>', text)
+    # Numbers with performance units: 45,000 ops/s, 100ms, 5,000 QPS, 50,000 TPM, 99.99%
+    text = re.sub(r'(\d+[.,]?\d*\s*(ops/s|ms|QPS|TPM|%|writes/second|hourly transactions|hourly revenue))', r'<span class="metric">\1</span>', text)
+    # Number ranges with days/hours/minutes: 7 days, 2 hours, 30 minutes, 5 days
+    text = re.sub(r'(\d+\s*(days?|hours?|minutes?))', r'<span class="metric">\1</span>', text)
+    # Numbers with K/M suffix: 3K, 1M+, 45,000 (standalone)
+    text = re.sub(r'(\d+[KMB]\++?)(?!\s*(days?|hours?|minutes?|ops/s|ms|QPS|TPM|%))', r'<span class="metric">\1</span>', text)
+    return text
 
 
 def convert(md_text):
@@ -41,14 +54,20 @@ def convert(md_text):
         elif line.startswith("## "):
             html.append(f'<div class="section-heading">{line[3:]}</div>')
 
-        # H3 - Job entries
+        # H3 - Job entries: "Title | Company — Location | Date"
         elif line.startswith("### "):
             content = line[4:]
             parts = [p.strip() for p in content.split("|")]
-            if len(parts) >= 2:
-                title = parts[0]
-                rest = " | ".join(parts[1:])
-                html.append(f'<div class="job-header"><span class="job-title">{title}</span> <span class="job-meta">{rest}</span></div>')
+            title = parts[0] if len(parts) >= 1 else content
+            if len(parts) >= 3:
+                # Title | Company — Location | Date
+                company = parts[1]
+                date = parts[2]
+                html.append(f'<div class="job-header"><span class="job-title">{title}</span> <span class="job-company">{company}</span> <span class="job-date">{date}</span></div>')
+            elif len(parts) == 2:
+                # Title | rest
+                rest = parts[1]
+                html.append(f'<div class="job-header"><span class="job-title">{title}</span> <span class="job-company">{rest}</span></div>')
             else:
                 html.append(f'<div class="job-header">{content}</div>')
 
@@ -59,8 +78,10 @@ def convert(md_text):
         # Bullet points
         elif stripped.startswith("- "):
             item = stripped[2:]
-            cls = "bullet-sm" if in_project_box else "bullet"
-            html.append(f'<p class="{cls}">\u2022 {item}</p>')
+            if in_project_box:
+                html.append(f'<p class="bullet-sm">\u2022 {item}</p>')
+            else:
+                html.append(f'<p class="bullet">\u2022 {item}</p>')
 
         # Regular line
         else:
@@ -76,6 +97,14 @@ def convert(md_text):
 
     # Convert [text](url) to <a href="url">text</a>
     result = re.sub(r'\[([^\]]+)\]\(([^)]+)\)', r'<a href="\2">\1</a>', result)
+
+    # Highlight metrics (but not inside project box or headings)
+    lines_out = []
+    for line in result.split("\n"):
+        if not line.strip().startswith("<div class=") and "project" not in line:
+            line = highlight_metrics(line)
+        lines_out.append(line)
+    result = "\n".join(lines_out)
 
     return result
 
@@ -114,15 +143,13 @@ body {
     background: #f6faf0;
     box-shadow: 3px 3px 8px rgba(0, 0, 0, 0.12);
 }
-.project-box .section-heading {
+.project-box p:first-child {
     font-size: 8.5pt;
     font-weight: 700;
     color: #76B900;
     text-transform: uppercase;
     letter-spacing: 1px;
     margin: 0 0 3px 0;
-    padding: 0;
-    border: none;
 }
 p.project-text {
     font-size: 8pt;
@@ -165,14 +192,20 @@ p.bullet-sm strong {
 .job-header {
     font-size: 10.5pt;
     margin: 8px 0 2px 0;
+    line-height: 1.3;
 }
 .job-title {
     font-weight: 700;
     color: #111;
 }
-.job-meta {
+.job-company {
     font-weight: 400;
-    color: #666;
+    color: #0d7377;
+    font-size: 10pt;
+}
+.job-date {
+    font-weight: 400;
+    color: #d35400;
     font-size: 9.5pt;
 }
 
@@ -202,8 +235,11 @@ a {
     color: #76B900;
     text-decoration: none;
 }
-a:hover {
-    text-decoration: underline;
+
+/* ---- Metrics ---- */
+span.metric {
+    color: #c0392b;
+    font-weight: 700;
 }
 """
 
