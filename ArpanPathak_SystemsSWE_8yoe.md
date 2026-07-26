@@ -6,6 +6,14 @@ LinkedIn: [linkedin.com/in/arpan-pathak-272341424](https://linkedin.com/in/arpan
 GitHub: [github.com/arpanpathak](https://github.com/arpanpathak)  
 **Visa: Requires H1B Transfer sponsorship**
 
+::: project-box
+PERSONAL PROJECTS
+**Driving-CivicSense-Vision-Model** | [github.com/arpanpathak/driving-civicsense-vision-model](https://github.com/arpanpathak/driving-civicsense-vision-model) | 2026
+- AI-driven auxiliary perception system built in **Rust** for real-time intersection discipline and lane-awareness — runs entirely on-device (Edge AI, < 50ms latency, no cloud dependency).
+- Combines **YOLOv8/v11** computer vision models with custom inference pipeline to detect stop sign compliance, intersection occupancy violations, and left-lane camping.
+- Trained on cloud GPU infrastructure with focus on **real-time performance**, privacy-first architecture, and aftermarket dashcam/AR glasses deployment.
+:::
+
 ---
 
 ## SUMMARY
@@ -71,16 +79,6 @@ Systems Software Engineer with 8+ years architecting high-performance, developer
 **Core CS**: Data Structures & Algorithms, Distributed Systems (consensus, replication, sharding), Concurrency, System Design, Networking (TCP/IP, UDP, TLS, DNS, HTTP 3), Performance Optimization
 
 **Systems Programming**: eBPF, Cilium, Lock-Free Data Structures, Memory Safety, Concurrency
-
----
-
-## PERSONAL PROJECTS
-
-**Driving-CivicSense-Vision-Model** | [github.com/arpanpathak/driving-civicsense-vision-model](https://github.com/arpanpathak/driving-civicsense-vision-model) | 2026
-
-- AI-driven auxiliary perception system built in **Rust** for real-time intersection discipline and lane-awareness — runs entirely on-device (Edge AI, < 50ms latency, no cloud dependency).
-- Combines **YOLOv8/v11** computer vision models with custom inference pipeline to detect stop sign compliance, intersection occupancy violations, and left-lane camping.
-- Trained on cloud GPU infrastructure with focus on **real-time performance**, privacy-first architecture, and aftermarket dashcam/AR glasses deployment.
 
 ---
 

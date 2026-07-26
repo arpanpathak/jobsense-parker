@@ -1,11 +1,12 @@
 #!/usr/bin/env python3
-"""Convert resume markdown to a modern, clean PDF with proper link rendering."""
+"""Convert resume markdown to a modern, clean PDF with project box support."""
 
 import re
+import sys
 import weasyprint
 
-MD_FILE = "/Users/arpanpathak/Projects/rust/jobsense-parker/Arpan_Pathak_NVIDIA_Resume.md"
-PDF_FILE = "/Users/arpanpathak/Projects/rust/jobsense-parker/Arpan_Pathak_NVIDIA_Resume.pdf"
+MD_FILE = sys.argv[1] if len(sys.argv) > 1 else "/Users/arpanpathak/Projects/rust/jobsense-parker/Arpan_Pathak_NVIDIA_Resume.md"
+PDF_FILE = MD_FILE.replace(".md", ".pdf")
 
 with open(MD_FILE, "r") as f:
     md = f.read()
@@ -15,9 +16,22 @@ def convert(md_text):
     """Convert markdown to clean HTML with proper link rendering."""
     lines = md_text.split("\n")
     html = []
+    in_project_box = False
 
     for line in lines:
         stripped = line.strip()
+
+        # Project box start
+        if stripped == "::: project-box":
+            in_project_box = True
+            html.append('<div class="project-box">')
+            continue
+
+        # Project box end
+        if stripped == ":::" and in_project_box:
+            in_project_box = False
+            html.append('</div>')
+            continue
 
         # H1 - Name
         if line.startswith("# ") and not line.startswith("## ") and not line.startswith("### "):
@@ -27,7 +41,7 @@ def convert(md_text):
         elif line.startswith("## "):
             html.append(f'<div class="section-heading">{line[3:]}</div>')
 
-        # H3 - Job entries: "Title | Company — Location | Date"
+        # H3 - Job entries
         elif line.startswith("### "):
             content = line[4:]
             parts = [p.strip() for p in content.split("|")]
@@ -45,11 +59,15 @@ def convert(md_text):
         # Bullet points
         elif stripped.startswith("- "):
             item = stripped[2:]
-            html.append(f'<p class="bullet">\u2022 {item}</p>')
+            cls = "bullet-sm" if in_project_box else "bullet"
+            html.append(f'<p class="{cls}">\u2022 {item}</p>')
 
         # Regular line
         else:
-            html.append(f'<p>{line}</p>')
+            if in_project_box:
+                html.append(f'<p class="project-text">{line}</p>')
+            else:
+                html.append(f'<p>{line}</p>')
 
     result = "\n".join(html)
 
@@ -84,11 +102,46 @@ body {
     margin-bottom: 4px;
 }
 
-/* ---- Contact info ---- */
-.contact-line {
-    font-size: 9pt;
-    color: #444;
-    margin: 1px 0;
+/* ---- Project Box ---- */
+.project-box {
+    border: 1.5px solid #76B900;
+    border-radius: 6px;
+    padding: 7px 10px;
+    margin: 6px 0 10px 0;
+    background: #f6faf0;
+}
+.project-box .section-heading {
+    font-size: 8.5pt;
+    font-weight: 700;
+    color: #76B900;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    margin: 0 0 3px 0;
+    padding: 0;
+    border: none;
+}
+p.project-text {
+    font-size: 8pt;
+    line-height: 1.3;
+    margin: 2px 0;
+    color: #333;
+}
+p.project-text strong {
+    font-size: 8.5pt;
+}
+p.bullet-sm {
+    margin: 1px 0 1px 12px;
+    font-size: 8pt;
+    line-height: 1.3;
+    text-indent: -7px;
+    color: #333;
+}
+p.bullet-sm strong {
+    font-size: 8pt;
+}
+.project-box a {
+    color: #76B900;
+    font-size: 8pt;
 }
 
 /* ---- Section Headings ---- */
