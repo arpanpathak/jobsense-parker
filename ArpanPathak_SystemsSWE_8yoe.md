@@ -1,11 +1,5 @@
 # Arpan Pathak
 
-**Seattle, Washington, USA** | Open to Relocation  
-Email: arpan.pathak47@gmail.com | Phone: +1 (206) 306-6059  
-LinkedIn: [linkedin.com/in/arpan-pathak-272341424](https://linkedin.com/in/arpan-pathak-272341424)  
-GitHub: [github.com/arpanpathak](https://github.com/arpanpathak)  
-**Visa: Requires H1B Transfer sponsorship**
-
 ::: project-box
 PERSONAL PROJECTS
 **Driving-CivicSense-Vision-Model** | [github.com/arpanpathak/driving-civicsense-vision-model](https://github.com/arpanpathak/driving-civicsense-vision-model) | 2026
@@ -13,6 +7,12 @@ PERSONAL PROJECTS
 - Combines **YOLOv8/v11** computer vision models with custom inference pipeline to detect stop sign compliance, intersection occupancy violations, and left-lane camping.
 - Trained on cloud GPU infrastructure with focus on **real-time performance**, privacy-first architecture, and aftermarket dashcam/AR glasses deployment.
 :::
+
+**Seattle, Washington, USA** | Open to Relocation  
+Email: arpan.pathak47@gmail.com | Phone: +1 (206) 306-6059  
+LinkedIn: [linkedin.com/in/arpan-pathak-272341424](https://linkedin.com/in/arpan-pathak-272341424)  
+GitHub: [github.com/arpanpathak](https://github.com/arpanpathak)  
+**Visa: Requires H1B Transfer sponsorship**
 
 ---
 

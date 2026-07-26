@@ -104,11 +104,15 @@ body {
 
 /* ---- Project Box ---- */
 .project-box {
+    float: right;
+    width: 48%;
+    margin-left: 12px;
+    margin-bottom: 8px;
     border: 1.5px solid #76B900;
     border-radius: 6px;
     padding: 7px 10px;
-    margin: 6px 0 10px 0;
     background: #f6faf0;
+    box-shadow: 3px 3px 8px rgba(0, 0, 0, 0.12);
 }
 .project-box .section-heading {
     font-size: 8.5pt;
