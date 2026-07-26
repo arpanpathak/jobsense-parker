@@ -74,6 +74,16 @@ Systems Software Engineer with 8+ years architecting high-performance, developer
 
 ---
 
+## PERSONAL PROJECTS
+
+**Driving-CivicSense-Vision-Model** | [github.com/arpanpathak/driving-civicsense-vision-model](https://github.com/arpanpathak/driving-civicsense-vision-model) | 2026
+
+- AI-driven auxiliary perception system built in **Rust** for real-time intersection discipline and lane-awareness — runs entirely on-device (Edge AI, < 50ms latency, no cloud dependency).
+- Combines **YOLOv8/v11** computer vision models with custom inference pipeline to detect stop sign compliance, intersection occupancy violations, and left-lane camping.
+- Trained on cloud GPU infrastructure with focus on **real-time performance**, privacy-first architecture, and aftermarket dashcam/AR glasses deployment.
+
+---
+
 ## EDUCATION
 
 **Bachelor of Technology — Computer Science & Engineering**  
