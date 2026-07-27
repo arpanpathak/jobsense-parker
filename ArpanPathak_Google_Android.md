@@ -4,7 +4,7 @@
 PERSONAL PROJECTS
 **Driving-CivicSense (Edge AI Vision)** | [github.com/arpanpathak/driving-civicsense-vision-model](https://github.com/arpanpathak/driving-civicsense-vision-model) | 2026
 - Edge-AI perception system built in **Rust** for intersection discipline and lane-awareness. Fine-tuning **YOLOv8/v11** and custom **CNN** architectures for stop sign compliance detection, intersection occupancy violations, and left-lane camping classification. Experimenting with model pruning and quantization for on-device inference.
-- Achieving low-latency inference on low-powered single-board computers (Raspberry Pi 5 + Hailo-8L, Qualcomm AR1). Training pipeline on cloud GPU infrastructure with synthetic data augmentation.
+- Achieving low-latency inference on low-powered single-board computers (Raspberry Pi 5). Training pipeline on cloud GPU infrastructure with synthetic data augmentation.
 - Plan to publish a public driving behavior dataset on **Hugging Face** to support reproducible research in traffic civility and edge-AI perception.
 - 3D printing custom glasses frame in progress for aftermarket AR clip-on form factor.
 - **KMP Companion App (In Progress)**: Building a **Kotlin Multiplatform** mobile app to display real-time detection alerts from the Rust pipeline via gRPC bridge. Shared business logic in KMP with Jetpack Compose (Android) and SwiftUI (iOS) frontends.
@@ -66,17 +66,17 @@ Software Engineer with 8+ years architecting high-performance, low-latency syste
 
 ## SKILLS
 
-**Android & Mobile**: Android SDK, Jetpack Compose, Kotlin Multiplatform (KMP), MVVM, Coroutines & Flow, gRPC mobile, BLE, SQLDelight, Mobile CI/CD
+**Languages**: Kotlin, Java, Python, C++, Rust, Go, TypeScript, C#, Shell Script
 
-**Languages**: Kotlin, C++, Rust, Java, Go, Python, TypeScript, C#, Shell Script
+**Backend & API**: Spring Boot, Ktor, gRPC, REST API Design, SDK Development, Terraform Providers, CI/CD, Automated Testing
 
-**Performance Engineering**: Lock-Free Data Structures, Concurrency & Threading, Memory Profiling, Cache Optimization, Low-Latency Systems, Real-Time Pipelines, GPU-Accelerated Computing, eBPF
+**Android & Mobile**: Android SDK, Jetpack Compose, Kotlin Multiplatform (KMP), MVVM, Coroutines & Flow, BLE, SQLDelight, Mobile CI/CD
 
-**SDK & Developer Tools**: SDK Design, API Development, Developer-Facing Libraries, Terraform Providers, CI/CD, Automated Testing, Gradle (KMP), Packaging
+**Performance & Systems**: Lock-Free Data Structures, Concurrency & Threading, Memory Profiling, Cache Optimization, Low-Latency Systems, Real-Time Data Pipelines, GPU-Accelerated Computing, eBPF
 
 **Machine Learning & AI**: PyTorch, TensorFlow, XGBoost, Transformer Models (BERT), Computer Vision (YOLOv8/v11), ONNX Runtime, On-Device Edge AI
 
-**Distributed Systems**: AWS (EC2, ECS, Lambda, Kinesis, EMR, SageMaker), Azure (AKS), Kubernetes (AKS, EKS), Docker, Terraform, Apache Kafka, Apache Spark, Redshift
+**Cloud & Distributed Systems**: AWS (EC2, ECS, Lambda, Kinesis, EMR, SageMaker), Azure (AKS), Kubernetes (EKS, AKS), Docker, Terraform, Apache Kafka, Apache Spark, Redshift
 
 **Core CS**: Data Structures & Algorithms, System Design, Networking (TCP/IP, TLS, DNS, HTTP/3), Operating Systems, Memory Safety
 
