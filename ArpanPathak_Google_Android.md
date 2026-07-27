@@ -20,7 +20,7 @@ GitHub: [github.com/arpanpathak](https://github.com/arpanpathak)
 
 ## SUMMARY
 
-Systems Software Engineer with 8+ years architecting high-performance, low-latency systems at **Amazon**, **Microsoft**, and **Oracle**, now applying systems depth to Android engineering. Deep expertise in **Kotlin**, **C++**, **Rust**, lock-free concurrency, SDK design, and real-time streaming at global scale. Brings memory-safe, cache-aware, performance-profiled engineering to mobile -- the same discipline that shipped multi-million-dollar infrastructure. Currently building a **Kotlin Multiplatform** companion app for an on-device AI perception system targeting intersection safety, lane discipline, and cooperative hazard detection.
+Software Engineer with 8+ years architecting high-performance, low-latency systems at **Amazon**, **Microsoft**, and **Oracle**, now applying systems depth to Android engineering. Deep expertise in **Kotlin**, **C++**, **Rust**, lock-free concurrency, SDK design, and real-time streaming at global scale. Brings memory-safe, cache-aware, performance-profiled engineering to mobile -- the same discipline that shipped multi-million-dollar infrastructure. Currently building a **Kotlin Multiplatform** companion app for an on-device AI perception system targeting intersection safety, lane discipline, and cooperative hazard detection.
 
 ---
 

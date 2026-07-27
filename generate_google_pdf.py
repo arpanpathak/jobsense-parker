@@ -98,10 +98,22 @@ CSS = """
     size: letter;
     margin: 0.5in 0.65in;
 }
+@font-face {
+    font-family: 'JetBrainsMono';
+    src: url('file:///Users/arpanpathak/Library/Fonts/JetBrainsMonoNLNerdFontMono-Regular.ttf') format('truetype');
+    font-weight: 400;
+    font-style: normal;
+}
+@font-face {
+    font-family: 'JetBrainsMono';
+    src: url('file:///Users/arpanpathak/Library/Fonts/JetBrainsMonoNerdFont-Bold.ttf') format('truetype');
+    font-weight: 700;
+    font-style: normal;
+}
 body {
-    font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
-    font-size: 10pt;
-    line-height: 1.32;
+    font-family: 'JetBrainsMono', 'SF Mono', Menlo, monospace;
+    font-size: 9pt;
+    line-height: 1.22;
     color: #1a1a1a;
 }
 
