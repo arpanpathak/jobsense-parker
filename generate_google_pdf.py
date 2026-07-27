@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Convert resume markdown to a Google-themed PDF with color-highlighted metrics and dates."""
+"""Convert resume markdown to a Google-themed PDF with color-highlighted metrics."""
 
 import re
 import sys
@@ -14,13 +14,9 @@ with open(MD_FILE, "r") as f:
 
 def highlight_metrics(text):
     """Wrap metrics and numbers in colored spans."""
-    # Dollar amounts: $5.4M, $1.2M, $184,000
     text = re.sub(r'(\$\d+[.,]?\d*[KMB]?[/]?(month|year)?)', r'<span class="metric">\1</span>', text)
-    # Numbers with performance units: 45,000 ops/s, 100ms, 5,000 QPS, 50,000 TPM, 99.99%
-    text = re.sub(r'(\d+[.,]?\d*\s*(ops/s|ms|QPS|TPM|%|writes/second|hourly transactions|hourly revenue))', r'<span class="metric">\1</span>', text)
-    # Number ranges with days/hours/minutes: 7 days, 2 hours, 30 minutes, 5 days
+    text = re.sub(r'(\d+[.,]?\d*\s*(ops/s|ms|QPS|TPM|%|writes/second|hourly transactions))', r'<span class="metric">\1</span>', text)
     text = re.sub(r'(\d+\s*(days?|hours?|minutes?))', r'<span class="metric">\1</span>', text)
-    # Numbers with K/M suffix: 3K, 1M+, 45,000 (standalone)
     text = re.sub(r'(\d+[KMB]\++?)(?!\s*(days?|hours?|minutes?|ops/s|ms|QPS|TPM|%))', r'<span class="metric">\1</span>', text)
     return text
 
@@ -34,27 +30,22 @@ def convert(md_text):
     for line in lines:
         stripped = line.strip()
 
-        # Project box start
         if stripped == "::: project-box":
             in_project_box = True
             html.append('<div class="project-box">')
             continue
 
-        # Project box end
         if stripped == ":::" and in_project_box:
             in_project_box = False
             html.append('</div>')
             continue
 
-        # H1 - Name
         if line.startswith("# ") and not line.startswith("## ") and not line.startswith("### "):
             html.append(f'<div class="name">{line[2:]}</div>')
 
-        # H2 - Section headings
         elif line.startswith("## "):
             html.append(f'<div class="section-heading">{line[3:]}</div>')
 
-        # H3 - Job entries: "Title | Company — Location | Date"
         elif line.startswith("### "):
             content = line[4:]
             parts = [p.strip() for p in content.split("|")]
@@ -69,11 +60,9 @@ def convert(md_text):
             else:
                 html.append(f'<div class="job-header">{content}</div>')
 
-        # Empty / separator
         elif not stripped or stripped == "---":
             continue
 
-        # Bullet points
         elif stripped.startswith("- "):
             item = stripped[2:]
             if in_project_box:
@@ -81,7 +70,6 @@ def convert(md_text):
             else:
                 html.append(f'<p class="bullet">\u2022 {item}</p>')
 
-        # Regular line
         else:
             if in_project_box:
                 html.append(f'<p class="project-text">{line}</p>')
@@ -90,13 +78,9 @@ def convert(md_text):
 
     result = "\n".join(html)
 
-    # Convert **bold** to <strong>
     result = re.sub(r'\*\*(.+?)\*\*', r'<strong>\1</strong>', result)
-
-    # Convert [text](url) to <a href="url">text</a>
     result = re.sub(r'\[([^\]]+)\]\(([^)]+)\)', r'<a href="\2">\1</a>', result)
 
-    # Highlight metrics
     lines_out = []
     for line in result.split("\n"):
         if not line.strip().startswith("<div class=") and "project" not in line:
@@ -112,84 +96,83 @@ body_html = convert(md)
 CSS = """
 @page {
     size: letter;
-    margin: 0.6in 0.7in;
+    margin: 0.5in 0.65in;
 }
 body {
     font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
     font-size: 10pt;
-    line-height: 1.35;
+    line-height: 1.32;
     color: #1a1a1a;
 }
 
-/* ---- Name ---- */
 .name {
-    font-size: 22pt;
+    font-size: 24pt;
     font-weight: 700;
     color: #111;
-    margin-bottom: 4px;
+    margin-bottom: 2px;
+    letter-spacing: 0.5px;
 }
 
-/* ---- Project Box ---- */
 .project-box {
     float: right;
     width: 48%;
-    margin-left: 12px;
-    margin-bottom: 8px;
-    border: 1.5px solid #4285F4;
-    border-radius: 6px;
-    padding: 7px 10px;
-    background: #f0f5ff;
-    box-shadow: 3px 3px 8px rgba(0, 0, 0, 0.12);
+    margin-left: 14px;
+    margin-bottom: 10px;
+    border: 1.5px solid #1A73E8;
+    border-radius: 8px;
+    padding: 8px 11px;
+    background: #f0f6ff;
+    box-shadow: 4px 4px 14px rgba(0, 0, 0, 0.15), 1px 1px 4px rgba(0, 0, 0, 0.08);
 }
 .project-box p:first-child {
     font-size: 8.5pt;
     font-weight: 700;
-    color: #4285F4;
+    color: #1A73E8;
     text-transform: uppercase;
-    letter-spacing: 1px;
+    letter-spacing: 1.2px;
     margin: 0 0 3px 0;
 }
 p.project-text {
     font-size: 8pt;
-    line-height: 1.3;
+    line-height: 1.28;
     margin: 2px 0;
-    color: #333;
+    color: #222;
 }
 p.project-text strong {
     font-size: 8.5pt;
+    color: #1A73E8;
 }
 p.bullet-sm {
     margin: 1px 0 1px 12px;
     font-size: 8pt;
-    line-height: 1.3;
+    line-height: 1.28;
     text-indent: -7px;
-    color: #333;
+    color: #222;
 }
 p.bullet-sm strong {
     font-size: 8pt;
+    color: #1A73E8;
 }
 .project-box a {
-    color: #4285F4;
+    color: #1A73E8;
     font-size: 8pt;
 }
 
-/* ---- Section Headings ---- */
 .section-heading {
     font-size: 11pt;
     font-weight: 700;
     color: #111;
     text-transform: uppercase;
-    letter-spacing: 0.3px;
-    border-bottom: 1.5px solid #4285F4;
-    padding-bottom: 2px;
+    letter-spacing: 0.6px;
+    border-bottom: 2px solid #1A73E8;
+    padding-bottom: 3px;
     margin-top: 14px;
-    margin-bottom: 6px;
+    margin-bottom: 7px;
 }
 
-/* ---- Job Header ---- */
 .job-header {
     font-size: 10.5pt;
-    margin: 8px 0 2px 0;
+    margin: 9px 0 2px 0;
     line-height: 1.3;
 }
 .job-title {
@@ -197,46 +180,41 @@ p.bullet-sm strong {
     color: #111;
 }
 .job-company {
-    font-weight: 400;
-    color: #4285F4;
+    font-weight: 600;
+    color: #1A73E8;
     font-size: 10pt;
 }
 .job-date {
     font-weight: 400;
-    color: #EA4335;
+    color: #5F6368;
     font-size: 9.5pt;
 }
 
-/* ---- Paragraphs ---- */
 p {
     margin: 2px 0;
     font-size: 9.5pt;
-    line-height: 1.35;
+    line-height: 1.32;
 }
 
-/* ---- Bullet points ---- */
 p.bullet {
     margin: 1px 0 1px 16px;
     font-size: 9.5pt;
-    line-height: 1.35;
+    line-height: 1.32;
     text-indent: -8px;
 }
 
-/* ---- Bold ---- */
 strong {
     font-weight: 700;
     color: #111;
 }
 
-/* ---- Links ---- */
 a {
-    color: #4285F4;
+    color: #1A73E8;
     text-decoration: none;
 }
 
-/* ---- Metrics ---- */
 span.metric {
-    color: #EA4335;
+    color: #B8860B;
     font-weight: 700;
 }
 """
