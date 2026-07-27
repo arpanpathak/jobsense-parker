@@ -20,7 +20,7 @@ GitHub: [github.com/arpanpathak](https://github.com/arpanpathak)
 
 ## SUMMARY
 
-Software Engineer with 8+ years architecting high-performance, low-latency systems at **Amazon**, **Microsoft**, and **Oracle**, now applying systems depth to Android engineering. Deep expertise in **Kotlin**, **C++**, **Rust**, lock-free concurrency, SDK design, and real-time streaming at global scale. Brings memory-safe, cache-aware, performance-profiled engineering to mobile -- the same discipline that shipped multi-million-dollar infrastructure. Currently building a **Kotlin Multiplatform** companion app for an on-device AI perception system targeting intersection safety, lane discipline, and cooperative hazard detection.
+Software Engineer with 8+ years architecting high-performance, low-latency systems at **Amazon**, **Microsoft**, and **Oracle**, now applying systems depth to Android engineering. Deep expertise in **Kotlin**, **C++**, **Go**, **Rust**, lock-free concurrency, SDK design, and real-time streaming at global scale. Brings memory-safe, cache-aware, performance-profiled engineering to mobile -- the same discipline that shipped multi-million-dollar infrastructure. Currently building a **Kotlin Multiplatform** companion app for an on-device AI perception system targeting intersection safety, lane discipline, and cooperative hazard detection.
 
 ---
 
@@ -72,13 +72,17 @@ Software Engineer with 8+ years architecting high-performance, low-latency syste
 
 **Android & Mobile**: Android SDK, Jetpack Compose, Kotlin Multiplatform (KMP), MVVM, Coroutines & Flow, BLE, SQLDelight, Mobile CI/CD
 
-**Performance & Systems**: Lock-Free Data Structures, Concurrency & Threading, Memory Profiling, Cache Optimization, Low-Latency Systems, Real-Time Data Pipelines, GPU-Accelerated Computing, eBPF
+**Frontend**: React.JS, JavaScript, Angular, HTML5, CSS3 / SCSS
 
-**Machine Learning & AI**: PyTorch, TensorFlow, XGBoost, Transformer Models (BERT), Computer Vision (YOLOv8/v11), ONNX Runtime, On-Device Edge AI
+**Performance & Systems**: Lock-Free Data Structures, Concurrency, Memory Profiling, Cache Optimization, Low-Latency Systems, Real-Time Data Pipelines, GPU-Accelerated Computing, eBPF, Kernel Programming
 
-**Cloud & Distributed Systems**: AWS (EC2, ECS, Lambda, Kinesis, EMR, SageMaker), Azure (AKS), Kubernetes (EKS, AKS), Docker, Terraform, Apache Kafka, Apache Spark, Redshift
+**Machine Learning & AI**: PyTorch, TensorFlow, Scikit-learn, XGBoost, Transformer Models (BERT), Recommendation Systems, Neural Networks, MLOps, Natural Language Processing (a.k.a Computer Linguistics), Computer Vision (YOLOv8/v11), ONNX Runtime, On-Device Edge AI, Audio Signal Processing
 
-**Core CS**: Data Structures & Algorithms, System Design, Networking (TCP/IP, TLS, DNS, HTTP/3), Operating Systems, Memory Safety
+**Distributed Systems & Cloud**: AWS (EC2, ECS, Lambda, Kinesis, EMR, SageMaker), Azure (AKS, Bicep), Kubernetes (EKS, AKS), Docker, Terraform, Apache Kafka, Apache Spark, Apache Flink, Kubebuilder, Istio, Cilium, Kubernetes Gateway API
+
+**Distributed Data & Storage**: DynamoDB, PostgreSQL, Redis, MongoDB, Amazon Redshift, Amazon S3
+
+**Core CS**: Data Structures & Algorithms, Distributed Systems (consensus, replication, sharding), System Design, Networking (TCP/IP, UDP, TLS, DNS, HTTP/3), Operating Systems, Memory Safety
 
 ---
 
