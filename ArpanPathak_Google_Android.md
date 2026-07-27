@@ -2,12 +2,12 @@
 
 ::: project-box
 PERSONAL PROJECTS
-**Driving-CivicSense Companion (KMP)** | [github.com/arpanpathak/driving-civicsense-vision-model](https://github.com/arpanpathak/driving-civicsense-vision-model) | 2026 (In Progress)
-- Building a **Kotlin Multiplatform** companion app for the CivicSense edge-AI perception system that watches intersections, detects blocking violations, enforces lane discipline, and tracks turn-signal compliance on-device (YOLOv8/v11 via ONNX + Deep SORT tracking).
-- **Intersection blocking module**: renders real-time intersection occupancy heatmaps from Rust inference pipeline on a Jetpack Compose map overlay. Alerts driver when occupancy exceeds 70% with <30ft stopping distance.
-- **Turn signal enforcement**: consumes amber-blinker detection events and lateral vehicle motion tracks from the Rust pipeline. Logs unsignaled lane changes, late signals, and multi-lane cuts with severity scoring.
-- **Mesh hazard network viewer**: visualizes distributed hazard beacons (debris, animals, blocked intersections) reported by nearby CivicSense units via LoRa/BLE. Shows verified conditions when 3+ units detect same hazard.
-- Shared KMP module handles gRPC deserialization, local persistence via SQLDelight, and offline-first state. Android UI in Jetpack Compose (MVVM + Coroutines/Flow). iOS UI in SwiftUI.
+**Driving-CivicSense (Edge AI Vision)** | [github.com/arpanpathak/driving-civicsense-vision-model](https://github.com/arpanpathak/driving-civicsense-vision-model) | 2026
+- Edge-AI perception system built in **Rust** for intersection discipline and lane-awareness. Fine-tuning **YOLOv8/v11** and custom **CNN** architectures for stop sign compliance detection, intersection occupancy violations, and left-lane camping classification. Experimenting with model pruning and quantization for on-device inference.
+- Achieving low-latency inference on low-powered single-board computers (Raspberry Pi 5 + Hailo-8L, Qualcomm AR1). Training pipeline on cloud GPU infrastructure with synthetic data augmentation.
+- Plan to publish a public driving behavior dataset on **Hugging Face** to support reproducible research in traffic civility and edge-AI perception.
+- 3D printing custom glasses frame in progress for aftermarket AR clip-on form factor.
+- **KMP Companion App (In Progress)**: Building a **Kotlin Multiplatform** mobile app to display real-time detection alerts from the Rust pipeline via gRPC bridge. Shared business logic in KMP with Jetpack Compose (Android) and SwiftUI (iOS) frontends.
 :::
 
 **Seattle, Washington, USA** | Open to Relocation  
