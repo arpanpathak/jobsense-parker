@@ -20,7 +20,7 @@ GitHub: [github.com/arpanpathak](https://github.com/arpanpathak)
 
 ## SUMMARY
 
-Software Engineer with 8+ years architecting high-performance, low-latency systems at **Amazon**, **Microsoft**, and **Oracle**, now applying systems depth to Android engineering. Deep expertise in **Kotlin**, **C++**, **Go**, **Rust**, lock-free concurrency, SDK design, and real-time streaming at global scale. Brings memory-safe, cache-aware, performance-profiled engineering to mobile -- the same discipline that shipped multi-million-dollar infrastructure. Currently building a **Kotlin Multiplatform** companion app for an on-device AI perception system targeting intersection safety, lane discipline, and cooperative hazard detection.
+Software Engineer with 8+ years architecting high-performance, low-latency systems at **Amazon**, **Microsoft**, and **Oracle**, now applying systems depth to Android engineering. Deep expertise in **Kotlin**, **C++**, **Go**, **Rust**, lock-free concurrency, SDK design, and real-time streaming at global scale. Brings memory-safe, cache-aware, performance-profiled engineering to mobile. Currently building a **Kotlin Multiplatform** companion app for an on-device AI perception system targeting intersection safety, lane discipline, and cooperative hazard detection.
 
 ---
 
@@ -68,11 +68,11 @@ Software Engineer with 8+ years architecting high-performance, low-latency syste
 
 **Languages**: Kotlin, Java, Python, C++, Rust, Go, TypeScript, C#, Shell Script
 
-**Backend & API**: Spring Boot, Ktor, gRPC, REST API Design, SDK Development, Terraform Providers, CI/CD, Automated Testing
+**Backend & API**: Spring Boot, Ktor, gRPC, REST API Design, SDK Development, Terraform Providers, CI/CD
 
-**Android & Mobile**: Android SDK, Jetpack Compose, Kotlin Multiplatform (KMP), MVVM, Coroutines & Flow, BLE, SQLDelight, Mobile CI/CD
+**Android & Mobile**: Android SDK, Jetpack Compose, Kotlin Multiplatform (KMP), MVVM, Coroutines & Flow, SQLDelight, Mobile CI/CD
 
-**Frontend**: React.JS, JavaScript, Angular, HTML5, CSS3 / SCSS
+**Frontend**: React.JS, JavaScript, Angular, HTML5, CSS3 / SCSS, Microfrontend Architecture
 
 **Performance & Systems**: Lock-Free Data Structures, Concurrency, Memory Profiling, Cache Optimization, Low-Latency Systems, Real-Time Data Pipelines, GPU-Accelerated Computing, eBPF, Kernel Programming
 
