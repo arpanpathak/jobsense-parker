@@ -358,6 +358,8 @@ pub enum Command {
     AddCompany(String, String),
     /// Remove a company from the cache by name.
     RemoveCompany(String),
+    /// Show the scan history.
+    ShowScanHistory,
     /// Exit the application.
     Quit,
 }

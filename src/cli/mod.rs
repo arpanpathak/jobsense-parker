@@ -10,7 +10,9 @@ use uuid::Uuid;
 use crate::crawler::company::CompanyCrawler;
 use crate::crawler::CrawlerCoordinator;
 use crate::matcher::Matcher;
-use crate::models::{Command, CompanyDatabase, JobPost, JobSource, MatchResult, Resume, ScanRecord, SearchConfig};
+use crate::models::{
+    Command, CompanyDatabase, JobPost, JobSource, MatchResult, Resume, ScanRecord, SearchConfig,
+};
 use crate::storage;
 
 pub use views::{banner, print_help, show_scan_history};
@@ -28,6 +30,7 @@ pub struct App {
 
 impl App {
     /// Create a new app instance, loading persisted state (resume, results, history).
+    #[allow(clippy::new_without_default)]
     pub fn new() -> Self {
         let prefs = storage::load_preferences().unwrap_or_default();
         let resume = storage::load_resume().unwrap_or(None);
@@ -64,7 +67,6 @@ impl App {
     /// Start the interactive menu loop.
     pub async fn run(&mut self) {
         banner();
-
         loop {
             let cmd = self.prompt_command();
             match cmd {
@@ -79,6 +81,9 @@ impl App {
                 Command::ViewResults => self.cmd_view_results(),
                 Command::FilterResults => self.cmd_filter_results(),
                 Command::ListCompanies => self.cmd_list_companies(),
+                Command::ShowScanHistory => {
+                    show_scan_history(&self.scan_history);
+                }
                 Command::AddCompany(name, url) => self.cmd_add_company(&name, &url),
                 Command::RemoveCompany(name) => self.cmd_remove_company(&name),
             }
@@ -167,6 +172,9 @@ impl App {
     // ─── Menu ─────────────────────────────────────────────────────────
 
     /// Show the main menu and return the user's chosen command.
+    ///
+    /// NOTE: This method ONLY shows the menu and returns a command.
+    /// NO side effects — every selection is dispatched by `run()`.
     fn prompt_command(&self) -> Command {
         let resume_status = if self.matcher.has_resume() {
             "loaded".green().to_string()
@@ -181,7 +189,9 @@ impl App {
         };
 
         let company_count = self.company_db.companies.len();
-        let company_status = format!("{} companies cached", company_count).cyan().to_string();
+        let company_status = format!("{} companies cached", company_count)
+            .cyan()
+            .to_string();
 
         let items = vec![
             format!("Scan jobs (all sources + career sites)"),
@@ -206,100 +216,84 @@ impl App {
         match selection {
             0 => Command::Scan,
             1 => {
-                let query: String = Input::with_theme(&dialoguer::theme::ColorfulTheme::default())
-                    .with_prompt("Search query")
-                    .interact_text()
-                    .unwrap_or_default();
+                let query: String =
+                    Input::with_theme(&dialoguer::theme::ColorfulTheme::default())
+                        .with_prompt("Search query")
+                        .interact_text()
+                        .unwrap_or_default();
                 Command::Search(query)
             }
             2 => Command::ViewResults,
-            3 => {
-                // Company management sub-menu
-                self.cmd_list_companies();
-                println!("  Add a company? Enter name and careers URL, or just press Enter to skip.");
-                let name: String = Input::with_theme(&dialoguer::theme::ColorfulTheme::default())
-                    .with_prompt("Company name (or blank to skip)")
-                    .allow_empty(true)
-                    .interact_text()
-                    .unwrap_or_default();
-                if !name.trim().is_empty() {
-                    let url: String = Input::with_theme(&dialoguer::theme::ColorfulTheme::default())
-                        .with_prompt("Careers URL")
-                        .interact_text()
-                        .unwrap_or_default();
-                    if !url.trim().is_empty() {
-                        Command::AddCompany(name.trim().to_string(), url.trim().to_string())
-                    } else {
-                        println!("  No URL given. Skipping.");
-                        Command::ShowResume // no-op
-                    }
-                } else {
-                    Command::ShowResume // no-op
+            3 => Command::ListCompanies,
+            4 => match pick_resume_file() {
+                Some(p) => Command::LoadResume(p),
+                None => {
+                    println!("  Cancelled.");
+                    Command::Scan // harmless no-op, goes back to menu
                 }
-            }
-            4 => {
-                match pick_resume_file() {
-                    Some(p) => Command::LoadResume(p),
-                    None => {
-                        println!("  Cancelled.");
-                        Command::ShowResume // no-op
-                    }
-                }
-            }
+            },
             5 => Command::ShowResume,
             6 => Command::FilterResults,
-            7 => {
-                show_scan_history(&self.scan_history);
-                Command::ShowResume // no-op
-            }
-            8 | _ => Command::Quit,
+            7 => Command::ShowScanHistory,
+            _ => Command::Quit,
         }
     }
 
     // ─── Command: Load Resume ─────────────────────────────────────────
 
+    /// Parse resume text from a PDF, file (JSON/YAML/text), or raw string.
+    fn parse_resume_from_input(input: &str) -> Resume {
+        let trimmed = input.trim();
+        let path = std::path::Path::new(trimmed);
+
+        // PDF file
+        if path.exists() && trimmed.ends_with(".pdf") {
+            match pdf_extract::extract_text(trimmed) {
+                Ok(pdf_text) => {
+                    println!("  Extracted {} chars from PDF.", pdf_text.len());
+                    return Resume::from_text(&pdf_text);
+                }
+                Err(e) => {
+                    println!("  Failed to read PDF: {e}");
+                    return Resume::from_text(trimmed);
+                }
+            }
+        }
+
+        // Existing file: try JSON → YAML → plain text
+        if path.exists() {
+            match std::fs::read_to_string(trimmed) {
+                Ok(content) => {
+                    if let Ok(r) = serde_json::from_str::<Resume>(&content) {
+                        return r;
+                    }
+                    if let Ok(r) = serde_yaml::from_str::<Resume>(&content) {
+                        return r;
+                    }
+                    println!("  Read file as plain text ({} chars).", content.len());
+                    return Resume::from_text(&content);
+                }
+                Err(e) => {
+                    println!("  Could not read file '{trimmed}': {e}");
+                    return Resume::from_text(trimmed);
+                }
+            }
+        }
+
+        // Not a file: try JSON → YAML → plain text
+        serde_json::from_str::<Resume>(trimmed)
+            .or_else(|_| serde_yaml::from_str::<Resume>(trimmed))
+            .unwrap_or_else(|_| Resume::from_text(trimmed))
+    }
+
     /// Handle the "Load Resume" command.
     fn cmd_load_resume(&mut self, input: &str) {
-        let trimmed = input.trim();
-        if trimmed.is_empty() {
+        if input.trim().is_empty() {
             println!("  No text provided.");
             return;
         }
 
-        let path = std::path::Path::new(trimmed);
-        let path_exists = path.exists();
-
-        let resume = if path_exists && trimmed.ends_with(".pdf") {
-            match pdf_extract::extract_text(trimmed) {
-                Ok(pdf_text) => {
-                    println!("  Extracted {} chars from PDF.", pdf_text.len());
-                    Resume::from_text(&pdf_text)
-                }
-                Err(e) => {
-                    println!("  Failed to read PDF: {e}");
-                    Resume::from_text(trimmed)
-                }
-            }
-        } else if path_exists {
-            match std::fs::read_to_string(trimmed) {
-                Ok(content) => {
-                    serde_json::from_str::<Resume>(&content)
-                        .or_else(|_| serde_yaml::from_str::<Resume>(&content))
-                        .unwrap_or_else(|_| {
-                            println!("  Read file as plain text ({} chars).", content.len());
-                            Resume::from_text(&content)
-                        })
-                }
-                Err(e) => {
-                    println!("  Could not read file '{trimmed}': {e}");
-                    Resume::from_text(trimmed)
-                }
-            }
-        } else {
-            serde_json::from_str::<Resume>(trimmed)
-                .or_else(|_| serde_yaml::from_str::<Resume>(trimmed))
-                .unwrap_or_else(|_| Resume::from_text(trimmed))
-        };
+        let resume = Self::parse_resume_from_input(input);
 
         self.matcher.load_resume(resume.clone());
         if let Err(e) = storage::save_resume(&resume) {
@@ -329,7 +323,6 @@ impl App {
             println!("  No resume loaded. Search keywords must be provided manually.");
             return;
         }
-
         if let Some(r) = self.matcher.resume() {
             let mut kws = r.skills.clone();
             kws.extend(r.role_titles.clone());
@@ -342,12 +335,10 @@ impl App {
     /// Execute a scan against all sources with the current config.
     async fn cmd_scan(&mut self) {
         self.prepare_keywords();
-
         if self.config.keywords.is_empty() {
             println!("\n  No keywords available. Load a resume or use --search \"your keywords\".\n");
             return;
         }
-
         let kw = self.config.keywords.clone();
         self.run_with_spinner("Scanning", &kw, false).await;
     }
@@ -360,7 +351,6 @@ impl App {
             println!("  Empty query, cancelling.");
             return;
         }
-
         self.config.keywords = query.split_whitespace().map(|s| s.to_string()).collect();
         let kw = self.config.keywords.clone();
         self.run_with_spinner("Searching", &kw, true).await;
@@ -372,37 +362,59 @@ impl App {
     /// Keywords in the title are weighted 3x vs description, with an exact-phrase bonus.
     fn score_jobs_by_keywords(&self, jobs: Vec<JobPost>) -> Vec<MatchResult> {
         if self.config.keywords.is_empty() {
-            return jobs.into_iter().map(|j| MatchResult {
-                score: 0.5,
-                matched_skills: vec![],
-                matched_keywords: vec![],
-                missing_skills: vec![],
-                job: j,
-            }).collect();
+            return jobs
+                .into_iter()
+                .map(|j| MatchResult {
+                    score: 0.5,
+                    matched_skills: vec![],
+                    matched_keywords: vec![],
+                    missing_skills: vec![],
+                    job: j,
+                })
+                .collect();
         }
         let kw_lower: Vec<String> = self.config.keywords.iter().map(|k| k.to_lowercase()).collect();
         let query_phrase = kw_lower.join(" ");
         let max_kw = kw_lower.len() as f64;
         let max_score = max_kw * 3.0 + max_kw;
 
-        jobs.into_iter().map(|j| {
-            let title_lower = j.title.to_lowercase();
-            let desc_lower = j.description.to_lowercase();
+        jobs.into_iter()
+            .map(|j| {
+                let title_lower = j.title.to_lowercase();
+                let desc_lower = j.description.to_lowercase();
 
-            let title_matches = kw_lower.iter().filter(|kw| title_lower.contains(kw.as_str())).count() as f64;
-            let desc_matches = kw_lower.iter().filter(|kw| desc_lower.contains(kw.as_str())).count() as f64;
-            let phrase_bonus = if title_lower.contains(&query_phrase) { 2.0 } else { 0.0 };
+                let title_matches = kw_lower
+                    .iter()
+                    .filter(|kw| title_lower.contains(kw.as_str()))
+                    .count() as f64;
+                let desc_matches = kw_lower
+                    .iter()
+                    .filter(|kw| desc_lower.contains(kw.as_str()))
+                    .count() as f64;
+                let phrase_bonus = if title_lower.contains(&query_phrase) {
+                    2.0
+                } else {
+                    0.0
+                };
 
-            let raw = (title_matches * 3.0 + desc_matches) / max_score + phrase_bonus * 0.1;
-            let score = raw.clamp(0.05, 0.99);
+                let raw = (title_matches * 3.0 + desc_matches) / max_score + phrase_bonus * 0.1;
+                let score = raw.clamp(0.05, 0.99);
 
-            let matched_keywords: Vec<String> = kw_lower.iter()
-                .filter(|kw| title_lower.contains(kw.as_str()) || desc_lower.contains(kw.as_str()))
-                .cloned()
-                .collect();
+                let matched_keywords: Vec<String> = kw_lower
+                    .iter()
+                    .filter(|kw| title_lower.contains(kw.as_str()) || desc_lower.contains(kw.as_str()))
+                    .cloned()
+                    .collect();
 
-            MatchResult { score, matched_skills: vec![], matched_keywords, missing_skills: vec![], job: j }
-        }).collect()
+                MatchResult {
+                    score,
+                    matched_skills: vec![],
+                    matched_keywords,
+                    missing_skills: vec![],
+                    job: j,
+                }
+            })
+            .collect()
     }
 
     /// Run a crawl with a progress spinner showing status in real-time.
@@ -415,18 +427,15 @@ impl App {
             .join(", ");
 
         // ── Run board crawl + company crawl IN PARALLEL ──────────────
-        // No reason to wait for boards to finish before hitting career sites.
-        // They're independent I/O operations — run them concurrently.
-        // Total time = max(board_time, company_time), not board_time + company_time.
-
-        // Split borrows so tokio::join! can run both concurrently
         let coordinator = &self.coordinator;
         let config = &self.config;
         let company_db = &mut self.company_db;
 
         let spinner_msg = format!(
             "{} jobs for: {} (boards + {} company sites)...",
-            action, kw_display, company_db.companies.len()
+            action,
+            kw_display,
+            company_db.companies.len()
         );
 
         let pb = ProgressBar::new_spinner();
@@ -439,12 +448,10 @@ impl App {
         pb.enable_steady_tick(std::time::Duration::from_millis(100));
 
         let (board_result, company_result) = tokio::join!(
-            // Board crawl (45s timeout)
             tokio::time::timeout(
                 std::time::Duration::from_secs(45),
                 coordinator.crawl_all(config),
             ),
-            // Company crawl (60s timeout)
             tokio::time::timeout(
                 std::time::Duration::from_secs(60),
                 CompanyCrawler::crawl_all(company_db, config),
@@ -453,7 +460,7 @@ impl App {
 
         pb.finish_and_clear();
 
-        // Unpack results
+        // ── Unpack and merge results ────────────────────────────────
         let mut jobs: Vec<JobPost> = match board_result {
             Ok(j) => j,
             Err(_) => {
@@ -461,7 +468,6 @@ impl App {
                 vec![]
             }
         };
-
         let company_jobs: Vec<JobPost> = match company_result {
             Ok(j) => j,
             Err(_) => {
@@ -469,19 +475,17 @@ impl App {
                 vec![]
             }
         };
-
-        // Merge
         if !company_jobs.is_empty() {
             jobs.extend(company_jobs);
         }
         let _ = storage::save_company_database(&self.company_db);
 
-        // ── Auto-discover companies from board job posts ─────────────
         if jobs.is_empty() {
             println!("\n  No jobs found. Try different keywords or sources.\n");
             return;
         }
 
+        // ── Auto-discover companies from job posts ──────────────────
         let discovered = self.auto_discover_companies(&jobs);
         if discovered > 0 {
             eprintln!(
@@ -492,16 +496,11 @@ impl App {
             );
         }
 
-        // ── Process results ──────────────────────────────────────────
+        // ── Score all jobs ──────────────────────────────────────────
         let raw_count = jobs.len();
-        if jobs.is_empty() {
-            println!("\n  No jobs found. Try different keywords or sources.\n");
-            return;
-        }
-
         println!(
             "  {} {} raw job posts. Matching against resume...",
-            "⚡".bright_green(),
+            "\u{26A1}".bright_green(),
             raw_count
         );
 
@@ -511,31 +510,32 @@ impl App {
             self.score_jobs_by_keywords(jobs)
         };
 
-        // Sort by score DESC, then by posted_at DESC (most recent first) as tiebreaker.
-        // `posted_at` is the actual publication date from the source (vs `crawled_at`
-        // which is always "now" and meaningless for freshness).
-        self.results.sort_by(|a, b| {
-            let score_cmp = b.score.partial_cmp(&a.score).unwrap_or(std::cmp::Ordering::Equal);
-            if score_cmp != std::cmp::Ordering::Equal {
-                return score_cmp;
-            }
-            // Compare posted_at; if both are None, fall back to crawled_at
-            match (b.job.posted_at, a.job.posted_at) {
-                (Some(b_date), Some(a_date)) => b_date.cmp(&a_date),
-                (Some(_), None) => std::cmp::Ordering::Greater,
-                (None, Some(_)) => std::cmp::Ordering::Less,
-                (None, None) => b.job.crawled_at.cmp(&a.job.crawled_at),
-            }
-        });
+        // ── Sort by score DESC, then by date DESC ───────────────────
+        sort_by_score_desc(&mut self.results);
 
-        // Save query to history
+        // ── Persist history and results ─────────────────────────────
         if save_query {
             let _ = storage::push_query(&keywords.join(" "));
         }
-        // Persist results
         let _ = storage::save_last_results(&self.results);
+        self.record_scan(keywords, raw_count);
 
-        // Record scan in history
+        // ── Show summary ────────────────────────────────────────────
+        let top_score = self.results.iter().map(|r| r.score).fold(0.0, f64::max);
+        if !self.results.is_empty() {
+            println!(
+                "  {} {} matched results (top score: {:.0}%) — use 'View results' to browse\n",
+                "\u{2713}".bright_green(),
+                self.results.len(),
+                top_score * 100.0
+            );
+        } else {
+            println!("  No matches above threshold.\n");
+        }
+    }
+
+    /// Create a ScanRecord for this run, prepend it to in-memory history, and persist.
+    fn record_scan(&mut self, keywords: &[String], raw_count: usize) {
         let top_score = self.results.iter().map(|r| r.score).fold(0.0, f64::max);
         let record = ScanRecord {
             id: Uuid::new_v4().to_string(),
@@ -547,23 +547,8 @@ impl App {
             result_count: self.results.len(),
         };
         self.scan_history.insert(0, record.clone());
-        if self.scan_history.len() > 100 {
-            self.scan_history.truncate(100);
-        }
+        self.scan_history.truncate(100);
         let _ = storage::push_scan_record(&record);
-
-        // Show brief summary, then return to menu immediately.
-        // User can select "View results" for the full paginated browser.
-        if !self.results.is_empty() {
-            println!(
-                "  {} {} matched results (top score: {:.0}%) — use 'View results' to browse\n",
-                "✓".bright_green(),
-                self.results.len(),
-                top_score * 100.0
-            );
-        } else {
-            println!("  No matches above threshold.\n");
-        }
     }
 
     // ─── Company Management ─────────────────────────────────────────────
@@ -571,49 +556,45 @@ impl App {
     /// Extract company names from job posts and add them to the local cache.
     /// Returns the number of newly discovered companies.
     fn auto_discover_companies(&mut self, jobs: &[JobPost]) -> usize {
-        let mut count = 0usize;
-
-        // If there are already 100+ companies, skip auto-discovery to avoid bloat.
         if self.company_db.companies.len() >= 100 {
-            return 0;
+            return 0; // cap auto-discovery to avoid bloat
         }
+        let generic: &[&str] = &[
+            "remote", "inc", "llc", "corp", "ltd", "gmbh", "co", "company", "startup", "client",
+            "company name", "confidential", "private",
+        ];
 
+        let mut count = 0usize;
         for job in jobs {
-            if let Some(ref name) = job.company {
-                // Skip very short or generic names
-                let trimmed = name.trim();
-                if trimmed.len() < 2 {
-                    continue;
-                }
-                // Skip generic company-like words that aren't actual companies
-                let generic = [
-                    "remote", "inc", "llc", "corp", "ltd", "gmbh", "co", "company",
-                    "startup", "client", "company name", "confidential", "private",
-                ];
-                if generic.iter().any(|g| trimmed.eq_ignore_ascii_case(g)) {
-                    continue;
-                }
-                // Skip if already in DB
-                if self.company_db.companies.iter().any(|c| c.name.eq_ignore_ascii_case(trimmed)) {
-                    continue;
-                }
-
-                // Guess the careers URL from the company name
-                let url = storage::guess_careers_url(trimmed);
-                if url.is_empty() {
-                    continue;
-                }
-
-                if self.company_db.add(trimmed, &url) {
-                    count += 1;
-                }
+            let Some(ref name) = job.company else {
+                continue;
+            };
+            let trimmed = name.trim();
+            if trimmed.len() < 2 {
+                continue;
+            }
+            if generic.iter().any(|g| trimmed.eq_ignore_ascii_case(g)) {
+                continue;
+            }
+            if self
+                .company_db
+                .companies
+                .iter()
+                .any(|c| c.name.eq_ignore_ascii_case(trimmed))
+            {
+                continue;
+            }
+            let url = storage::guess_careers_url(trimmed);
+            if url.is_empty() {
+                continue;
+            }
+            if self.company_db.add(trimmed, &url) {
+                count += 1;
             }
         }
-
         if count > 0 {
             let _ = storage::save_company_database(&self.company_db);
         }
-
         count
     }
 
@@ -623,7 +604,6 @@ impl App {
             println!("  No companies cached yet. They are auto-discovered from job posts.");
             return;
         }
-
         let failed = &self.company_db.failed;
         println!();
         println!(
@@ -631,15 +611,15 @@ impl App {
             self.company_db.companies.len(),
             failed.len()
         );
-        println!("  {}", "─".repeat(60).dimmed());
+        println!("  {}", "\u{2500}".repeat(60).dimmed());
 
         for (i, company) in self.company_db.companies.iter().enumerate() {
             let status = match company.last_crawled {
-                Some(_) => "✓".green().to_string(),
-                None => "—".dimmed().to_string(),
+                Some(_) => "\u{2713}".green().to_string(),
+                None => "\u{2014}".dimmed().to_string(),
             };
             let fail_note = if failed.contains_key(&company.name) {
-                format!(" {}", "⚠ failed".red())
+                format!(" {}", "\u{26A0} failed".red())
             } else {
                 String::new()
             };
@@ -665,7 +645,7 @@ impl App {
         }
         if self.company_db.add(name.trim(), url.trim()) {
             let _ = storage::save_company_database(&self.company_db);
-            println!("  Added: {} → {}", name.trim().green(), url.trim().dimmed());
+            println!("  Added: {} \u{2192} {}", name.trim().green(), url.trim().dimmed());
         } else {
             println!("  '{}' is already in the cache.", name);
         }
@@ -689,11 +669,7 @@ impl App {
             println!("  No results yet. Run a scan or search first.");
             return;
         }
-
         let resume = self.matcher.resume().cloned();
-
-        // Enter raw mode via console Term for the vim-style viewer.
-        // The viewer handles its own screen rendering and key reading.
         if let Err(e) = views::run_results_viewer(&self.results, resume.as_ref()) {
             eprintln!("  Viewer error: {e}");
         }
@@ -732,10 +708,8 @@ impl App {
             .unwrap_or(items.len() - 1);
 
         match selection {
-            // ── Sort by score ──────────────────────────────────────────
             0 => {
-                self.results
-                    .sort_by(|a, b| b.score.partial_cmp(&a.score).unwrap_or(std::cmp::Ordering::Equal));
+                sort_by_score_desc(&mut self.results);
                 println!("  ✓ Sorted by score (high → low).");
             }
             1 => {
@@ -743,30 +717,14 @@ impl App {
                     .sort_by(|a, b| a.score.partial_cmp(&b.score).unwrap_or(std::cmp::Ordering::Equal));
                 println!("  ✓ Sorted by score (low → high).");
             }
-            // ── Sort by date (using posted_at, fall back to crawled_at) ──
             2 => {
-                self.results.sort_by(|a, b| {
-                    match (b.job.posted_at, a.job.posted_at) {
-                        (Some(bd), Some(ad)) => bd.cmp(&ad),
-                        (Some(_), None) => std::cmp::Ordering::Greater,
-                        (None, Some(_)) => std::cmp::Ordering::Less,
-                        (None, None) => b.job.crawled_at.cmp(&a.job.crawled_at),
-                    }
-                });
+                sort_by_date_newest(&mut self.results);
                 println!("  ✓ Sorted by date (newest first).");
             }
             3 => {
-                self.results.sort_by(|a, b| {
-                    match (a.job.posted_at, b.job.posted_at) {
-                        (Some(ad), Some(bd)) => ad.cmp(&bd),
-                        (Some(_), None) => std::cmp::Ordering::Greater,
-                        (None, Some(_)) => std::cmp::Ordering::Less,
-                        (None, None) => a.job.crawled_at.cmp(&b.job.crawled_at),
-                    }
-                });
+                sort_by_date_oldest(&mut self.results);
                 println!("  ✓ Sorted by date (oldest first).");
             }
-            // ── Filter by source ───────────────────────────────────────
             4 => {
                 let before = self.results.len();
                 self.results.retain(|r| matches!(r.job.source, JobSource::RemoteOk));
@@ -785,9 +743,12 @@ impl App {
             7 => {
                 let before = self.results.len();
                 self.results.retain(|r| matches!(r.job.source, JobSource::Custom(_)));
-                println!("  ✓ Filtered to {} company career-site results (was {}).", self.results.len(), before);
+                println!(
+                    "  ✓ Filtered to {} company career-site results (was {}).",
+                    self.results.len(),
+                    before
+                );
             }
-            // ── Filter by score range ──────────────────────────────────
             8 => {
                 self.results.retain(|r| r.score >= 0.7);
                 println!("  ✓ Filtered to {} high-match results (>70%).", self.results.len());
@@ -800,20 +761,61 @@ impl App {
                 self.results.retain(|r| r.score < 0.4);
                 println!("  ✓ Filtered to {} low-match results (<40%).", self.results.len());
             }
-            // ── Reset ──────────────────────────────────────────────────
-            11 => {
-                // Reload from storage to undo all filters
-                if let Ok(saved) = storage::load_last_results() {
+            11 => match storage::load_last_results() {
+                Ok(saved) => {
                     let count_before = self.results.len();
                     self.results = saved;
                     println!("  ✓ Reset filters. Back to {} results (was {}).", self.results.len(), count_before);
-                } else {
+                }
+                Err(_) => {
                     println!("  No cached results to restore. Re-run a scan.");
                 }
-            }
+            },
             _ => {}
         }
     }
+}
+
+// ─── Free-standing sort helpers ────────────────────────────────────────
+
+/// Sort `MatchResult`s by score descending, then by posted_at descending as tiebreaker.
+fn sort_by_score_desc(results: &mut [MatchResult]) {
+    results.sort_by(|a, b| {
+        let score_cmp = b.score.partial_cmp(&a.score).unwrap_or(std::cmp::Ordering::Equal);
+        if score_cmp != std::cmp::Ordering::Equal {
+            return score_cmp;
+        }
+        match (b.job.posted_at, a.job.posted_at) {
+            (Some(b_date), Some(a_date)) => b_date.cmp(&a_date),
+            (Some(_), None) => std::cmp::Ordering::Greater,
+            (None, Some(_)) => std::cmp::Ordering::Less,
+            (None, None) => b.job.crawled_at.cmp(&a.job.crawled_at),
+        }
+    });
+}
+
+/// Sort by posted_at descending (newest first), falling back to crawled_at.
+fn sort_by_date_newest(results: &mut [MatchResult]) {
+    results.sort_by(|a, b| {
+        match (b.job.posted_at, a.job.posted_at) {
+            (Some(bd), Some(ad)) => bd.cmp(&ad),
+            (Some(_), None) => std::cmp::Ordering::Greater,
+            (None, Some(_)) => std::cmp::Ordering::Less,
+            (None, None) => b.job.crawled_at.cmp(&a.job.crawled_at),
+        }
+    });
+}
+
+/// Sort by posted_at ascending (oldest first), falling back to crawled_at.
+fn sort_by_date_oldest(results: &mut [MatchResult]) {
+    results.sort_by(|a, b| {
+        match (a.job.posted_at, b.job.posted_at) {
+            (Some(ad), Some(bd)) => ad.cmp(&bd),
+            (Some(_), None) => std::cmp::Ordering::Greater,
+            (None, Some(_)) => std::cmp::Ordering::Less,
+            (None, None) => a.job.crawled_at.cmp(&b.job.crawled_at),
+        }
+    });
 }
 
 // ─── File Picker ─────────────────────────────────────────────────────────
@@ -904,5 +906,60 @@ fn pick_resume_file() -> Option<String> {
                 }
             }
         }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::models::MatchResult;
+
+    fn make_result(score: f64, days_ago: i64) -> MatchResult {
+        use chrono::TimeDelta;
+        let posted = chrono::Utc::now() - TimeDelta::try_days(days_ago).unwrap();
+        MatchResult {
+            score,
+            matched_skills: vec![],
+            matched_keywords: vec![],
+            missing_skills: vec![],
+            job: crate::models::JobPost {
+                id: String::new(),
+                title: String::new(),
+                company: None,
+                location: None,
+                description: String::new(),
+                url: String::new(),
+                source: crate::models::JobSource::RemoteOk,
+                posted_at: Some(posted),
+                crawled_at: chrono::Utc::now(),
+                salary: None,
+                job_type: None,
+                tags: vec![],
+            },
+        }
+    }
+
+    #[test]
+    fn test_sort_by_score_desc() {
+        let mut results = vec![make_result(0.5, 5), make_result(0.9, 1), make_result(0.5, 2)];
+        sort_by_score_desc(&mut results);
+        assert_eq!(results[0].score, 0.9);
+        // scores equal → newer first
+        assert_eq!(results[1].score, 0.5);
+        assert!(results[1].job.posted_at.unwrap() > results[2].job.posted_at.unwrap());
+    }
+
+    #[test]
+    fn test_sort_by_date_newest() {
+        let mut results = vec![make_result(0.5, 10), make_result(0.5, 1)];
+        sort_by_date_newest(&mut results);
+        assert!(results[0].job.posted_at.unwrap() > results[1].job.posted_at.unwrap());
+    }
+
+    #[test]
+    fn test_sort_by_date_oldest() {
+        let mut results = vec![make_result(0.5, 1), make_result(0.5, 10)];
+        sort_by_date_oldest(&mut results);
+        assert!(results[0].job.posted_at.unwrap() < results[1].job.posted_at.unwrap());
     }
 }

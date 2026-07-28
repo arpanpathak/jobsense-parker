@@ -224,7 +224,7 @@ pub fn run_results_viewer(results: &[MatchResult], resume: Option<&Resume>) -> R
         return Ok(());
     }
 
-    let total_pages = (results.len() + PAGE_SIZE - 1) / PAGE_SIZE;
+    let total_pages = results.len().div_ceil(PAGE_SIZE);
     let mut page = 0usize;
     let mut selected = 0usize; // index within current page
     let mut show_help = false;
