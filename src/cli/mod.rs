@@ -3,7 +3,7 @@
 mod views;
 
 use colored::Colorize;
-use dialoguer::{FuzzySelect, Input, Select};
+use dialoguer::{FuzzySelect, Input, MultiSelect, Select};
 use indicatif::{ProgressBar, ProgressStyle};
 use uuid::Uuid;
 
@@ -704,6 +704,7 @@ impl App {
             "Score: only high (>70%)".to_string(),
             "Score: only medium (40-70%)".to_string(),
             "Score: only low (<40%)".to_string(),
+            "Filter by country".to_string(),
             "Reset all filters".to_string(),
             "Back".to_string(),
         ];
@@ -770,7 +771,45 @@ impl App {
                 self.results.retain(|r| r.score < 0.4);
                 println!("  ✓ Filtered to {} low-match results (<40%).", self.results.len());
             }
-            11 => match storage::load_last_results() {
+            11 => {
+                let countries = collect_countries(&self.results);
+                if countries.is_empty() {
+                    println!("  No location data available to filter by country.");
+                    return;
+                }
+                // All countries pre-selected by default
+                let defaults: Vec<bool> = std::iter::repeat(true).take(countries.len()).collect();
+                let selections = MultiSelect::with_theme(&dialoguer::theme::ColorfulTheme::default())
+                    .with_prompt("Filter by country (Space to toggle, Enter to confirm)")
+                    .items(&countries)
+                    .defaults(&defaults)
+                    .interact_opt()
+                    .unwrap_or(None);
+
+                match selections {
+                    Some(selected) => {
+                        let before = self.results.len();
+                        let keep: std::collections::HashSet<&str> = selected
+                            .iter()
+                            .map(|&i| countries[i].as_str())
+                            .collect();
+                        self.results.retain(|r| {
+                            let c = infer_country(r.job.location.as_deref());
+                            keep.contains(c.as_str())
+                        });
+                        println!(
+                            "  ✓ Filtered by country ({} countries selected, results: {} → {}).",
+                            selected.len(),
+                            before,
+                            self.results.len()
+                        );
+                    }
+                    None => {
+                        println!("  Cancelled.");
+                    }
+                }
+            }
+            12 => match storage::load_last_results() {
                 Ok(saved) => {
                     let count_before = self.results.len();
                     self.results = saved;
@@ -825,6 +864,103 @@ fn sort_by_date_oldest(results: &mut [MatchResult]) {
             (None, None) => a.job.crawled_at.cmp(&b.job.crawled_at),
         }
     });
+}
+
+// ─── Location / Country helpers ────────────────────────────────────────
+
+/// Infer a country name from a job's location field.
+/// Falls back to "Unknown" when nothing can be determined.
+fn infer_country(location: Option<&str>) -> String {
+    let loc = match location {
+        Some(l) => l.trim(),
+        None => return "Unknown".into(),
+    };
+    if loc.is_empty() || loc.eq_ignore_ascii_case("remote") || loc.eq_ignore_ascii_case("anywhere")
+    {
+        return "Remote".into();
+    }
+
+    // Check for explicit country names in location text
+    let country_names: &[(&str, &[&str])] = &[
+        ("United States", &["united states", "usa", "u.s.a.", "america"][..]),
+        ("United Kingdom", &["united kingdom", "uk", "u.k.", "england", "scotland", "wales", "britain"][..]),
+        ("Canada", &["canada"][..]),
+        ("Australia", &["australia"][..]),
+        ("Germany", &["germany", "deutschland"][..]),
+        ("France", &["france"][..]),
+        ("India", &["india"][..]),
+        ("Japan", &["japan"][..]),
+        ("Singapore", &["singapore"][..]),
+        ("China", &["china"][..]),
+        ("South Korea", &["south korea", "korea"][..]),
+        ("Netherlands", &["netherlands", "holland"][..]),
+        ("Switzerland", &["switzerland"][..]),
+        ("Sweden", &["sweden"][..]),
+        ("Denmark", &["denmark"][..]),
+        ("Norway", &["norway"][..]),
+        ("Finland", &["finland"][..]),
+        ("Spain", &["spain"][..]),
+        ("Italy", &["italy"][..]),
+        ("Brazil", &["brazil"][..]),
+        ("Ireland", &["ireland"][..]),
+        ("New Zealand", &["new zealand"][..]),
+        ("Israel", &["israel"][..]),
+        ("Poland", &["poland"][..]),
+        ("Russia", &["russia"][..]),
+        ("Mexico", &["mexico"][..]),
+        ("Argentina", &["argentina"][..]),
+    ];
+    let loc_lower = loc.to_lowercase();
+    for (country, aliases) in country_names {
+        if aliases.iter().any(|a| loc_lower.contains(a)) {
+            return country.to_string();
+        }
+    }
+
+    // Check for US state abbreviations (2-letter codes)
+    let us_states = [
+        "AL", "AK", "AZ", "AR", "CA", "CO", "CT", "DE", "FL", "GA",
+        "HI", "ID", "IL", "IN", "IA", "KS", "KY", "LA", "ME", "MD",
+        "MA", "MI", "MN", "MS", "MO", "MT", "NE", "NV", "NH", "NJ",
+        "NM", "NY", "NC", "ND", "OH", "OK", "OR", "PA", "RI", "SC",
+        "SD", "TN", "TX", "UT", "VT", "VA", "WA", "WV", "WI", "WY",
+        "DC", "PR",
+    ];
+    // Check for ", XX" pattern at end of location (e.g. "San Francisco, CA")
+    for word in loc.split(&[',', ' '][..]).filter(|w| !w.is_empty()) {
+        let word_upper = word.to_uppercase();
+        if us_states.contains(&word_upper.as_str()) {
+            return "United States".into();
+        }
+    }
+
+    // Check for Canadian province abbreviations
+    let ca_provinces = [
+        "AB", "BC", "MB", "NB", "NL", "NS", "NT", "NU", "ON", "PE", "QC", "SK", "YT",
+    ];
+    for word in loc.split(&[',', ' '][..]).filter(|w| !w.is_empty()) {
+        let word_upper = word.to_uppercase();
+        if ca_provinces.contains(&word_upper.as_str()) {
+            return "Canada".into();
+        }
+    }
+
+    // Fallback
+    "Unknown".into()
+}
+
+/// Collect unique countries from a slice of match results.
+fn collect_countries(results: &[MatchResult]) -> Vec<String> {
+    let mut seen = std::collections::HashSet::new();
+    let mut countries: Vec<String> = Vec::new();
+    for r in results {
+        let c = infer_country(r.job.location.as_deref());
+        if seen.insert(c.clone()) {
+            countries.push(c);
+        }
+    }
+    countries.sort();
+    countries
 }
 
 // ─── File Picker ─────────────────────────────────────────────────────────
