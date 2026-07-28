@@ -21,7 +21,7 @@ impl Matcher {
     pub fn new() -> Self {
         Self {
             resume: None,
-            threshold: 0.15,
+            threshold: 0.05,
         }
     }
 

@@ -505,11 +505,11 @@ impl App {
 
         // ── Score all jobs ──────────────────────────────────────────
         let raw_count = jobs.len();
-        println!(
-            "  {} {} raw job posts. Matching against resume...",
-            "\u{26A1}".bright_green(),
-            raw_count
-        );
+
+        // Re-activate spinner so user sees progress during matching
+        pb.reset();
+        pb.set_message(format!("Scoring {} jobs against resume...", raw_count));
+        pb.enable_steady_tick(std::time::Duration::from_millis(100));
 
         self.results = if self.matcher.has_resume() {
             self.matcher.score_all(&jobs)
@@ -517,8 +517,10 @@ impl App {
             self.score_jobs_by_keywords(jobs)
         };
 
-        // ── Sort by score DESC, then by date DESC ───────────────────
-        sort_by_score_desc(&mut self.results);
+        pb.finish_and_clear();
+
+        // ── Sort by date DESC (newest first), then by score DESC ────
+        sort_by_date_newest(&mut self.results);
 
         // ── Persist history and results ─────────────────────────────
         if save_query {
