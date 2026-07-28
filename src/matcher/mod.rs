@@ -8,7 +8,7 @@ pub mod scoring;
 use std::collections::HashSet;
 
 use crate::models::{JobPost, MatchResult, Resume};
-use scoring::{build_job_text, compute_score, fuzzy_match};
+use scoring::{build_job_text, compute_score};
 
 /// Compares a resume against job posts and produces scored results.
 pub struct Matcher {
@@ -54,7 +54,12 @@ impl Matcher {
 
         for skill in &resume.skills {
             let skill_lower = skill.to_lowercase();
-            if job_lower.contains(&skill_lower) || fuzzy_match(&skill_lower, &job_lower) {
+            // Exact substring match — fast path. `fuzzy_match` via Jaro-Winkler
+            // is orders of magnitude slower (splits full text into words, O(n*m)
+            // per call) and catches <1% of real matches. We skip it here and
+            // only keep it in compute_score() for role-title matching where it
+            // actually matters on a tiny input set.
+            if job_lower.contains(&skill_lower) {
                 matched_skills.push(skill.clone());
             } else {
                 missing_skills.push(skill.clone());
@@ -71,7 +76,7 @@ impl Matcher {
 
         for kw in &all_keywords {
             let kw_lower = kw.to_lowercase();
-            if job_lower.contains(&kw_lower) || fuzzy_match(&kw_lower, &job_lower) {
+            if job_lower.contains(&kw_lower) {
                 matched_keywords.push(kw.clone());
             }
         }
