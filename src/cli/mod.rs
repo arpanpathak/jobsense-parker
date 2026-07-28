@@ -76,8 +76,14 @@ impl App {
                 }
                 Command::LoadResume(path) => self.cmd_load_resume(&path),
                 Command::ShowResume => self.cmd_show_resume(),
-                Command::Scan => self.cmd_scan().await,
-                Command::Search(query) => self.cmd_search(&query).await,
+                Command::Scan => {
+                    self.cmd_scan().await;
+                    self.cmd_view_results();
+                }
+                Command::Search(query) => {
+                    self.cmd_search(&query).await;
+                    self.cmd_view_results();
+                }
                 Command::ViewResults => self.cmd_view_results(),
                 Command::FilterResults => self.cmd_filter_results(),
                 Command::ListCompanies => self.cmd_list_companies(),
@@ -482,6 +488,7 @@ impl App {
 
         if jobs.is_empty() {
             println!("\n  No jobs found. Try different keywords or sources.\n");
+            self.results.clear();
             return;
         }
 
@@ -524,7 +531,7 @@ impl App {
         let top_score = self.results.iter().map(|r| r.score).fold(0.0, f64::max);
         if !self.results.is_empty() {
             println!(
-                "  {} {} matched results (top score: {:.0}%) — use 'View results' to browse\n",
+                "  {} {} matched results (top score: {:.0}%) — opening viewer...\n",
                 "\u{2713}".bright_green(),
                 self.results.len(),
                 top_score * 100.0
