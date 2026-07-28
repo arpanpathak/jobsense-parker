@@ -104,20 +104,18 @@ impl SourceCrawler for HackerNewsCrawler {
 impl HackerNewsCrawler {
     /// Find the most recent "Who is Hiring?" thread by searching Algolia,
     /// trying the current month and up to 2 months back.
-    async fn find_story(fetcher: &Fetcher, config: &SearchConfig) -> (String, String) {
+    /// NOTE: keywords are NOT appended to the Algolia query — they would
+    /// prevent finding the thread. Keyword filtering happens later in
+    /// `KeywordMatcher::matches()` on individual comments.
+    async fn find_story(fetcher: &Fetcher, _config: &SearchConfig) -> (String, String) {
         let now = Utc::now();
-        let keyword_q = if config.keywords.is_empty() {
-            String::new()
-        } else {
-            format!("%20{}", config.keywords.join(" "))
-        };
 
         for offset in 0..=2 {
             let dt = now - chrono::Months::new(offset);
             let month = dt.format("%B").to_string();
             let year = dt.format("%Y").to_string();
             let url = format!(
-                "https://hn.algolia.com/api/v1/search?query=Who%20is%20Hiring%20{month}%20{year}{keyword_q}&tags=story&hitsPerPage=5"
+                "https://hn.algolia.com/api/v1/search?query=Who%20is%20Hiring%20{month}%20{year}&tags=story&hitsPerPage=5"
             );
 
             let json = match fetcher.fetch(&url).await {
