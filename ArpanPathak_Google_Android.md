@@ -70,7 +70,7 @@ Software Engineer with 8+ years architecting high-performance, low-latency syste
 
 **Backend & API**: Spring Boot, Ktor, gRPC, REST API Design, SDK Development, Terraform Providers, CI/CD
 
-**Android & Mobile**: Android SDK, Jetpack Compose, Kotlin Multiplatform (KMP), MVVM, Coroutines & Flow, SQLDelight, Mobile CI/CD
+**Android & Mobile**: Android SDK, Android NDK / JNI, Jetpack Compose, Kotlin Multiplatform (KMP), MVVM, Coroutines & Flow, SQLDelight, Mobile CI/CD
 
 **Frontend**: React.JS, JavaScript, Angular, HTML5, CSS3 / SCSS, Microfrontend Architecture
 
