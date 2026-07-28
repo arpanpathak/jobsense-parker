@@ -7,6 +7,7 @@ use dialoguer::{FuzzySelect, Input, MultiSelect, Select};
 use indicatif::{ProgressBar, ProgressStyle};
 use uuid::Uuid;
 
+use crate::applicant::{self, ApplicationDatabase};
 use crate::crawler::company::CompanyCrawler;
 use crate::crawler::CrawlerCoordinator;
 use crate::matcher::Matcher;
@@ -89,6 +90,27 @@ impl App {
                 Command::ListCompanies => self.cmd_list_companies(),
                 Command::ShowScanHistory => {
                     show_scan_history(&self.scan_history);
+                }
+                Command::ShowAppliedJobs => {
+                    let db = ApplicationDatabase::load();
+                    if db.applied.is_empty() {
+                        println!("\n  No applications yet. Press 'a' on a job in the results viewer to apply.\n");
+                    } else {
+                        println!();
+                        println!("  Applied jobs ({} total):", db.applied.len());
+                        println!("  {}", "\u{2500}".repeat(60).dimmed());
+                        for (i, a) in db.list().iter().enumerate() {
+                            println!(
+                                "  {:>3}. {} {} @ {}",
+                                i + 1,
+                                a.applied_at.format("%Y-%m-%d"),
+                                a.title.bright_white(),
+                                a.company.as_deref().unwrap_or("unknown").cyan(),
+                            );
+                            println!("       {} (score: {:.0}%)", a.url.dimmed(), a.score * 100.0);
+                        }
+                        println!();
+                    }
                 }
                 Command::AddCompany(name, url) => self.cmd_add_company(&name, &url),
                 Command::RemoveCompany(name) => self.cmd_remove_company(&name),
@@ -208,6 +230,7 @@ impl App {
             format!("Show current resume"),
             format!("Filter / sort results"),
             format!("Scan history"),
+            format!("View applied jobs"),
             format!("Quit"),
         ];
 
@@ -216,8 +239,8 @@ impl App {
             .items(&items)
             .default(0)
             .interact_opt()
-            .unwrap_or(Some(8))
-            .unwrap_or(8);
+            .unwrap_or(Some(9))
+            .unwrap_or(9);
 
         match selection {
             0 => Command::Scan,
@@ -241,6 +264,7 @@ impl App {
             5 => Command::ShowResume,
             6 => Command::FilterResults,
             7 => Command::ShowScanHistory,
+            8 => Command::ShowAppliedJobs,
             _ => Command::Quit,
         }
     }
@@ -706,6 +730,7 @@ impl App {
             "Score: only low (<40%)".to_string(),
             "Filter by country".to_string(),
             "Reset all filters".to_string(),
+            "Batch apply to visible results".to_string(),
             "Back".to_string(),
         ];
 
@@ -819,6 +844,25 @@ impl App {
                     println!("  No cached results to restore. Re-run a scan.");
                 }
             },
+            13 => {
+                let resume = match self.matcher.resume() {
+                    Some(r) => r.clone(),
+                    None => {
+                        println!("  No resume loaded. Load a resume first.");
+                        return;
+                    }
+                };
+                if self.results.is_empty() {
+                    println!("  No results to apply to.");
+                    return;
+                }
+                let count = self.results.len();
+                println!("  Applying to {} visible results...", count);
+                for result in &self.results {
+                    applicant::apply_to_job(result, &resume);
+                }
+                println!("  Done. Applied to {} jobs.\n", count);
+            }
             _ => {}
         }
     }

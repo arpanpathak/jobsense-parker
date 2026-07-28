@@ -360,6 +360,8 @@ pub enum Command {
     RemoveCompany(String),
     /// Show the scan history.
     ShowScanHistory,
+    /// Show the list of jobs we've applied to.
+    ShowAppliedJobs,
     /// Exit the application.
     Quit,
 }

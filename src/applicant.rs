@@ -111,9 +111,9 @@ impl ApplicationDatabase {
 ///
 /// The letter is tailored:
 /// - Opens with the job title and company
-/// - Highlights matched skills
+/// - Highlights matched skills and experience years
+/// - Mentions seniority level and focus areas
 /// - Acknowledges missing skills (turns them into a learning opportunity)
-/// - References seniority level and experience years
 /// - Closes with enthusiasm
 pub fn generate_cover_letter(result: &MatchResult, resume: &Resume) -> String {
     let job = &result.job;
@@ -150,8 +150,21 @@ pub fn generate_cover_letter(result: &MatchResult, resume: &Resume) -> String {
         format!("\n\nMy expertise focuses on {}.", resume.focus_areas.join(", "))
     };
 
+    let education = if resume.education.is_empty() {
+        String::new()
+    } else {
+        let edu_str: Vec<String> = resume.education.iter().map(|e| e.to_string()).collect();
+        format!("\n\nI hold: {}.", edu_str.join("; "))
+    };
+
+    let certs = if resume.certifications.is_empty() {
+        String::new()
+    } else {
+        format!("\n\nCertifications: {}.", resume.certifications.join(", "))
+    };
+
     format!(
-        r#"Subject: Application for {title} — {name}
+        r#"Subject: Application for {title} — {role}
 
 Dear Hiring Team at {company},
 
@@ -159,7 +172,7 @@ I am writing to express my strong interest in the {title} position at {company}.
 As a {seniority} professional with {exp}, I am confident that my background \
 aligns well with what you are looking for.
 
-My relevant skills include: {matched}.{missing}{focus}
+My relevant skills include: {matched}.{focus}{education}{certs}{missing}
 
 I am excited about the opportunity to contribute to {company}'s mission \
 and would welcome the chance to discuss how my experience can add value to your team.
@@ -170,13 +183,15 @@ Best regards,
 [Your Name]
 "#,
         title = job.title,
-        name = resume.role_titles.first().map(|s| s.as_str()).unwrap_or("Candidate"),
+        role = resume.role_titles.first().map(|s| s.as_str()).unwrap_or("Candidate"),
         company = company,
         seniority = seniority,
         exp = exp,
         matched = matched,
         missing = missing,
         focus = focus,
+        education = education,
+        certs = certs,
     )
 }
 
