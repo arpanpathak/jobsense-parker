@@ -212,25 +212,45 @@ pub fn load_company_database() -> Result<CompanyDatabase> {
 
 /// Guess a careers-page URL from a company name (used for auto-discovery).
 ///
-/// Takes the company name, lowercases it, removes non-alphanumeric
-/// characters, and constructs `https://careers.{slug}.com/`.
+/// If the name already looks like a domain (ends with .com, .io, .org, etc.),
+/// prepend `careers.` to use it as a subdomain.
+/// Otherwise, strip everything non-alphanumeric and construct
+/// `https://careers.{slug}.com/`.
 ///
 /// # Examples
 ///
 /// ```ignore
 /// assert_eq!(guess_careers_url("Google"), "https://careers.google.com/");
-/// assert_eq!(guess_careers_url("Stripe"), "https://careers.stripe.com/");
+/// assert_eq!(guess_careers_url("Blockchain.com"), "https://careers.blockchain.com/");
+/// assert_eq!(guess_careers_url("Lemon.io"), "https://careers.lemon.io/");
+/// assert_eq!(guess_careers_url("The Elites"), "https://careers.theelites.com/");
 /// ```
 ///
-/// This won't always work (e.g. Meta → `careers.meta.com` is wrong),
-/// but it's a reasonable starting guess. Users can override with
-/// `--add-company` or the interactive menu.
+/// This is still a heuristic — many companies have non-standard career page
+/// URLs. Users can override with `--add-company` or the interactive menu.
 pub fn guess_careers_url(name: &str) -> String {
-    let slug = name
-        .to_lowercase()
-        .replace(|c: char| !c.is_alphanumeric() && c != '.', "")
-        .trim()
-        .to_string();
+    let cleaned = name.trim();
+    if cleaned.is_empty() {
+        return String::new();
+    }
+
+    let lower = cleaned.to_lowercase();
+    let known_tlds = [
+        ".com", ".io", ".org", ".net", ".ai", ".app", ".dev", ".co",
+        ".uk", ".eu", ".de", ".fr", ".jp", ".au", ".ca", ".in",
+    ];
+
+    // If the name already ends with a known TLD, treat it as a domain
+    // and use it as a careers subdomain (e.g. "blockchain.com" → careers.blockchain.com)
+    if known_tlds.iter().any(|t| lower.ends_with(t)) {
+        return format!("https://careers.{}/", cleaned);
+    }
+
+    // Otherwise, strip all non-alphanumeric and build careers.{slug}.com
+    let slug: String = cleaned
+        .chars()
+        .filter(|c| c.is_alphanumeric())
+        .collect();
     if slug.is_empty() {
         return String::new();
     }
