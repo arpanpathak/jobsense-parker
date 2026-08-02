@@ -42,6 +42,7 @@ Systems Software Engineer with 8+ years architecting performance-critical backen
 ### Software Development Engineer II | **Amazon** — Seattle, WA & Hyderabad, India | Mar 2021 – Oct 2024
 
 - **Real-Time ML Inference Engine**: Architected an **ensemble model pipeline combining XGBoost and Deep Learning** for real-time ads & deal ranking across FreeVee, Twitch, MiniTV, Prime Video, and Amazon Retail — processing millions of events at **100ms inference latency** while driving **5% CTR increase**, 30% higher deal impressions, and **$5.4M monthly revenue growth**.
+- **Event-Driven Ads Systems**: Designed and delivered event-driven systems for the ads publisher platform, delivering **programmatic guaranteed ad deals** via real-time **change data capture (CDC)** with **< 50ms latency** for ad consumer-side platforms handling auction and programmatic buying inventory.
 - **Distributed Systems & SDK Design**: Designed a uniqueness constraint indexing solution and **SDK** for a multi-tenant NoSQL datastore using **two-phase commit**, achieving **serializable isolation** at **3K writes/second** — a developer-facing library used across multiple publisher teams.
 - **Conversational AI (BERT)**: Developed a **BERT-based inference service** handling **5,000 QPS** at peak, reducing support ticket triage SLA from 7 days to 2 hours.
 - **Big Data Pipelines**: Engineered **Apache Spark** jobs processing millions of daily events into Amazon Redshift for OLAP with automated dashboards.
