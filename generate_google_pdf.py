@@ -391,9 +391,9 @@ THEMES = {
         "HEADING_BG": "#fdf0f6", "HEADER_BG": "#fff7fb",
     },
     "vivid": {
-        "BG": "#ffffff", "TEXT": "#334155", "NAME": "#1e293b", "STRONG": "#334155",
-        "ACCENT": "#1e293b", "LINK": "#0f766e", "BOX_BG": "#f0fdfa",
-        "DATE": "#64748b", "METRIC": "#1f2937", "MUTED": "#64748b",
+        "BG": "#ffffff", "TEXT": "#1f2937", "NAME": "#111827", "STRONG": "#1f2937",
+        "ACCENT": "#1f2937", "LINK": "#0f766e", "BOX_BG": "#f0fdfa",
+        "DATE": "#64748b", "METRIC": "#111827", "MUTED": "#475569",
         "TECH": "#0f766e", "PROJECT": "#0f766e", "TECH_LABEL": "#64748b",
         "SKILL": "#0f766e",
         "SHADOW": "0 2px 6px rgba(15, 23, 42, 0.10)",
