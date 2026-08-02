@@ -60,7 +60,7 @@ Software Engineer with nearly 8 years of industry experience architecting perfor
 
 - Developed full-stack workflow tools and an **AR-based product search microservice**, serving 10,000+ daily queries.
 - Built administrative dashboards reducing data retrieval latency from 5 min to 1 min.
-- TechStack: **Java, Angular, MongoDB, MySQL, SpringBoot**
+- TechStack: **Java, SpringBoot, Angular, MySQL, MongoDB, AWS**
 
 ---
 

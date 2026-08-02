@@ -177,6 +177,7 @@ p.bullet-sm strong {
     margin-bottom: 7px;
     border-radius: 4px;
     box-shadow: __HEADER_SHADOW__;
+    background: linear-gradient(90deg, __HEADING_BG__, transparent);
 }
 
 .job-header {
@@ -185,6 +186,8 @@ p.bullet-sm strong {
     line-height: 1.3;
     padding: 3px 8px;
     border-radius: 6px;
+    border-left: 3px solid __ACCENT__;
+    background: __HEADER_BG__;
     box-shadow: __HEADER_SHADOW__;
 }
 .job-title {
@@ -211,6 +214,10 @@ p {
 
 p.skill-group {
     margin: 6px 0 3px 0;
+}
+
+p.skill-group strong {
+    color: __SKILL__;
 }
 
 p.bullet {
@@ -257,32 +264,40 @@ THEMES = {
         "ACCENT": "#1A73E8", "LINK": "#1A73E8", "BOX_BG": "#f0f6ff",
         "DATE": "#5F6368", "METRIC": "#B8860B", "MUTED": "#222222",
         "TECH": "#188038", "PROJECT": "#1A73E8", "TECH_LABEL": "#5F6368",
+        "SKILL": "#1A73E8",
         "SHADOW": "4px 4px 14px rgba(0, 0, 0, 0.15), 1px 1px 4px rgba(0, 0, 0, 0.08)",
         "HEADER_SHADOW": "0 1px 3px rgba(0, 0, 0, 0.12)",
+        "HEADING_BG": "#f0f6ff", "HEADER_BG": "#f8f9fa",
     },
     "nightowl": {
         "BG": "#011627", "TEXT": "#d6deeb", "NAME": "#ffffff", "STRONG": "#e8eef5",
         "ACCENT": "#ec4899", "LINK": "#f472b6", "BOX_BG": "#152238",
         "DATE": "#8fa3b8", "METRIC": "#f472b6", "MUTED": "#c8d3de",
         "TECH": "#22d3ee", "PROJECT": "#c792ea", "TECH_LABEL": "#8fa3b8",
+        "SKILL": "#ff5874",
         "SHADOW": "4px 4px 14px rgba(0, 0, 0, 0.45), 1px 1px 4px rgba(0, 0, 0, 0.3)",
         "HEADER_SHADOW": "0 1px 4px rgba(0, 0, 0, 0.5)",
+        "HEADING_BG": "#152238", "HEADER_BG": "#0e2737",
     },
     "pink": {
         "BG": "#ffffff", "TEXT": "#1a1a1a", "NAME": "#111111", "STRONG": "#111111",
         "ACCENT": "#d63384", "LINK": "#d63384", "BOX_BG": "#fdf0f6",
         "DATE": "#6b7280", "METRIC": "#d63384", "MUTED": "#333333",
         "TECH": "#0f766e", "PROJECT": "#a21caf", "TECH_LABEL": "#6b7280",
+        "SKILL": "#d63384",
         "SHADOW": "4px 4px 14px rgba(0, 0, 0, 0.12), 1px 1px 4px rgba(0, 0, 0, 0.06)",
         "HEADER_SHADOW": "0 1px 3px rgba(0, 0, 0, 0.08)",
+        "HEADING_BG": "#fdf0f6", "HEADER_BG": "#fff7fb",
     },
     "vivid": {
         "BG": "#ffffff", "TEXT": "#1f2937", "NAME": "#111827", "STRONG": "#1f2937",
         "ACCENT": "#6366f1", "LINK": "#3b82f6", "BOX_BG": "#eef2ff",
         "DATE": "#9ca3af", "METRIC": "#f59e0b", "MUTED": "#4b5563",
         "TECH": "#0d9488", "PROJECT": "#7c3aed", "TECH_LABEL": "#6b7280",
+        "SKILL": "#db2777",
         "SHADOW": "0 2px 6px rgba(31, 41, 55, 0.08)",
         "HEADER_SHADOW": "0 1px 4px rgba(31, 41, 55, 0.12)",
+        "HEADING_BG": "#eef2ff", "HEADER_BG": "#f8fafc",
     },
 }
 
