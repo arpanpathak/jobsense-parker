@@ -37,6 +37,15 @@ def svg_icon(name, color, size=11):
         "github": '<path d="M9 19c-5 1.5-5-2.5-7-3m14 6v-3.87a3.37 3.37 0 0 0-.94-2.61c3.14-.35 6.44-1.54 6.44-7A5.44 5.44 0 0 0 20 4.77 5.07 5.07 0 0 0 19.91 1S18.73.65 16 2.48a13.38 13.38 0 0 0-7 0C6.27.65 5.09 1 5.09 1A5.07 5.07 0 0 0 5 4.77a5.44 5.44 0 0 0-1.5 3.78c0 5.42 3.3 6.61 6.44 7A3.37 3.37 0 0 0 9 18.13V22"/>',
         "code": '<polyline points="16 18 22 12 16 6"/><polyline points="8 6 2 12 8 18"/>',
         "shield": '<path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>',
+        "cpu": '<rect x="4" y="4" width="16" height="16" rx="2"/><rect x="9" y="9" width="6" height="6"/><line x1="9" y1="1" x2="9" y2="4"/><line x1="15" y1="1" x2="15" y2="4"/><line x1="9" y1="20" x2="9" y2="23"/><line x1="15" y1="20" x2="15" y2="23"/><line x1="20" y1="9" x2="23" y2="9"/><line x1="20" y1="14" x2="23" y2="14"/><line x1="1" y1="9" x2="4" y2="9"/><line x1="1" y1="14" x2="4" y2="14"/>',
+        "globe": '<circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/>',
+        "lock": '<rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/>',
+        "server": '<rect x="2" y="2" width="20" height="8" rx="2"/><rect x="2" y="14" width="20" height="8" rx="2"/><line x1="6" y1="6" x2="6.01" y2="6"/><line x1="6" y1="18" x2="6.01" y2="18"/>',
+        "plug": '<path d="M12 22v-5"/><path d="M9 8V2"/><path d="M15 8V2"/><path d="M18 8v5a4 4 0 0 1-4 4h-4a4 4 0 0 1-4-4V8z"/>',
+        "zap": '<polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/>',
+        "cloud": '<path d="M18 10h-1.26A8 8 0 1 0 9 20h9a5 5 0 0 0 0-10z"/>',
+        "database": '<ellipse cx="12" cy="5" rx="9" ry="3"/><path d="M21 12c0 1.66-4 3-9 3s-9-1.34-9-3"/><path d="M3 5v14c0 1.66 4 3 9 3s9-1.34 9-3V5"/>',
+        "layers": '<polygon points="12 2 2 7 12 12 22 7 12 2"/><polyline points="2 17 12 22 22 17"/><polyline points="2 12 12 17 22 12"/>',
     }
     p = paths.get(name, "")
     return (
@@ -46,13 +55,25 @@ def svg_icon(name, color, size=11):
     )
 
 
-def convert(md_text, icon_color="#4f46e5", project_color="#7c3aed", muted_color="#4b5563", tech_color="#0d9488"):
+def convert(md_text, icon_color="#0f766e", project_color="#0f766e", muted_color="#475569", tech_color="#0f766e", skill_color="#b45309"):
     """Convert markdown to clean HTML with proper link rendering."""
     lines = md_text.split("\n")
     html = []
     in_project_box = False
     contact_open = False
     heading_icons = {"SUMMARY": "target", "EXPERIENCE": "briefcase", "SKILLS": "tool", "EDUCATION": "cap"}
+    skill_icons = {
+        "Languages": "code",
+        "Systems Programming & Performance": "cpu",
+        "Networking & Protocols": "globe",
+        "Network & Cloud Security": "lock",
+        "Distributed Systems & Streaming": "server",
+        "APIs & Serialization": "plug",
+        "ML Inference & AI": "zap",
+        "Cloud & Infra": "cloud",
+        "Data & Storage": "database",
+        "Core CS": "layers",
+    }
 
     for line in lines:
         stripped = line.strip()
@@ -128,8 +149,13 @@ def convert(md_text, icon_color="#4f46e5", project_color="#7c3aed", muted_color=
                     ico = "shield"
                 html.append(f'<div class="contact-item"><span class="contact-ico">{svg_icon(ico, muted_color, 11)}</span><span class="contact-txt">{line}</span></div>')
             else:
-                cls = "skill-group" if "**: " in line else ""
-                html.append(f'<p class="{cls}">{line}</p>')
+                if line.startswith("**") and "**: " in line:
+                    label = line.split(":", 1)[0].strip("*")
+                    ic = skill_icons.get(label, "layers")
+                    line = svg_icon(ic, skill_color, 10) + line
+                    html.append(f'<p class="skill-group">{line}</p>')
+                else:
+                    html.append(f'<p>{line}</p>')
 
     result = "\n".join(html)
 
@@ -360,14 +386,14 @@ THEMES = {
         "HEADING_BG": "#fdf0f6", "HEADER_BG": "#fff7fb",
     },
     "vivid": {
-        "BG": "#ffffff", "TEXT": "#1f2937", "NAME": "#111827", "STRONG": "#4338ca",
-        "ACCENT": "#6366f1", "LINK": "#3b82f6", "BOX_BG": "#eef2ff",
-        "DATE": "#9ca3af", "METRIC": "#e11d48", "MUTED": "#4b5563",
-        "TECH": "#0d9488", "PROJECT": "#7c3aed", "TECH_LABEL": "#6b7280",
-        "SKILL": "#db2777",
-        "SHADOW": "0 2px 6px rgba(31, 41, 55, 0.08)",
-        "HEADER_SHADOW": "0 1px 4px rgba(31, 41, 55, 0.12)",
-        "HEADING_BG": "#eef2ff", "HEADER_BG": "#f8fafc",
+        "BG": "#ffffff", "TEXT": "#334155", "NAME": "#115e59", "STRONG": "#0f766e",
+        "ACCENT": "#0f766e", "LINK": "#0d9488", "BOX_BG": "#f0fdfa",
+        "DATE": "#94a3b8", "METRIC": "#b45309", "MUTED": "#475569",
+        "TECH": "#0f766e", "PROJECT": "#0f766e", "TECH_LABEL": "#64748b",
+        "SKILL": "#b45309",
+        "SHADOW": "0 2px 6px rgba(15, 118, 110, 0.10)",
+        "HEADER_SHADOW": "0 1px 4px rgba(15, 118, 110, 0.10)",
+        "HEADING_BG": "#f0fdfa", "HEADER_BG": "#f8fafc",
     },
 }
 
@@ -376,7 +402,7 @@ for token, value in theme.items():
     CSS = CSS.replace("__" + token + "__", value)
 
 body_html = convert(md, icon_color=theme["ACCENT"], project_color=theme["PROJECT"],
-                    muted_color=theme["MUTED"], tech_color=theme["TECH"])
+                    muted_color=theme["MUTED"], tech_color=theme["TECH"], skill_color=theme["SKILL"])
 
 full_html = f"""<!DOCTYPE html>
 <html lang="en">
