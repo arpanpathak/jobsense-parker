@@ -71,13 +71,17 @@ Software Engineer with nearly 8 years of industry experience architecting perfor
 
 **Systems Programming & Performance**: Lock-Free Data Structures, Concurrency, Memory Safety, Memory Profiling, Cache Optimization, Performance Engineering, Low-Latency Systems
 
-**Networking**: eBPF, Cilium, XDP, Kernel-Level Networking, TCP/IP, UDP, TLS, DNS, HTTP/3, Socket Programming, Packet Processing, Network Performance Optimization
+**Networking & Protocols**: TCP/IP, UDP, TLS, mTLS, DNS, HTTP/2, HTTP/3, WebSockets, Socket Programming, Network Performance Optimization
 
-**Distributed Systems & Streaming**: Apache Kafka, Apache Flink, Apache Spark, Distributed Systems (consensus, replication, sharding), Real-Time Data Pipelines, gRPC, REST API Design
+**Network & Cloud Security**: eBPF, Cilium, XDP, Kernel-Level Networking, Packet Processing, VPC, Subnets, Routing, NAT, VPN, Peering, Load Balancing, Security Groups / Firewalls
+
+**Distributed Systems & Streaming**: Apache Kafka, Apache Flink, Apache Spark, Distributed Systems (consensus, replication, sharding), Real-Time Data Pipelines
+
+**APIs & Serialization**: gRPC, REST API Design, Protobuf
 
 **ML Inference & AI**: PyTorch, TensorFlow, XGBoost, Transformer Models (BERT), ONNX Runtime, On-Device/Edge Inference, Model Pruning & Quantization, Computer Vision (YOLOv8/v11), Artificial Neural Networks (ANN), Convolutional Neural Networks (CNN), Sequential Models, Natural Language Processing (NLP), Deep Learning, Recommendation Systems, MLOps
 
-**Cloud & Infra**: AWS (EC2, ECS, Lambda, Kinesis, EMR, SageMaker), Azure (AKS), Kubernetes (EKS, AKS), Docker, Terraform, Kubebuilder, Istio
+**Cloud & Infra**: AWS (EC2, ECS, Lambda, Kinesis, EMR, SageMaker), Google Cloud, Azure (AKS), Kubernetes (EKS, AKS), Docker, Terraform, Kubebuilder, Istio
 
 **Data & Storage**: DynamoDB, PostgreSQL, Redis, MongoDB, Amazon Redshift, Amazon S3
 

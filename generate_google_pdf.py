@@ -155,7 +155,7 @@ CSS = """
 body {
     font-family: 'Avenir Next', 'Avenir', 'Helvetica Neue', Helvetica, Arial, sans-serif;
     font-size: 10pt;
-    line-height: 1.38;
+    line-height: 1.34;
     color: __TEXT__;
     background: __BG__;
 }
@@ -243,8 +243,8 @@ p.bullet-sm strong {
     letter-spacing: 0.6px;
     border-bottom: 2px solid __ACCENT__;
     padding: 3px 8px;
-    margin-top: 14px;
-    margin-bottom: 7px;
+    margin-top: 10px;
+    margin-bottom: 5px;
     border-radius: 4px;
     box-shadow: __HEADER_SHADOW__;
     background: linear-gradient(90deg, __HEADING_BG__, transparent);
@@ -252,7 +252,7 @@ p.bullet-sm strong {
 
 .job-header {
     font-size: 10.5pt;
-    margin: 9px 0 2px 0;
+    margin: 7px 0 2px 0;
     line-height: 1.3;
     padding: 3px 8px;
     border-radius: 6px;
@@ -277,13 +277,13 @@ p.bullet-sm strong {
 }
 
 p {
-    margin: 2px 0;
+    margin: 1px 0;
     font-size: 9.5pt;
     line-height: 1.32;
 }
 
 p.skill-group {
-    margin: 6px 0 3px 0;
+    margin: 4px 0 2px 0;
 }
 
 p.skill-group strong {
