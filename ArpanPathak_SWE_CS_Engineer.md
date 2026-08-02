@@ -6,6 +6,8 @@ PERSONAL PROJECTS
 - On-device AI perception system built in **Rust** for intersection discipline and lane awareness — runs entirely on-device (**< 50ms inference latency**, no cloud dependency) for aftermarket dashcam and AR-glasses form factors.
 - Fine-tunes **YOLOv8/v11** and custom **CNN** architectures; applies model pruning and quantization to fit tight memory and power budgets on low-powered single-board computers (Raspberry Pi 5).
 - Trains on cloud GPU infrastructure with synthetic data augmentation; planning to release a public driving-behavior dataset on **Hugging Face**.
+**Physics & Mathematics of Game Development in Rust (Book)** | [arpanpathak.github.io/bevy-physics-book](https://arpanpathak.github.io/bevy-physics-book/ch01-foreword.html) | 2026
+- Authored an unpublished book on the **physics and mathematics of game development in Rust** — deep-diving the math and systems behind real-time simulation.
 :::
 
 **Seattle, Washington, USA** | Open to Relocation  
@@ -26,7 +28,7 @@ Systems Software Engineer with 8+ years architecting performance-critical backen
 
 ### Software Developer II | **Microsoft** — Redmond, WA | June 2025 – Present
 
-- **C++ to Rust Migration**: Spearheaded migration of the Information Protection service from **C++ to Rust**, shifting memory safety to compile-time. Eliminated use-after-free and buffer-overflow CVEs in the audited path while maintaining full performance parity — a critical win for DORA compliance.
+- **Rust Migration (Legacy C++/C#)**: Spearheaded migration of the Information Protection service from a legacy **unsafe C++** and garbage-collected **C#** codebase to **Rust**, shifting memory safety to compile-time. Completely eliminated **use-after-free**, **buffer-overflow**, and **null-safety** bugs in the migrated path. Delivered measurable performance gains over C# — improved **latency**, higher **throughput**, and reduced **memory consumption per request** — with real cost savings. Significantly increased developer productivity and confidence writing memory-safe code for MSEC.
 - **AI-Powered Policy Engine**: Built an AI-driven engine that auto-generates Cilium network policies and scans for misconfigurations, reducing manual policy review cycles from 4 hours to near-real-time with zero policy drift across sovereign regions.
 - **eBPF & Kernel-Level Networking**: Designed and deployed eBPF-based network policies using **Cilium** for Microsoft Purview's sovereign cloud regions. Authored custom **Kubernetes Operators** (Kubebuilder) to reconcile compliance states across AKS clusters.
 - **Developer Workflows**: Established CI/CD pipelines, containerized microservices, and automated validation frameworks ensuring reliable multi-region releases.
