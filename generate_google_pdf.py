@@ -51,6 +51,7 @@ def convert(md_text, icon_color="#4f46e5", project_color="#7c3aed", muted_color=
     lines = md_text.split("\n")
     html = []
     in_project_box = False
+    contact_open = False
     heading_icons = {"SUMMARY": "target", "EXPERIENCE": "briefcase", "SKILLS": "tool", "EDUCATION": "cap"}
 
     for line in lines:
@@ -68,6 +69,8 @@ def convert(md_text, icon_color="#4f46e5", project_color="#7c3aed", muted_color=
 
         if line.startswith("# ") and not line.startswith("## ") and not line.startswith("### "):
             html.append(f'<div class="name">{line[2:]}</div>')
+            contact_open = True
+            html.append('<div class="contact">')
 
         elif line.startswith("## "):
             title = line[3:]
@@ -89,6 +92,9 @@ def convert(md_text, icon_color="#4f46e5", project_color="#7c3aed", muted_color=
                 html.append(f'<div class="job-header">{content}</div>')
 
         elif not stripped or stripped == "---":
+            if stripped == "---" and contact_open:
+                contact_open = False
+                html.append('</div>')
             continue
 
         elif stripped.startswith("- "):
@@ -105,19 +111,24 @@ def convert(md_text, icon_color="#4f46e5", project_color="#7c3aed", muted_color=
             if in_project_box:
                 if stripped == "PERSONAL PROJECTS":
                     line = svg_icon("rocket", project_color, 11) + line
+                elif "github" in line and "[" in line:
+                    line = line.replace("[", svg_icon("github", project_color, 10) + "[", 1)
                 html.append(f'<p class="project-text">{line}</p>')
+            elif contact_open:
+                ico = "pin"
+                if "Email:" in line:
+                    ico = "mail"
+                elif "Phone:" in line:
+                    ico = "phone"
+                elif "LinkedIn:" in line:
+                    ico = "linkedin"
+                elif "GitHub:" in line:
+                    ico = "github"
+                elif line.startswith("**Visa"):
+                    ico = "shield"
+                html.append(f'<div class="contact-item"><span class="contact-ico">{svg_icon(ico, muted_color, 11)}</span><span class="contact-txt">{line}</span></div>')
             else:
                 cls = "skill-group" if "**: " in line else ""
-                if "Email:" in line:
-                    line = svg_icon("mail", muted_color, 10) + line
-                    line = line.replace("Phone:", svg_icon("phone", muted_color, 10) + "Phone:", 1)
-                if "LinkedIn:" in line:
-                    line = svg_icon("linkedin", muted_color, 10) + line
-                    line = line.replace("GitHub:", svg_icon("github", muted_color, 10) + "GitHub:", 1)
-                if stripped.startswith("**Seattle"):
-                    line = svg_icon("pin", muted_color, 10) + line
-                if stripped.startswith("**Visa"):
-                    line = svg_icon("shield", muted_color, 10) + line
                 html.append(f'<p class="{cls}">{line}</p>')
 
     result = "\n".join(html)
@@ -155,6 +166,28 @@ body {
     color: __NAME__;
     margin-bottom: 2px;
     letter-spacing: 0.5px;
+}
+
+.contact {
+    margin: 2px 0 4px 0;
+}
+.contact-item {
+    display: flex;
+    align-items: center;
+    margin: 1px 0;
+    font-size: 9.5pt;
+    line-height: 1.45;
+}
+.contact-ico {
+    flex: 0 0 16px;
+    text-align: center;
+    margin-right: 5px;
+}
+.contact-ico svg {
+    vertical-align: middle;
+}
+.contact-txt {
+    flex: 1;
 }
 
 .project-box {
@@ -230,7 +263,7 @@ p.bullet-sm strong {
 .job-title {
     font-style: italic;
     font-weight: 600;
-    color: __NAME__;
+    color: __STRONG__;
 }
 .job-company {
     font-weight: 600;
@@ -327,9 +360,9 @@ THEMES = {
         "HEADING_BG": "#fdf0f6", "HEADER_BG": "#fff7fb",
     },
     "vivid": {
-        "BG": "#ffffff", "TEXT": "#1f2937", "NAME": "#111827", "STRONG": "#1f2937",
+        "BG": "#ffffff", "TEXT": "#1f2937", "NAME": "#111827", "STRONG": "#4338ca",
         "ACCENT": "#6366f1", "LINK": "#3b82f6", "BOX_BG": "#eef2ff",
-        "DATE": "#9ca3af", "METRIC": "#f59e0b", "MUTED": "#4b5563",
+        "DATE": "#9ca3af", "METRIC": "#e11d48", "MUTED": "#4b5563",
         "TECH": "#0d9488", "PROJECT": "#7c3aed", "TECH_LABEL": "#6b7280",
         "SKILL": "#db2777",
         "SHADOW": "0 2px 6px rgba(31, 41, 55, 0.08)",
