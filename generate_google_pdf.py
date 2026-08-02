@@ -22,11 +22,36 @@ def highlight_metrics(text):
     return text
 
 
-def convert(md_text):
+def svg_icon(name, color, size=11):
+    """Return a clean inline SVG icon (feather-style stroke icons)."""
+    paths = {
+        "target": '<circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="6"/><circle cx="12" cy="12" r="2"/>',
+        "briefcase": '<rect x="2" y="7" width="20" height="14" rx="2"/><path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"/>',
+        "tool": '<path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"/>',
+        "cap": '<path d="M22 10L12 5 2 10l10 5 10-5z"/><path d="M6 12v5c0 1.66 2.69 3 6 3s6-1.34 6-3v-5"/>',
+        "rocket": '<path d="M4.5 16.5c-1.5 1.26-2 5-2 5s3.74-.5 5-2c.71-.84.7-2.13-.09-2.91a2.18 2.18 0 0 0-2.91-.09z"/><path d="M12 15l-3-3a22 22 0 0 1 2-3.95A12.88 12.88 0 0 1 22 2c0 2.72-.78 7.5-6 11a22.35 22.35 0 0 1-4 2z"/><path d="M9 12H4s.55-3.03 2-4c1.62-1.08 5 0 5 0"/><path d="M12 15v5s3.03-.55 4-2c1.08-1.62 0-5 0-5"/>',
+        "mail": '<path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/>',
+        "phone": '<path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72c.127.96.361 1.903.7 2.81a2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0 1 22 16.92z"/>',
+        "pin": '<path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/>',
+        "linkedin": '<path d="M16 8a6 6 0 0 1 6 6v7h-4v-7a2 2 0 0 0-2-2 2 2 0 0 0-2 2v7h-4V8h4v1.5A5.98 5.98 0 0 1 16 8z"/><rect x="2" y="9" width="4" height="12"/><circle cx="4" cy="4" r="2"/>',
+        "github": '<path d="M9 19c-5 1.5-5-2.5-7-3m14 6v-3.87a3.37 3.37 0 0 0-.94-2.61c3.14-.35 6.44-1.54 6.44-7A5.44 5.44 0 0 0 20 4.77 5.07 5.07 0 0 0 19.91 1S18.73.65 16 2.48a13.38 13.38 0 0 0-7 0C6.27.65 5.09 1 5.09 1A5.07 5.07 0 0 0 5 4.77a5.44 5.44 0 0 0-1.5 3.78c0 5.42 3.3 6.61 6.44 7A3.37 3.37 0 0 0 9 18.13V22"/>',
+        "code": '<polyline points="16 18 22 12 16 6"/><polyline points="8 6 2 12 8 18"/>',
+        "shield": '<path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>',
+    }
+    p = paths.get(name, "")
+    return (
+        f'<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="{size}" height="{size}" '
+        f'fill="none" stroke="{color}" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" '
+        f'style="vertical-align:-1.5px;margin-right:4px">{p}</svg>'
+    )
+
+
+def convert(md_text, icon_color="#4f46e5", project_color="#7c3aed", muted_color="#4b5563", tech_color="#0d9488"):
     """Convert markdown to clean HTML with proper link rendering."""
     lines = md_text.split("\n")
     html = []
     in_project_box = False
+    heading_icons = {"SUMMARY": "target", "EXPERIENCE": "briefcase", "SKILLS": "tool", "EDUCATION": "cap"}
 
     for line in lines:
         stripped = line.strip()
@@ -45,7 +70,9 @@ def convert(md_text):
             html.append(f'<div class="name">{line[2:]}</div>')
 
         elif line.startswith("## "):
-            html.append(f'<div class="section-heading">{line[3:]}</div>')
+            title = line[3:]
+            ic = heading_icons.get(title.upper(), "target")
+            html.append(f'<div class="section-heading">{svg_icon(ic, icon_color, 12)}{title}</div>')
 
         elif line.startswith("### "):
             content = line[4:]
@@ -70,15 +97,27 @@ def convert(md_text):
                 html.append(f'<p class="bullet-sm">\u2022 {item}</p>')
             elif item.startswith("TechStack"):
                 label, _, rest = item.partition(":")
-                html.append(f'<p class="techstack-box"><span class="techstack-label">{label}</span>:{rest}</p>')
+                html.append(f'<p class="techstack-box">{svg_icon("code", tech_color, 10)}<span class="techstack-label">{label}</span>:{rest}</p>')
             else:
                 html.append(f'<p class="bullet">\u2022 {item}</p>')
 
         else:
             if in_project_box:
+                if stripped == "PERSONAL PROJECTS":
+                    line = svg_icon("rocket", project_color, 11) + line
                 html.append(f'<p class="project-text">{line}</p>')
             else:
                 cls = "skill-group" if "**: " in line else ""
+                if "Email:" in line:
+                    line = svg_icon("mail", muted_color, 10) + line
+                    line = line.replace("Phone:", svg_icon("phone", muted_color, 10) + "Phone:", 1)
+                if "LinkedIn:" in line:
+                    line = svg_icon("linkedin", muted_color, 10) + line
+                    line = line.replace("GitHub:", svg_icon("github", muted_color, 10) + "GitHub:", 1)
+                if stripped.startswith("**Seattle"):
+                    line = svg_icon("pin", muted_color, 10) + line
+                if stripped.startswith("**Visa"):
+                    line = svg_icon("shield", muted_color, 10) + line
                 html.append(f'<p class="{cls}">{line}</p>')
 
     result = "\n".join(html)
@@ -95,8 +134,6 @@ def convert(md_text):
 
     return result
 
-
-body_html = convert(md)
 
 CSS = """
 @page {
@@ -304,6 +341,9 @@ THEMES = {
 theme = THEMES.get(THEME_NAME, THEMES["google"])
 for token, value in theme.items():
     CSS = CSS.replace("__" + token + "__", value)
+
+body_html = convert(md, icon_color=theme["ACCENT"], project_color=theme["PROJECT"],
+                    muted_color=theme["MUTED"], tech_color=theme["TECH"])
 
 full_html = f"""<!DOCTYPE html>
 <html lang="en">

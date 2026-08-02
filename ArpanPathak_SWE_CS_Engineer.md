@@ -66,7 +66,7 @@ Software Engineer with nearly 8 years of industry experience architecting perfor
 
 ## SKILLS
 
-**Languages**: Rust, C++, Go, Python, Java, Kotlin, C, TypeScript
+**Languages**: Rust, C++, Go, Python, Java, Kotlin, C, TypeScript, Shell Script
 
 **Systems Programming & Performance**: Lock-Free Data Structures, Concurrency, Memory Safety, Memory Profiling, Cache Optimization, Performance Engineering, Low-Latency Systems
 
