@@ -76,7 +76,8 @@ def convert(md_text):
             if in_project_box:
                 html.append(f'<p class="project-text">{line}</p>')
             else:
-                html.append(f'<p>{line}</p>')
+                cls = "skill-group" if "**: " in line else ""
+                html.append(f'<p class="{cls}">{line}</p>')
 
     result = "\n".join(html)
 
@@ -198,6 +199,10 @@ p {
     margin: 2px 0;
     font-size: 9.5pt;
     line-height: 1.32;
+}
+
+p.skill-group {
+    margin: 6px 0 3px 0;
 }
 
 p.bullet {
