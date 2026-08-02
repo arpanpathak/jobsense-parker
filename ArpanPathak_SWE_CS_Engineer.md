@@ -54,13 +54,13 @@ Software Engineer with nearly 8 years of industry experience architecting perfor
 
 - Built UPI Payment Gateway Aggregator using **Golang** and Protobuf, processing **1M+ hourly transactions**.
 - Maintained **99.99% uptime** with **150ms P99 latency** under 50,000 TPM peak loads.
-- TechStack: **Go, Redis, Protobuf**
+- TechStack: **Go, Redis, PostgreSQL, Protobuf, Google Cloud, AWS**
 
 ### Software Engineer | **Mindfire Solutions**, Bhubaneswar, India | Aug 2018 – Feb 2020
 
 - Developed full-stack workflow tools and an **AR-based product search microservice**, serving 10,000+ daily queries.
 - Built administrative dashboards reducing data retrieval latency from 5 min to 1 min.
-- TechStack: **Java, Angular, React, MongoDB, MySQL, SpringBoot**
+- TechStack: **Java, Angular, MongoDB, MySQL, SpringBoot**
 
 ---
 

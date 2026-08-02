@@ -105,16 +105,16 @@ CSS = """
     background: __BG__;
 }
 body {
-    font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
+    font-family: 'Avenir Next', 'Avenir', 'Helvetica Neue', Helvetica, Arial, sans-serif;
     font-size: 10pt;
-    line-height: 1.32;
+    line-height: 1.38;
     color: __TEXT__;
     background: __BG__;
 }
 
 .name {
     font-size: 24pt;
-    font-weight: 700;
+    font-weight: 600;
     color: __NAME__;
     margin-bottom: 2px;
     letter-spacing: 0.5px;
@@ -167,7 +167,7 @@ p.bullet-sm strong {
 
 .section-heading {
     font-size: 11pt;
-    font-weight: 700;
+    font-weight: 600;
     color: __NAME__;
     text-transform: uppercase;
     letter-spacing: 0.6px;
@@ -183,7 +183,8 @@ p.bullet-sm strong {
     line-height: 1.3;
 }
 .job-title {
-    font-weight: 700;
+    font-style: italic;
+    font-weight: 600;
     color: __NAME__;
 }
 .job-company {
@@ -233,7 +234,8 @@ p.techstack-box strong {
 }
 
 strong {
-    font-weight: 700;
+    font-style: italic;
+    font-weight: 600;
     color: __STRONG__;
 }
 
