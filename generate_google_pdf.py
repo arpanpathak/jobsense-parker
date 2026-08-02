@@ -345,7 +345,7 @@ strong {
 
 a {
     color: __LINK__;
-    text-decoration: none;
+    text-decoration: underline;
 }
 
 span.metric {
@@ -386,14 +386,14 @@ THEMES = {
         "HEADING_BG": "#fdf0f6", "HEADER_BG": "#fff7fb",
     },
     "vivid": {
-        "BG": "#ffffff", "TEXT": "#334155", "NAME": "#115e59", "STRONG": "#0f766e",
-        "ACCENT": "#0f766e", "LINK": "#0d9488", "BOX_BG": "#f0fdfa",
-        "DATE": "#94a3b8", "METRIC": "#b45309", "MUTED": "#475569",
-        "TECH": "#0f766e", "PROJECT": "#0f766e", "TECH_LABEL": "#64748b",
-        "SKILL": "#b45309",
-        "SHADOW": "0 2px 6px rgba(15, 118, 110, 0.10)",
-        "HEADER_SHADOW": "0 1px 4px rgba(15, 118, 110, 0.10)",
-        "HEADING_BG": "#f0fdfa", "HEADER_BG": "#f8fafc",
+        "BG": "#ffffff", "TEXT": "#1f2937", "NAME": "#111827", "STRONG": "#1f2937",
+        "ACCENT": "#374151", "LINK": "#111827", "BOX_BG": "#f8fafc",
+        "DATE": "#6b7280", "METRIC": "#111827", "MUTED": "#4b5563",
+        "TECH": "#374151", "PROJECT": "#374151", "TECH_LABEL": "#6b7280",
+        "SKILL": "#1f2937",
+        "SHADOW": "0 2px 6px rgba(0, 0, 0, 0.08)",
+        "HEADER_SHADOW": "0 1px 4px rgba(0, 0, 0, 0.10)",
+        "HEADING_BG": "#f8fafc", "HEADER_BG": "#f8fafc",
     },
 }
 
