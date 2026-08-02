@@ -68,9 +68,11 @@ def convert(md_text):
             item = stripped[2:]
             if in_project_box:
                 html.append(f'<p class="bullet-sm">\u2022 {item}</p>')
+            elif item.startswith("TechStack"):
+                label, _, rest = item.partition(":")
+                html.append(f'<p class="techstack-box"><span class="techstack-label">{label}</span>:{rest}</p>')
             else:
-                cls = "bullet techstack" if item.startswith("TechStack") else "bullet"
-                html.append(f'<p class="{cls}">\u2022 {item}</p>')
+                html.append(f'<p class="bullet">\u2022 {item}</p>')
 
         else:
             if in_project_box:
@@ -212,8 +214,22 @@ p.bullet {
     text-indent: -8px;
 }
 
-p.bullet.techstack strong {
+p.techstack-box {
+    background: __TECH_BG__;
+    border: 1px solid __TECH_BORDER__;
+    border-radius: 6px;
+    padding: 3px 9px;
+    margin: 3px 0 7px 0;
+    box-shadow: __TECH_SHADOW__;
+}
+span.techstack-label {
+    font-style: italic;
+    font-weight: 600;
+    color: __TECH_LABEL__;
+}
+p.techstack-box strong {
     color: __TECH__;
+    font-weight: 600;
 }
 
 strong {
@@ -238,28 +254,36 @@ THEMES = {
         "ACCENT": "#1A73E8", "LINK": "#1A73E8", "BOX_BG": "#f0f6ff",
         "DATE": "#5F6368", "METRIC": "#B8860B", "MUTED": "#222222",
         "TECH": "#188038", "PROJECT": "#1A73E8",
+        "TECH_BG": "#f2f8f3", "TECH_BORDER": "#b7dfc0", "TECH_LABEL": "#5F6368",
         "SHADOW": "4px 4px 14px rgba(0, 0, 0, 0.15), 1px 1px 4px rgba(0, 0, 0, 0.08)",
+        "TECH_SHADOW": "0 1px 3px rgba(0, 0, 0, 0.08)",
     },
     "nightowl": {
         "BG": "#011627", "TEXT": "#d6deeb", "NAME": "#ffffff", "STRONG": "#e8eef5",
         "ACCENT": "#ec4899", "LINK": "#f472b6", "BOX_BG": "#152238",
         "DATE": "#8fa3b8", "METRIC": "#f472b6", "MUTED": "#c8d3de",
         "TECH": "#22d3ee", "PROJECT": "#c792ea",
+        "TECH_BG": "#0e2737", "TECH_BORDER": "#1f5a6b", "TECH_LABEL": "#8fa3b8",
         "SHADOW": "4px 4px 14px rgba(0, 0, 0, 0.45), 1px 1px 4px rgba(0, 0, 0, 0.3)",
+        "TECH_SHADOW": "0 1px 3px rgba(0, 0, 0, 0.4)",
     },
     "pink": {
         "BG": "#ffffff", "TEXT": "#1a1a1a", "NAME": "#111111", "STRONG": "#111111",
         "ACCENT": "#d63384", "LINK": "#d63384", "BOX_BG": "#fdf0f6",
         "DATE": "#6b7280", "METRIC": "#d63384", "MUTED": "#333333",
         "TECH": "#0f766e", "PROJECT": "#a21caf",
+        "TECH_BG": "#f0fdfa", "TECH_BORDER": "#99f6e4", "TECH_LABEL": "#6b7280",
         "SHADOW": "4px 4px 14px rgba(0, 0, 0, 0.12), 1px 1px 4px rgba(0, 0, 0, 0.06)",
+        "TECH_SHADOW": "0 1px 3px rgba(0, 0, 0, 0.08)",
     },
     "vivid": {
-        "BG": "#ffffff", "TEXT": "#1a1a1a", "NAME": "#111111", "STRONG": "#111111",
-        "ACCENT": "#4f46e5", "LINK": "#2563eb", "BOX_BG": "#f5f3ff",
-        "DATE": "#6b7280", "METRIC": "#ea580c", "MUTED": "#333333",
-        "TECH": "#0f766e", "PROJECT": "#9333ea",
-        "SHADOW": "4px 4px 14px rgba(0, 0, 0, 0.12), 1px 1px 4px rgba(0, 0, 0, 0.06)",
+        "BG": "#ffffff", "TEXT": "#1f2937", "NAME": "#111827", "STRONG": "#1f2937",
+        "ACCENT": "#6366f1", "LINK": "#3b82f6", "BOX_BG": "#eef2ff",
+        "DATE": "#9ca3af", "METRIC": "#f59e0b", "MUTED": "#4b5563",
+        "TECH": "#0d9488", "PROJECT": "#7c3aed",
+        "TECH_BG": "#f0fdfa", "TECH_BORDER": "#99f6e4", "TECH_LABEL": "#6b7280",
+        "SHADOW": "0 2px 6px rgba(31, 41, 55, 0.08)",
+        "TECH_SHADOW": "0 1px 3px rgba(15, 118, 110, 0.12)",
     },
 }
 
