@@ -125,7 +125,7 @@ body {
     border-radius: 8px;
     padding: 8px 11px;
     background: __BOX_BG__;
-    box-shadow: 4px 4px 14px rgba(0, 0, 0, 0.45), 1px 1px 4px rgba(0, 0, 0, 0.3);
+    box-shadow: __SHADOW__;
 }
 .project-box p:first-child {
     font-size: 8.5pt;
@@ -227,11 +227,19 @@ THEMES = {
         "BG": "#ffffff", "TEXT": "#1a1a1a", "NAME": "#111111", "STRONG": "#111111",
         "ACCENT": "#1A73E8", "LINK": "#1A73E8", "BOX_BG": "#f0f6ff",
         "DATE": "#5F6368", "METRIC": "#B8860B", "MUTED": "#222222",
+        "SHADOW": "4px 4px 14px rgba(0, 0, 0, 0.15), 1px 1px 4px rgba(0, 0, 0, 0.08)",
     },
     "nightowl": {
         "BG": "#011627", "TEXT": "#d6deeb", "NAME": "#ffffff", "STRONG": "#e8eef5",
         "ACCENT": "#ec4899", "LINK": "#f472b6", "BOX_BG": "#152238",
         "DATE": "#8fa3b8", "METRIC": "#f472b6", "MUTED": "#c8d3de",
+        "SHADOW": "4px 4px 14px rgba(0, 0, 0, 0.45), 1px 1px 4px rgba(0, 0, 0, 0.3)",
+    },
+    "pink": {
+        "BG": "#ffffff", "TEXT": "#1a1a1a", "NAME": "#111111", "STRONG": "#111111",
+        "ACCENT": "#d63384", "LINK": "#d63384", "BOX_BG": "#fdf0f6",
+        "DATE": "#6b7280", "METRIC": "#d63384", "MUTED": "#333333",
+        "SHADOW": "4px 4px 14px rgba(0, 0, 0, 0.12), 1px 1px 4px rgba(0, 0, 0, 0.06)",
     },
 }
 
