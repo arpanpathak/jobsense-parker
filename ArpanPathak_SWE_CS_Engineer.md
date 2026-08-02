@@ -27,7 +27,7 @@ Software Engineer with nearly 8 years of industry experience architecting perfor
 
 ## EXPERIENCE
 
-### Software Developer II | **Microsoft**, Redmond, WA | June 2025 – Present
+### Software Developer II | **Microsoft**, Redmond, WA | Jun 2025 – Aug 2026
 
 - **Rust Migration (Legacy C++/C#)**: Spearheaded migration of the Information Protection service from a legacy **unsafe C++** and garbage-collected **C#** codebase to **Rust**, shifting memory safety to compile-time. Completely eliminated **use-after-free**, **buffer-overflow**, and **null-safety** bugs in the migrated path. Delivered measurable performance gains over C#, **~40% lower P99 latency**, **~2x throughput**, and **~3x lower memory consumption per request**, with **6-figure annual cost savings**. Significantly increased developer productivity and confidence writing memory-safe code for MSEC.
 - **AI-Powered Policy Engine**: Built an AI-driven engine that auto-generates Cilium network policies and scans for misconfigurations, reducing manual policy review cycles from 4 hours to near-real-time with zero policy drift across sovereign regions.

@@ -277,6 +277,8 @@ p.bullet-sm strong {
 }
 
 .job-header {
+    display: flex;
+    align-items: baseline;
     font-size: 10.5pt;
     margin: 7px 0 2px 0;
     line-height: 1.3;
@@ -300,6 +302,8 @@ p.bullet-sm strong {
     font-weight: 400;
     color: __DATE__;
     font-size: 9.5pt;
+    margin-left: auto;
+    white-space: nowrap;
 }
 
 p {
@@ -386,14 +390,14 @@ THEMES = {
         "HEADING_BG": "#fdf0f6", "HEADER_BG": "#fff7fb",
     },
     "vivid": {
-        "BG": "#ffffff", "TEXT": "#4b5563", "NAME": "#374151", "STRONG": "#4b5563",
-        "ACCENT": "#4b5563", "LINK": "#0d9488", "BOX_BG": "#f0fdfa",
-        "DATE": "#9ca3af", "METRIC": "#374151", "MUTED": "#6b7280",
-        "TECH": "#0d9488", "PROJECT": "#0d9488", "TECH_LABEL": "#6b7280",
-        "SKILL": "#0d9488",
-        "SHADOW": "0 2px 6px rgba(0, 0, 0, 0.07)",
-        "HEADER_SHADOW": "0 1px 4px rgba(0, 0, 0, 0.08)",
-        "HEADING_BG": "#f8fafc", "HEADER_BG": "#f8fafc",
+        "BG": "#ffffff", "TEXT": "#334155", "NAME": "#1f2937", "STRONG": "#334155",
+        "ACCENT": "#475569", "LINK": "#0f766e", "BOX_BG": "#f0fdfa",
+        "DATE": "#64748b", "METRIC": "#1f2937", "MUTED": "#64748b",
+        "TECH": "#0f766e", "PROJECT": "#0f766e", "TECH_LABEL": "#64748b",
+        "SKILL": "#0f766e",
+        "SHADOW": "0 2px 6px rgba(15, 23, 42, 0.10)",
+        "HEADER_SHADOW": "0 1px 4px rgba(15, 23, 42, 0.12)",
+        "HEADING_BG": "#f1f5f9", "HEADER_BG": "#f1f5f9",
     },
 }
 
