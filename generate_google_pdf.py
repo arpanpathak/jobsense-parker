@@ -6,6 +6,7 @@ import sys
 import weasyprint
 
 MD_FILE = sys.argv[1] if len(sys.argv) > 1 else "/Users/arpanpathak/Projects/rust/jobsense-parker/ArpanPathak_Google_Android.md"
+THEME_NAME = sys.argv[2] if len(sys.argv) > 2 else "google"
 PDF_FILE = MD_FILE.replace(".md", ".pdf")
 
 with open(MD_FILE, "r") as f:
@@ -97,18 +98,20 @@ CSS = """
 @page {
     size: letter;
     margin: 0.5in 0.65in;
+    background: __BG__;
 }
 body {
     font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
     font-size: 10pt;
     line-height: 1.32;
-    color: #1a1a1a;
+    color: __TEXT__;
+    background: __BG__;
 }
 
 .name {
     font-size: 24pt;
     font-weight: 700;
-    color: #111;
+    color: __NAME__;
     margin-bottom: 2px;
     letter-spacing: 0.5px;
 }
@@ -118,16 +121,16 @@ body {
     width: 48%;
     margin-left: 14px;
     margin-bottom: 10px;
-    border: 1.5px solid #1A73E8;
+    border: 1.5px solid __ACCENT__;
     border-radius: 8px;
     padding: 8px 11px;
-    background: #f0f6ff;
-    box-shadow: 4px 4px 14px rgba(0, 0, 0, 0.15), 1px 1px 4px rgba(0, 0, 0, 0.08);
+    background: __BOX_BG__;
+    box-shadow: 4px 4px 14px rgba(0, 0, 0, 0.45), 1px 1px 4px rgba(0, 0, 0, 0.3);
 }
 .project-box p:first-child {
     font-size: 8.5pt;
     font-weight: 700;
-    color: #1A73E8;
+    color: __ACCENT__;
     text-transform: uppercase;
     letter-spacing: 1.2px;
     margin: 0 0 3px 0;
@@ -136,35 +139,35 @@ p.project-text {
     font-size: 8pt;
     line-height: 1.28;
     margin: 2px 0;
-    color: #222;
+    color: __MUTED__;
 }
 p.project-text strong {
     font-size: 8.5pt;
-    color: #1A73E8;
+    color: __ACCENT__;
 }
 p.bullet-sm {
     margin: 1px 0 1px 12px;
     font-size: 8pt;
     line-height: 1.28;
     text-indent: -7px;
-    color: #222;
+    color: __MUTED__;
 }
 p.bullet-sm strong {
     font-size: 8pt;
-    color: #1A73E8;
+    color: __ACCENT__;
 }
 .project-box a {
-    color: #1A73E8;
+    color: __LINK__;
     font-size: 8pt;
 }
 
 .section-heading {
     font-size: 11pt;
     font-weight: 700;
-    color: #111;
+    color: __NAME__;
     text-transform: uppercase;
     letter-spacing: 0.6px;
-    border-bottom: 2px solid #1A73E8;
+    border-bottom: 2px solid __ACCENT__;
     padding-bottom: 3px;
     margin-top: 14px;
     margin-bottom: 7px;
@@ -177,16 +180,16 @@ p.bullet-sm strong {
 }
 .job-title {
     font-weight: 700;
-    color: #111;
+    color: __NAME__;
 }
 .job-company {
     font-weight: 600;
-    color: #1A73E8;
+    color: __ACCENT__;
     font-size: 10pt;
 }
 .job-date {
     font-weight: 400;
-    color: #5F6368;
+    color: __DATE__;
     font-size: 9.5pt;
 }
 
@@ -205,19 +208,36 @@ p.bullet {
 
 strong {
     font-weight: 700;
-    color: #111;
+    color: __STRONG__;
 }
 
 a {
-    color: #1A73E8;
+    color: __LINK__;
     text-decoration: none;
 }
 
 span.metric {
-    color: #B8860B;
+    color: __METRIC__;
     font-weight: 700;
 }
 """
+
+THEMES = {
+    "google": {
+        "BG": "#ffffff", "TEXT": "#1a1a1a", "NAME": "#111111", "STRONG": "#111111",
+        "ACCENT": "#1A73E8", "LINK": "#1A73E8", "BOX_BG": "#f0f6ff",
+        "DATE": "#5F6368", "METRIC": "#B8860B", "MUTED": "#222222",
+    },
+    "nightowl": {
+        "BG": "#011627", "TEXT": "#d6deeb", "NAME": "#ffffff", "STRONG": "#e8eef5",
+        "ACCENT": "#ec4899", "LINK": "#f472b6", "BOX_BG": "#152238",
+        "DATE": "#8fa3b8", "METRIC": "#f472b6", "MUTED": "#c8d3de",
+    },
+}
+
+theme = THEMES.get(THEME_NAME, THEMES["google"])
+for token, value in theme.items():
+    CSS = CSS.replace("__" + token + "__", value)
 
 full_html = f"""<!DOCTYPE html>
 <html lang="en">
@@ -232,4 +252,4 @@ full_html = f"""<!DOCTYPE html>
 """
 
 weasyprint.HTML(string=full_html).write_pdf(PDF_FILE)
-print(f"PDF generated: {PDF_FILE}")
+print(f"PDF generated: {PDF_FILE} (theme: {THEME_NAME})")

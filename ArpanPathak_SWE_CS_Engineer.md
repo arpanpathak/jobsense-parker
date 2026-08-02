@@ -30,16 +30,16 @@ Systems Software Engineer with 8+ years architecting performance-critical backen
 
 - **Rust Migration (Legacy C++/C#)**: Spearheaded migration of the Information Protection service from a legacy **unsafe C++** and garbage-collected **C#** codebase to **Rust**, shifting memory safety to compile-time. Completely eliminated **use-after-free**, **buffer-overflow**, and **null-safety** bugs in the migrated path. Delivered measurable performance gains over C#, **~40% lower P99 latency**, **~2x throughput**, and **~3x lower memory consumption per request**, with **6-figure annual cost savings**. Significantly increased developer productivity and confidence writing memory-safe code for MSEC.
 - **AI-Powered Policy Engine**: Built an AI-driven engine that auto-generates Cilium network policies and scans for misconfigurations, reducing manual policy review cycles from 4 hours to near-real-time with zero policy drift across sovereign regions.
-- **Zero-Trust Sovereign Cloud Networking**: Architected **zero-trust sovereign cloud networking** using **eBPF and Cilium-based network policies** to ensure **data residency** and **SecNumCloud** compliance standards.
+- **Zero-Trust Sovereign Cloud Networking**: Architected **zero-trust sovereign cloud networking** using **eBPF and Cilium-based network policies** to ensure **data residency** and **SecNumCloud** compliance standards. Built **Kubernetes operators** to auto-generate network policies with CI/CD pipelines.
 - **Developer Workflows**: Established CI/CD pipelines, containerized microservices, and automated validation frameworks ensuring reliable multi-region releases.
-- Infra: **Rust, C++, Kubernetes, eBPF**
+- TechStack: **Rust, C++, Kubernetes, eBPF**
 
 ### Senior Software Engineer | **Oracle Cloud Infrastructure**, Seattle, WA | Oct 2024 – Mar 2025
 
 - **High-Performance Engine**: Architected low-latency internals for a proprietary database engine, optimizing **lock-free data structures** to reduce contention in high-concurrency read-write paths, improving transaction throughput by **45,000 ops/s**.
 - **Infrastructure-as-Code SDK**: Engineered a Terraform provider (developer-facing SDK) for Oracle Autonomous Database, replacing legacy control plane infrastructure with projected **$1.2M/month cost savings**.
 - **Security & Key Management**: Integrated OCI Security Vault across control plane services for secure secret management and automated key rotation protocols.
-- Infra: **Java, Go, Terraform Provider, Oracle Autonomous Database**
+- TechStack: **Java, Go, Terraform Provider, Oracle Autonomous Database**
 
 ### Software Development Engineer II | **Amazon**, Seattle, WA & Hyderabad, India | Mar 2021 – Oct 2024
 
@@ -48,19 +48,19 @@ Systems Software Engineer with 8+ years architecting performance-critical backen
 - **Distributed Systems & SDK Design**: Designed a uniqueness constraint indexing solution and **SDK** for a multi-tenant NoSQL datastore using **two-phase commit**, achieving **serializable isolation** at **3K writes/second**, a developer-facing library used across multiple publisher teams.
 - **Conversational AI (BERT)**: Developed a **BERT-based inference service** handling **5,000 QPS** at peak, reducing support ticket triage SLA from 7 days to 2 hours.
 - **Big Data Platform & Data Lake**: Built big data platform, data warehouse, and data lake infrastructure for Amazon WorkEvents data handling **1 petabyte** of data and serving OLTP use cases. Designed a **domain-specific language (DSL) execution engine** to deploy datasets to **AWS QuickSight** for business intelligence, using **AWS Glue**, **Kotlin Spark API**, and **AWS CDK (TypeScript)** to orchestrate job infrastructure and data refresh strategies.
-- Infra: **Kotlin, Java, Python, TypeScript, AWS CDK, React.Js, DynamoDB, Redshift, AWS, PostgreSQL, PyTorch, XGBoost**
+- TechStack: **Kotlin, Java, Python, TypeScript, AWS CDK, React.Js, DynamoDB, Redshift, AWS, PostgreSQL, PyTorch, XGBoost**
 
 ### Software Development Engineer | **Razorpay**, Bengaluru, India | Aug 2020 – Feb 2021
 
 - Built UPI Payment Gateway Aggregator using **Golang** and Protobuf, processing **1M+ hourly transactions**.
 - Maintained **99.99% uptime** with **150ms P99 latency** under 50,000 TPM peak loads.
-- Infra: **Go, Redis, Protobuf**
+- TechStack: **Go, Redis, Protobuf**
 
 ### Software Engineer | **Mindfire Solutions**, Bhubaneswar, India | Aug 2018 – Feb 2020
 
 - Developed full-stack workflow tools and an **AR-based product search microservice**, serving 10,000+ daily queries.
 - Built administrative dashboards reducing data retrieval latency from 5 min to 1 min.
-- Infra: **Java, Angular, React, MongoDB, MySQL, SpringBoot**
+- TechStack: **Java, Angular, React, MongoDB, MySQL, SpringBoot**
 
 ---
 
@@ -76,11 +76,11 @@ Systems Software Engineer with 8+ years architecting performance-critical backen
 
 **ML Inference & AI**: PyTorch, TensorFlow, XGBoost, Transformer Models (BERT), ONNX Runtime, On-Device/Edge Inference, Model Pruning & Quantization, Computer Vision (YOLOv8/v11), Recommendation Systems, MLOps
 
-**Cloud & Infra**: AWS (EC2, ECS, Lambda, Kinesis, EMR, SageMaker), Azure (AKS), Kubernetes (EKS, AKS), Docker, Terraform, Cilium, Kubebuilder, Istio
+**Cloud & Infra**: AWS (EC2, ECS, Lambda, Kinesis, EMR, SageMaker), Azure (AKS), Kubernetes (EKS, AKS), Docker, Terraform, Kubebuilder, Istio
 
 **Data & Storage**: DynamoDB, PostgreSQL, Redis, MongoDB, Amazon Redshift, Amazon S3
 
-**Core CS**: Data Structures & Algorithms, System Design, Operating Systems, Networking (TCP/IP, UDP, TLS, DNS, HTTP/3)
+**Core CS**: Data Structures & Algorithms, System Design, Operating Systems, Computer Architecture
 
 ---
 
