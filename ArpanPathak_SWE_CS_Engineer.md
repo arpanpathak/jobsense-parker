@@ -45,7 +45,7 @@ Systems Software Engineer with 8+ years architecting performance-critical backen
 - **Event-Driven Ads Systems**: Designed and delivered event-driven systems for the ads publisher platform, delivering **programmatic guaranteed ad deals** via real-time **change data capture (CDC)** with **< 50ms latency** for ad consumer-side platforms handling auction and programmatic buying inventory.
 - **Distributed Systems & SDK Design**: Designed a uniqueness constraint indexing solution and **SDK** for a multi-tenant NoSQL datastore using **two-phase commit**, achieving **serializable isolation** at **3K writes/second** — a developer-facing library used across multiple publisher teams.
 - **Conversational AI (BERT)**: Developed a **BERT-based inference service** handling **5,000 QPS** at peak, reducing support ticket triage SLA from 7 days to 2 hours.
-- **Big Data Pipelines**: Engineered **Apache Spark** jobs processing millions of daily events into Amazon Redshift for OLAP with automated dashboards.
+- **Big Data Platform & Data Lake**: Built big data platform, data warehouse, and data lake infrastructure for Amazon WorkEvents data handling **1 petabyte** of data and serving OLTP use cases. Designed a **domain-specific language (DSL) execution engine** to deploy datasets to **AWS QuickSight** for business intelligence — using **AWS Glue**, **Kotlin Spark API**, and **AWS CDK (TypeScript)** to orchestrate job infrastructure and data refresh strategies.
 - Infra: **Kotlin, Java, Python, TypeScript, AWS CDK, React.Js, DynamoDB, Redshift, AWS, PostgreSQL, PyTorch, XGBoost**
 
 ### Software Development Engineer | **Razorpay** — Bengaluru, India | Aug 2020 – Feb 2021
