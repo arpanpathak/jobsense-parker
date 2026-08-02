@@ -14,10 +14,16 @@ with open(MD_FILE, "r") as f:
 
 
 def highlight_metrics(text):
-    """Wrap metrics and numbers in colored spans."""
+    """Wrap metrics and numbers in colored spans. Percentages get their own class."""
+    # Percentages -> gold
+    text = re.sub(r'(\d+[.,]?\d*\s*%)', r'<span class="metric-pct">\1</span>', text)
+    # Dollar amounts
     text = re.sub(r'(\$\d+[.,]?\d*[KMB]?[/]?(month|year)?)', r'<span class="metric">\1</span>', text)
-    text = re.sub(r'(\d+[.,]?\d*\s*(ops/s|ms|QPS|TPM|%|writes/second|hourly transactions))', r'<span class="metric">\1</span>', text)
+    # Numbers with performance units (excluding % which is handled above)
+    text = re.sub(r'(\d+[.,]?\d*\s*(ops/s|ms|QPS|TPM|writes/second|hourly transactions))', r'<span class="metric">\1</span>', text)
+    # Time spans
     text = re.sub(r'(\d+\s*(days?|hours?|minutes?))', r'<span class="metric">\1</span>', text)
+    # Numbers with K/M/B suffix
     text = re.sub(r'(\d+[KMB]\++?)(?!\s*(days?|hours?|minutes?|ops/s|ms|QPS|TPM|%))', r'<span class="metric">\1</span>', text)
     return text
 
@@ -357,13 +363,18 @@ span.metric {
     color: __METRIC__;
     font-weight: 700;
 }
+
+span.metric-pct {
+    color: __METRIC_PCT__;
+    font-weight: 700;
+}
 """
 
 THEMES = {
     "google": {
         "BG": "#ffffff", "TEXT": "#1a1a1a", "NAME": "#111111", "STRONG": "#111111",
         "ACCENT": "#1A73E8", "LINK": "#1A73E8", "BOX_BG": "#f0f6ff",
-        "DATE": "#5F6368", "METRIC": "#B8860B", "MUTED": "#222222",
+        "DATE": "#5F6368", "METRIC": "#B8860B", "METRIC_PCT": "#B8860B", "MUTED": "#222222",
         "TECH": "#188038", "PROJECT": "#1A73E8", "TECH_LABEL": "#5F6368",
         "SKILL": "#1A73E8",
         "SHADOW": "4px 4px 14px rgba(0, 0, 0, 0.15), 1px 1px 4px rgba(0, 0, 0, 0.08)",
@@ -373,7 +384,7 @@ THEMES = {
     "nightowl": {
         "BG": "#011627", "TEXT": "#d6deeb", "NAME": "#ffffff", "STRONG": "#e8eef5",
         "ACCENT": "#ec4899", "LINK": "#f472b6", "BOX_BG": "#152238",
-        "DATE": "#8fa3b8", "METRIC": "#f472b6", "MUTED": "#c8d3de",
+        "DATE": "#8fa3b8", "METRIC": "#f472b6", "METRIC_PCT": "#f472b6", "MUTED": "#c8d3de",
         "TECH": "#22d3ee", "PROJECT": "#c792ea", "TECH_LABEL": "#8fa3b8",
         "SKILL": "#ff5874",
         "SHADOW": "4px 4px 14px rgba(0, 0, 0, 0.45), 1px 1px 4px rgba(0, 0, 0, 0.3)",
@@ -383,7 +394,7 @@ THEMES = {
     "pink": {
         "BG": "#ffffff", "TEXT": "#1a1a1a", "NAME": "#111111", "STRONG": "#111111",
         "ACCENT": "#d63384", "LINK": "#d63384", "BOX_BG": "#fdf0f6",
-        "DATE": "#6b7280", "METRIC": "#d63384", "MUTED": "#333333",
+        "DATE": "#6b7280", "METRIC": "#d63384", "METRIC_PCT": "#d63384", "MUTED": "#333333",
         "TECH": "#0f766e", "PROJECT": "#a21caf", "TECH_LABEL": "#6b7280",
         "SKILL": "#d63384",
         "SHADOW": "4px 4px 14px rgba(0, 0, 0, 0.12), 1px 1px 4px rgba(0, 0, 0, 0.06)",
@@ -393,7 +404,7 @@ THEMES = {
     "vivid": {
         "BG": "#ffffff", "TEXT": "#1f2937", "NAME": "#111827", "STRONG": "#1f2937",
         "ACCENT": "#1f2937", "LINK": "#0f766e", "BOX_BG": "#f0fdfa",
-        "DATE": "#64748b", "METRIC": "#111827", "MUTED": "#475569",
+        "DATE": "#64748b", "METRIC": "#475569", "METRIC_PCT": "#b45309", "MUTED": "#475569",
         "TECH": "#0f766e", "PROJECT": "#0f766e", "TECH_LABEL": "#64748b",
         "SKILL": "#0f766e",
         "SHADOW": "0 2px 6px rgba(15, 23, 42, 0.10)",
