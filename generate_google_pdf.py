@@ -105,10 +105,10 @@ def convert(md_text, icon_color="#0f766e", project_color="#0f766e", muted_color=
             if len(parts) >= 3:
                 company = parts[1]
                 date = parts[2]
-                html.append(f'<div class="job-header"><span class="job-title">{title}</span> <span class="job-company">{company}</span> <span class="job-date">{date}</span></div>')
+                html.append(f'<div class="job-header"><span class="job-title">{title},</span> <span class="job-company">{company}</span> <span class="job-date">{date}</span></div>')
             elif len(parts) == 2:
                 rest = parts[1]
-                html.append(f'<div class="job-header"><span class="job-title">{title}</span> <span class="job-company">{rest}</span></div>')
+                html.append(f'<div class="job-header"><span class="job-title">{title},</span> <span class="job-company">{rest}</span></div>')
             else:
                 html.append(f'<div class="job-header">{content}</div>')
 
@@ -279,6 +279,7 @@ p.bullet-sm strong {
 .job-header {
     display: flex;
     align-items: baseline;
+    column-gap: 6px;
     font-size: 10.5pt;
     margin: 7px 0 2px 0;
     line-height: 1.3;
@@ -390,8 +391,8 @@ THEMES = {
         "HEADING_BG": "#fdf0f6", "HEADER_BG": "#fff7fb",
     },
     "vivid": {
-        "BG": "#ffffff", "TEXT": "#334155", "NAME": "#1f2937", "STRONG": "#334155",
-        "ACCENT": "#475569", "LINK": "#0f766e", "BOX_BG": "#f0fdfa",
+        "BG": "#ffffff", "TEXT": "#334155", "NAME": "#1e293b", "STRONG": "#334155",
+        "ACCENT": "#1e293b", "LINK": "#0f766e", "BOX_BG": "#f0fdfa",
         "DATE": "#64748b", "METRIC": "#1f2937", "MUTED": "#64748b",
         "TECH": "#0f766e", "PROJECT": "#0f766e", "TECH_LABEL": "#64748b",
         "SKILL": "#0f766e",
