@@ -69,7 +69,8 @@ def convert(md_text):
             if in_project_box:
                 html.append(f'<p class="bullet-sm">\u2022 {item}</p>')
             else:
-                html.append(f'<p class="bullet">\u2022 {item}</p>')
+                cls = "bullet techstack" if item.startswith("TechStack") else "bullet"
+                html.append(f'<p class="{cls}">\u2022 {item}</p>')
 
         else:
             if in_project_box:
@@ -121,7 +122,7 @@ body {
     width: 48%;
     margin-left: 14px;
     margin-bottom: 10px;
-    border: 1.5px solid __ACCENT__;
+    border: 1.5px solid __PROJECT__;
     border-radius: 8px;
     padding: 8px 11px;
     background: __BOX_BG__;
@@ -130,7 +131,7 @@ body {
 .project-box p:first-child {
     font-size: 8.5pt;
     font-weight: 700;
-    color: __ACCENT__;
+    color: __PROJECT__;
     text-transform: uppercase;
     letter-spacing: 1.2px;
     margin: 0 0 3px 0;
@@ -143,7 +144,7 @@ p.project-text {
 }
 p.project-text strong {
     font-size: 8.5pt;
-    color: __ACCENT__;
+    color: __PROJECT__;
 }
 p.bullet-sm {
     margin: 1px 0 1px 12px;
@@ -154,7 +155,7 @@ p.bullet-sm {
 }
 p.bullet-sm strong {
     font-size: 8pt;
-    color: __ACCENT__;
+    color: __PROJECT__;
 }
 .project-box a {
     color: __LINK__;
@@ -206,6 +207,10 @@ p.bullet {
     text-indent: -8px;
 }
 
+p.bullet.techstack strong {
+    color: __TECH__;
+}
+
 strong {
     font-weight: 700;
     color: __STRONG__;
@@ -227,18 +232,28 @@ THEMES = {
         "BG": "#ffffff", "TEXT": "#1a1a1a", "NAME": "#111111", "STRONG": "#111111",
         "ACCENT": "#1A73E8", "LINK": "#1A73E8", "BOX_BG": "#f0f6ff",
         "DATE": "#5F6368", "METRIC": "#B8860B", "MUTED": "#222222",
+        "TECH": "#188038", "PROJECT": "#1A73E8",
         "SHADOW": "4px 4px 14px rgba(0, 0, 0, 0.15), 1px 1px 4px rgba(0, 0, 0, 0.08)",
     },
     "nightowl": {
         "BG": "#011627", "TEXT": "#d6deeb", "NAME": "#ffffff", "STRONG": "#e8eef5",
         "ACCENT": "#ec4899", "LINK": "#f472b6", "BOX_BG": "#152238",
         "DATE": "#8fa3b8", "METRIC": "#f472b6", "MUTED": "#c8d3de",
+        "TECH": "#22d3ee", "PROJECT": "#c792ea",
         "SHADOW": "4px 4px 14px rgba(0, 0, 0, 0.45), 1px 1px 4px rgba(0, 0, 0, 0.3)",
     },
     "pink": {
         "BG": "#ffffff", "TEXT": "#1a1a1a", "NAME": "#111111", "STRONG": "#111111",
         "ACCENT": "#d63384", "LINK": "#d63384", "BOX_BG": "#fdf0f6",
         "DATE": "#6b7280", "METRIC": "#d63384", "MUTED": "#333333",
+        "TECH": "#0f766e", "PROJECT": "#a21caf",
+        "SHADOW": "4px 4px 14px rgba(0, 0, 0, 0.12), 1px 1px 4px rgba(0, 0, 0, 0.06)",
+    },
+    "vivid": {
+        "BG": "#ffffff", "TEXT": "#1a1a1a", "NAME": "#111111", "STRONG": "#111111",
+        "ACCENT": "#4f46e5", "LINK": "#2563eb", "BOX_BG": "#f5f3ff",
+        "DATE": "#6b7280", "METRIC": "#ea580c", "MUTED": "#333333",
+        "TECH": "#0f766e", "PROJECT": "#9333ea",
         "SHADOW": "4px 4px 14px rgba(0, 0, 0, 0.12), 1px 1px 4px rgba(0, 0, 0, 0.06)",
     },
 }
