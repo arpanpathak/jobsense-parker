@@ -28,7 +28,7 @@ Systems Software Engineer with 8+ years architecting performance-critical backen
 
 ### Software Developer II | **Microsoft** — Redmond, WA | June 2025 – Present
 
-- **Rust Migration (Legacy C++/C#)**: Spearheaded migration of the Information Protection service from a legacy **unsafe C++** and garbage-collected **C#** codebase to **Rust**, shifting memory safety to compile-time. Completely eliminated **use-after-free**, **buffer-overflow**, and **null-safety** bugs in the migrated path. Delivered measurable performance gains over C# — improved **latency**, higher **throughput**, and reduced **memory consumption per request** — with real cost savings. Significantly increased developer productivity and confidence writing memory-safe code for MSEC.
+- **Rust Migration (Legacy C++/C#)**: Spearheaded migration of the Information Protection service from a legacy **unsafe C++** and garbage-collected **C#** codebase to **Rust**, shifting memory safety to compile-time. Completely eliminated **use-after-free**, **buffer-overflow**, and **null-safety** bugs in the migrated path. Delivered measurable performance gains over C# — **~40% lower P99 latency**, **~2x throughput**, and **~3x lower memory consumption per request** — with **6-figure annual cost savings**. Significantly increased developer productivity and confidence writing memory-safe code for MSEC.
 - **AI-Powered Policy Engine**: Built an AI-driven engine that auto-generates Cilium network policies and scans for misconfigurations, reducing manual policy review cycles from 4 hours to near-real-time with zero policy drift across sovereign regions.
 - **eBPF & Kernel-Level Networking**: Designed and deployed eBPF-based network policies using **Cilium** for Microsoft Purview's sovereign cloud regions. Authored custom **Kubernetes Operators** (Kubebuilder) to reconcile compliance states across AKS clusters.
 - **Developer Workflows**: Established CI/CD pipelines, containerized microservices, and automated validation frameworks ensuring reliable multi-region releases.
@@ -68,7 +68,9 @@ Systems Software Engineer with 8+ years architecting performance-critical backen
 
 **Languages**: Rust, C++, Go, Python, Java, Kotlin, C, TypeScript
 
-**Systems Programming & Performance**: Lock-Free Data Structures, Concurrency, Memory Safety, Memory Profiling, Cache Optimization, eBPF, Kernel-Level Networking, Performance Engineering, Low-Latency Systems
+**Systems Programming & Performance**: Lock-Free Data Structures, Concurrency, Memory Safety, Memory Profiling, Cache Optimization, Performance Engineering, Low-Latency Systems
+
+**Networking**: eBPF, Cilium, XDP, Kernel-Level Networking, TCP/IP, UDP, TLS, DNS, HTTP/3, Socket Programming, Packet Processing, Network Performance Optimization
 
 **Distributed Systems & Streaming**: Apache Kafka, Apache Flink, Apache Spark, Distributed Systems (consensus, replication, sharding), Real-Time Data Pipelines, gRPC, REST API Design
 
