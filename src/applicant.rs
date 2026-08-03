@@ -16,6 +16,7 @@
 
 use colored::Colorize;
 
+use crate::cli::open_url;
 use crate::storage;
 
 // ─── Public API ────────────────────────────────────────────────────────────
@@ -45,7 +46,7 @@ pub fn auto_apply(url: &str, title: &str, company: Option<&str>) -> bool {
             "→".cyan()
         );
         println!();
-        open_url(url);
+        let _ = open_url(url);
         return false;
     }
 
@@ -69,14 +70,11 @@ pub fn auto_apply(url: &str, title: &str, company: Option<&str>) -> bool {
 
     // Run Chrome automation in a separate thread (headless_chrome is sync)
     std::thread::spawn(move || {
-        if let Err(e) = run_chrome_fill(&url, &name, &email, &phone, &location, &linkedin, &github) {
-            eprintln!(
-                "  {} Auto-fill failed: {}. Apply manually.",
-                "!".red(),
-                e
-            );
+        if let Err(e) = run_chrome_fill(&url, &name, &email, &phone, &location, &linkedin, &github)
+        {
+            eprintln!("  {} Auto-fill failed: {}. Apply manually.", "!".red(), e);
             // Fallback: just open the URL
-            open_url(&url);
+            let _ = open_url(&url);
         }
     });
 
@@ -85,24 +83,6 @@ pub fn auto_apply(url: &str, title: &str, company: Option<&str>) -> bool {
         "✓".green()
     );
     true
-}
-
-/// Open a job URL in the default browser (no form filling).
-pub fn open_url(url: &str) {
-    #[cfg(target_os = "macos")]
-    {
-        let _ = std::process::Command::new("open").arg(url).spawn();
-    }
-    #[cfg(target_os = "linux")]
-    {
-        let _ = std::process::Command::new("xdg-open").arg(url).spawn();
-    }
-    #[cfg(target_os = "windows")]
-    {
-        let _ = std::process::Command::new("cmd")
-            .args(["/c", "start", url])
-            .spawn();
-    }
 }
 
 // ─── Chrome CDP Automation ───────────────────────────────────────────────
@@ -119,15 +99,13 @@ fn run_chrome_fill(
     linkedin: &str,
     github: &str,
 ) -> anyhow::Result<()> {
-    let browser = Browser::new(
-        LaunchOptions {
-            headless: false, // Show the browser window!
-            sandbox: false,  // Avoid sandbox issues on some systems
-            window_size: Some((1280, 900)),
-            idle_browser_timeout: std::time::Duration::from_secs(120),
-            ..LaunchOptions::default()
-        },
-    )?;
+    let browser = Browser::new(LaunchOptions {
+        headless: false, // Show the browser window!
+        sandbox: false,  // Avoid sandbox issues on some systems
+        window_size: Some((1280, 900)),
+        idle_browser_timeout: std::time::Duration::from_secs(120),
+        ..LaunchOptions::default()
+    })?;
 
     let tab = browser.new_tab()?;
     tab.set_default_timeout(std::time::Duration::from_secs(15));
@@ -138,7 +116,15 @@ fn run_chrome_fill(
     std::thread::sleep(std::time::Duration::from_secs(3));
 
     let js = build_fill_javascript(name, email, phone, location, linkedin, github);
-    tab.evaluate(&js, false)?;
+    let filled = tab
+        .evaluate(&js, false)?
+        .value
+        .and_then(|v| v.as_u64())
+        .unwrap_or(0);
+    eprintln!(
+        "  {} Auto-filled {filled} field(s). Review and click Submit.",
+        "✓".green()
+    );
 
     Ok(())
 }

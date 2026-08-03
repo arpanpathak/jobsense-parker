@@ -1,8 +1,14 @@
 [package]
 name = "jobsense-parker"
-version = "0.1.0"
+version = "0.3.0"
 edition = "2021"
 description = "A CLI job crawler that hunts the internet for hiring posts matching your resume — because LinkedIn sucks."
+license = "MIT"
+repository = "https://github.com/arpanpathak/jobsense-parker"
+homepage = "https://github.com/arpanpathak/jobsense-parker"
+keywords = ["jobs", "job-search", "crawler", "cli", "resume"]
+categories = ["command-line-utilities", "web-programming::http-client"]
+default-run = "jobsense-parker"
 
 [[bin]]
 name = "jobsense-parker"

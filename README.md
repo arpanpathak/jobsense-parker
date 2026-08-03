@@ -8,11 +8,12 @@
 ![License](https://img.shields.io/badge/license-MIT-blue?style=flat-square)
 ![Status](https://img.shields.io/badge/status-beta-brightgreen?style=flat-square)
 ![PRs](https://img.shields.io/badge/PRs-welcome-orange?style=flat-square)
+![Release](https://img.shields.io/github/v/release/arpanpathak/jobsense-parker?style=flat-square)
+![Platform](https://img.shields.io/badge/platform-macOS%20%7C%20Linux%20%7C%20Windows-lightgrey?style=flat-square)
 
 ```text
 ╔══════════════════════════════════════════════════════╗
-║  🔍  JobSense-Parker  v0.3                          ║
-║  ──────────────────────────────────────────────────   ║
+║  JobSense-Parker  v0.3.0                             ║
 ║  Hunt the internet for your next gig.                ║
 ║  Type '?' at any results view for keybindings        ║
 ║  (LinkedIn-free zone)                                ║
@@ -34,12 +35,41 @@ No recruiter spam. No LinkedIn. Just clean, scored results from real job sources
 - **Vim-style results viewer**: Full-screen paginated browser with `j`/`k` navigation, `Enter` to open URLs, `?` for help
 - **OSC 8 clickable links**: Cmd+click (macOS) or Ctrl+click (Linux/Windows) any job URL to open in your browser
 - **Progress spinner**: Real-time feedback during crawling — no more silent waiting
+- **Auto-fill applications**: Press `a` on a job — Chrome auto-fills the application form with your profile via CDP (headless browser automation, no chromedriver)
 - **Fully concurrent**: All sources are crawled simultaneously; HN comments are fetched in parallel
 - **Persistent**: Resumes, preferences, company database, scan history — all saved to `~/.jobsense-parker/`
 
 ---
 
 ## 📦 Install
+
+Prebuilt binaries for **macOS (Intel + Apple Silicon), Linux (x86_64 + arm64) and Windows (x86_64)** are attached to every [GitHub Release](https://github.com/arpanpathak/jobsense-parker/releases).
+
+### macOS / Linux — one-liner
+
+```bash
+curl -fsSL https://raw.githubusercontent.com/arpanpathak/jobsense-parker/master/install.sh | bash
+```
+
+Pin a version:
+
+```bash
+curl -fsSL https://raw.githubusercontent.com/arpanpathak/jobsense-parker/master/install.sh | bash -s -- v0.3.0
+```
+
+### Windows — one-liner (PowerShell)
+
+```powershell
+irm https://raw.githubusercontent.com/arpanpathak/jobsense-parker/master/install.ps1 | iex
+```
+
+### Cargo install (needs Rust)
+
+```bash
+cargo install jobsense-parker
+```
+
+### From source
 
 ```bash
 # Prerequisites: Rust 1.75+ (install via https://rustup.rs/)
@@ -64,7 +94,7 @@ cargo build --release
 Shows the menu:
 
 ```text
-? jobense-parker ›
+? jobsense-parker ›
 ❯ Scan jobs (all sources + career sites)
   Search with custom query
   View results (no results)
@@ -73,6 +103,7 @@ Shows the menu:
   Show current resume
   Filter / sort results
   Scan history
+  Set profile (for auto-fill)
   Quit
 ```
 
@@ -129,10 +160,26 @@ Select "View results" from the menu to enter the full-screen paginated browser:
 | `g` | First page |
 | `G` | Last page |
 | `Enter` / `o` | Open job URL in browser |
+| `a` | Auto-fill the application form (headless Chrome CDP) |
 | `q` / `Esc` | Back to menu |
 | `?` | Toggle keybinding help overlay |
 
 All URLs support **Cmd+click** (macOS) or **Ctrl+click** (Linux/Windows) to open directly.
+
+### 🤖 Auto-Fill Applications (headless browser)
+
+Press `a` on any job and jobsense-parker launches Chrome, navigates to the job
+page, and **auto-fills common application form fields** with your profile via
+Chrome DevTools Protocol (no chromedriver needed):
+
+- Name (first/last/full), email, phone, location
+- LinkedIn and GitHub / portfolio URLs
+- Detects fields by `name`/`id`, `placeholder`, `aria-label`, and `<label>` text
+
+Set your profile once from the menu (**Set profile (for auto-fill)**) — it is
+stored in `~/.jobsense-parker/preferences.json`. Chrome opens in **visible mode**
+so you can review the filled form before clicking Submit. Requires a local
+Chrome/Chromium install.
 
 ---
 

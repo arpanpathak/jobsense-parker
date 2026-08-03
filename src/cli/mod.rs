@@ -15,6 +15,7 @@ use crate::models::{
 };
 use crate::storage;
 
+pub(crate) use views::open_url;
 pub use views::{banner, print_help, show_scan_history};
 
 /// Main application struct that ties together the matcher, crawlers, and storage.
@@ -71,7 +72,10 @@ impl App {
             let cmd = self.prompt_command();
             match cmd {
                 Command::Quit => {
-                    println!("\n  {}\n", "Later, hunter. Good luck out there.".bright_green());
+                    println!(
+                        "\n  {}\n",
+                        "Later, hunter. Good luck out there.".bright_green()
+                    );
                     break;
                 }
                 Command::LoadResume(path) => self.cmd_load_resume(&path),
@@ -169,7 +173,10 @@ impl App {
                 r.job.source,
                 company,
             );
-            println!("      {}", views::clickable(&r.job.url, &r.job.url).dimmed());
+            println!(
+                "      {}",
+                views::clickable(&r.job.url, &r.job.url).dimmed()
+            );
         }
         if self.results.len() > 10 {
             println!("  ... and {} more", self.results.len() - 10);
@@ -216,21 +223,21 @@ impl App {
         ];
 
         let selection = Select::with_theme(&dialoguer::theme::ColorfulTheme::default())
-            .with_prompt("jobense-parker")
+            .with_prompt("jobsense-parker")
             .items(&items)
             .default(0)
             .interact_opt()
-            .unwrap_or(Some(9))
+            .ok()
+            .flatten()
             .unwrap_or(9);
 
         match selection {
             0 => Command::Scan,
             1 => {
-                let query: String =
-                    Input::with_theme(&dialoguer::theme::ColorfulTheme::default())
-                        .with_prompt("Search query")
-                        .interact_text()
-                        .unwrap_or_default();
+                let query: String = Input::with_theme(&dialoguer::theme::ColorfulTheme::default())
+                    .with_prompt("Search query")
+                    .interact_text()
+                    .unwrap_or_default();
                 Command::Search(query)
             }
             2 => Command::ViewResults,
@@ -347,7 +354,9 @@ impl App {
     async fn cmd_scan(&mut self) {
         self.prepare_keywords();
         if self.config.keywords.is_empty() {
-            println!("\n  No keywords available. Load a resume or use --search \"your keywords\".\n");
+            println!(
+                "\n  No keywords available. Load a resume or use --search \"your keywords\".\n"
+            );
             return;
         }
         let kw = self.config.keywords.clone();
@@ -384,7 +393,12 @@ impl App {
                 })
                 .collect();
         }
-        let kw_lower: Vec<String> = self.config.keywords.iter().map(|k| k.to_lowercase()).collect();
+        let kw_lower: Vec<String> = self
+            .config
+            .keywords
+            .iter()
+            .map(|k| k.to_lowercase())
+            .collect();
         let query_phrase = kw_lower.join(" ");
         let max_kw = kw_lower.len() as f64;
         let max_score = max_kw * 3.0 + max_kw;
@@ -413,7 +427,9 @@ impl App {
 
                 let matched_keywords: Vec<String> = kw_lower
                     .iter()
-                    .filter(|kw| title_lower.contains(kw.as_str()) || desc_lower.contains(kw.as_str()))
+                    .filter(|kw| {
+                        title_lower.contains(kw.as_str()) || desc_lower.contains(kw.as_str())
+                    })
                     .cloned()
                     .collect();
 
@@ -504,7 +520,11 @@ impl App {
                 "  {} Auto-discovered {} new {}",
                 "+".green(),
                 discovered,
-                if discovered == 1 { "company" } else { "companies" }
+                if discovered == 1 {
+                    "company"
+                } else {
+                    "companies"
+                }
             );
         }
 
@@ -574,8 +594,19 @@ impl App {
             return 0; // cap auto-discovery to avoid bloat
         }
         let generic: &[&str] = &[
-            "remote", "inc", "llc", "corp", "ltd", "gmbh", "co", "company", "startup", "client",
-            "company name", "confidential", "private",
+            "remote",
+            "inc",
+            "llc",
+            "corp",
+            "ltd",
+            "gmbh",
+            "co",
+            "company",
+            "startup",
+            "client",
+            "company name",
+            "confidential",
+            "private",
         ];
 
         let mut count = 0usize;
@@ -612,43 +643,13 @@ impl App {
         count
     }
 
-    /// Show all cached companies in a paginated list.
+    /// Show all cached companies (reuses the shared renderer from `views`).
     fn cmd_list_companies(&self) {
-        if self.company_db.companies.is_empty() {
-            println!("  No companies cached yet. They are auto-discovered from job posts.");
-            return;
+        views::show_companies_list(&self.company_db);
+        if !self.company_db.companies.is_empty() {
+            println!("  Use menu option 'Company career sites' to add more.");
+            println!();
         }
-        let failed = &self.company_db.failed;
-        println!();
-        println!(
-            "  {} companies in cache ({} failed last crawl)",
-            self.company_db.companies.len(),
-            failed.len()
-        );
-        println!("  {}", "\u{2500}".repeat(60).dimmed());
-
-        for (i, company) in self.company_db.companies.iter().enumerate() {
-            let status = match company.last_crawled {
-                Some(_) => "\u{2713}".green().to_string(),
-                None => "\u{2014}".dimmed().to_string(),
-            };
-            let fail_note = if failed.contains_key(&company.name) {
-                format!(" {}", "\u{26A0} failed".red())
-            } else {
-                String::new()
-            };
-            println!(
-                "  {:>3}. {} {} {}{}",
-                i + 1,
-                status,
-                company.name.bright_white(),
-                company.careers_url.dimmed(),
-                fail_note,
-            );
-        }
-        println!();
-        println!("  Use menu option 'Company career sites' to add more.");
-        println!();
     }
 
     /// Add a company to the cache.
@@ -659,7 +660,11 @@ impl App {
         }
         if self.company_db.add(name.trim(), url.trim()) {
             let _ = storage::save_company_database(&self.company_db);
-            println!("  Added: {} \u{2192} {}", name.trim().green(), url.trim().dimmed());
+            println!(
+                "  Added: {} \u{2192} {}",
+                name.trim().green(),
+                url.trim().dimmed()
+            );
         } else {
             println!("  '{}' is already in the cache.", name);
         }
@@ -682,9 +687,12 @@ impl App {
         let mut prefs = storage::load_preferences().unwrap_or_default();
 
         println!();
-        println!("  {}", "╔══════════════════════════════════════════════════╗".bright_blue());
-        println!("  {}  Profile Setup (for auto-fill)                {}", "║".bright_blue(), "║".bright_blue());
-        println!("  {}", "╚══════════════════════════════════════════════════╝".bright_blue());
+        println!("{}", views::box_top().bright_blue());
+        println!(
+            "{}",
+            views::box_line("Profile Setup (for auto-fill)").bright_blue()
+        );
+        println!("{}", views::box_bottom().bright_blue());
         println!();
 
         let name: String = Input::with_theme(&dialoguer::theme::ColorfulTheme::default())
@@ -713,28 +721,46 @@ impl App {
             .default(prefs.preferred_location.unwrap_or_default())
             .interact_text()
             .unwrap_or_default();
-        prefs.preferred_location = if location.is_empty() { None } else { Some(location) };
+        prefs.preferred_location = if location.is_empty() {
+            None
+        } else {
+            Some(location)
+        };
 
         let linkedin: String = Input::with_theme(&dialoguer::theme::ColorfulTheme::default())
             .with_prompt("LinkedIn URL (optional)")
             .default(prefs.linkedin_url.unwrap_or_default())
             .interact_text()
             .unwrap_or_default();
-        prefs.linkedin_url = if linkedin.is_empty() { None } else { Some(linkedin) };
+        prefs.linkedin_url = if linkedin.is_empty() {
+            None
+        } else {
+            Some(linkedin)
+        };
 
         let github: String = Input::with_theme(&dialoguer::theme::ColorfulTheme::default())
             .with_prompt("GitHub/Portfolio URL (optional)")
             .default(prefs.github_url.unwrap_or_default())
             .interact_text()
             .unwrap_or_default();
-        prefs.github_url = if github.is_empty() { None } else { Some(github) };
+        prefs.github_url = if github.is_empty() {
+            None
+        } else {
+            Some(github)
+        };
 
         if let Err(e) = storage::save_preferences(&prefs) {
             eprintln!("  {} Failed to save profile: {}", "!".red(), e);
         } else {
             println!();
-            println!("  {} Profile saved to ~/.jobsense-parker/preferences.json", "✓".green());
-            println!("  {} Press 'a' on any job to auto-fill the application form.", "→".cyan());
+            println!(
+                "  {} Profile saved to ~/.jobsense-parker/preferences.json",
+                "✓".green()
+            );
+            println!(
+                "  {} Press 'a' on any job to auto-fill the application form.",
+                "→".cyan()
+            );
             println!();
         }
     }
@@ -791,8 +817,11 @@ impl App {
                 println!("  ✓ Sorted by score (high → low).");
             }
             1 => {
-                self.results
-                    .sort_by(|a, b| a.score.partial_cmp(&b.score).unwrap_or(std::cmp::Ordering::Equal));
+                self.results.sort_by(|a, b| {
+                    a.score
+                        .partial_cmp(&b.score)
+                        .unwrap_or(std::cmp::Ordering::Equal)
+                });
                 println!("  ✓ Sorted by score (low → high).");
             }
             2 => {
@@ -805,22 +834,38 @@ impl App {
             }
             4 => {
                 let before = self.results.len();
-                self.results.retain(|r| matches!(r.job.source, JobSource::RemoteOk));
-                println!("  ✓ Filtered to {} Remote OK results (was {}).", self.results.len(), before);
+                self.results
+                    .retain(|r| matches!(r.job.source, JobSource::RemoteOk));
+                println!(
+                    "  ✓ Filtered to {} Remote OK results (was {}).",
+                    self.results.len(),
+                    before
+                );
             }
             5 => {
                 let before = self.results.len();
-                self.results.retain(|r| matches!(r.job.source, JobSource::Reddit));
-                println!("  ✓ Filtered to {} Reddit results (was {}).", self.results.len(), before);
+                self.results
+                    .retain(|r| matches!(r.job.source, JobSource::Reddit));
+                println!(
+                    "  ✓ Filtered to {} Reddit results (was {}).",
+                    self.results.len(),
+                    before
+                );
             }
             6 => {
                 let before = self.results.len();
-                self.results.retain(|r| matches!(r.job.source, JobSource::HackerNews));
-                println!("  ✓ Filtered to {} HN results (was {}).", self.results.len(), before);
+                self.results
+                    .retain(|r| matches!(r.job.source, JobSource::HackerNews));
+                println!(
+                    "  ✓ Filtered to {} HN results (was {}).",
+                    self.results.len(),
+                    before
+                );
             }
             7 => {
                 let before = self.results.len();
-                self.results.retain(|r| matches!(r.job.source, JobSource::Custom(_)));
+                self.results
+                    .retain(|r| matches!(r.job.source, JobSource::Custom(_)));
                 println!(
                     "  ✓ Filtered to {} company career-site results (was {}).",
                     self.results.len(),
@@ -829,15 +874,24 @@ impl App {
             }
             8 => {
                 self.results.retain(|r| r.score >= 0.7);
-                println!("  ✓ Filtered to {} high-match results (>70%).", self.results.len());
+                println!(
+                    "  ✓ Filtered to {} high-match results (>70%).",
+                    self.results.len()
+                );
             }
             9 => {
                 self.results.retain(|r| r.score >= 0.4 && r.score < 0.7);
-                println!("  ✓ Filtered to {} medium-match results (40-70%).", self.results.len());
+                println!(
+                    "  ✓ Filtered to {} medium-match results (40-70%).",
+                    self.results.len()
+                );
             }
             10 => {
                 self.results.retain(|r| r.score < 0.4);
-                println!("  ✓ Filtered to {} low-match results (<40%).", self.results.len());
+                println!(
+                    "  ✓ Filtered to {} low-match results (<40%).",
+                    self.results.len()
+                );
             }
             11 => {
                 let countries = collect_countries(&self.results);
@@ -846,21 +900,20 @@ impl App {
                     return;
                 }
                 // All countries pre-selected by default
-                let defaults: Vec<bool> = std::iter::repeat(true).take(countries.len()).collect();
-                let selections = MultiSelect::with_theme(&dialoguer::theme::ColorfulTheme::default())
-                    .with_prompt("Filter by country (Space to toggle, Enter to confirm)")
-                    .items(&countries)
-                    .defaults(&defaults)
-                    .interact_opt()
-                    .unwrap_or(None);
+                let defaults = vec![true; countries.len()];
+                let selections =
+                    MultiSelect::with_theme(&dialoguer::theme::ColorfulTheme::default())
+                        .with_prompt("Filter by country (Space to toggle, Enter to confirm)")
+                        .items(&countries)
+                        .defaults(&defaults)
+                        .interact_opt()
+                        .unwrap_or(None);
 
                 match selections {
                     Some(selected) => {
                         let before = self.results.len();
-                        let keep: std::collections::HashSet<&str> = selected
-                            .iter()
-                            .map(|&i| countries[i].as_str())
-                            .collect();
+                        let keep: std::collections::HashSet<&str> =
+                            selected.iter().map(|&i| countries[i].as_str()).collect();
                         self.results.retain(|r| {
                             let c = infer_country(r.job.location.as_deref());
                             keep.contains(c.as_str())
@@ -881,7 +934,11 @@ impl App {
                 Ok(saved) => {
                     let count_before = self.results.len();
                     self.results = saved;
-                    println!("  ✓ Reset filters. Back to {} results (was {}).", self.results.len(), count_before);
+                    println!(
+                        "  ✓ Reset filters. Back to {} results (was {}).",
+                        self.results.len(),
+                        count_before
+                    );
                 }
                 Err(_) => {
                     println!("  No cached results to restore. Re-run a scan.");
@@ -897,7 +954,10 @@ impl App {
 /// Sort `MatchResult`s by score descending, then by posted_at descending as tiebreaker.
 fn sort_by_score_desc(results: &mut [MatchResult]) {
     results.sort_by(|a, b| {
-        let score_cmp = b.score.partial_cmp(&a.score).unwrap_or(std::cmp::Ordering::Equal);
+        let score_cmp = b
+            .score
+            .partial_cmp(&a.score)
+            .unwrap_or(std::cmp::Ordering::Equal);
         if score_cmp != std::cmp::Ordering::Equal {
             return score_cmp;
         }
@@ -912,25 +972,21 @@ fn sort_by_score_desc(results: &mut [MatchResult]) {
 
 /// Sort by posted_at descending (newest first), falling back to crawled_at.
 fn sort_by_date_newest(results: &mut [MatchResult]) {
-    results.sort_by(|a, b| {
-        match (b.job.posted_at, a.job.posted_at) {
-            (Some(bd), Some(ad)) => bd.cmp(&ad),
-            (Some(_), None) => std::cmp::Ordering::Greater,
-            (None, Some(_)) => std::cmp::Ordering::Less,
-            (None, None) => b.job.crawled_at.cmp(&a.job.crawled_at),
-        }
+    results.sort_by(|a, b| match (b.job.posted_at, a.job.posted_at) {
+        (Some(bd), Some(ad)) => bd.cmp(&ad),
+        (Some(_), None) => std::cmp::Ordering::Greater,
+        (None, Some(_)) => std::cmp::Ordering::Less,
+        (None, None) => b.job.crawled_at.cmp(&a.job.crawled_at),
     });
 }
 
 /// Sort by posted_at ascending (oldest first), falling back to crawled_at.
 fn sort_by_date_oldest(results: &mut [MatchResult]) {
-    results.sort_by(|a, b| {
-        match (a.job.posted_at, b.job.posted_at) {
-            (Some(ad), Some(bd)) => ad.cmp(&bd),
-            (Some(_), None) => std::cmp::Ordering::Greater,
-            (None, Some(_)) => std::cmp::Ordering::Less,
-            (None, None) => a.job.crawled_at.cmp(&b.job.crawled_at),
-        }
+    results.sort_by(|a, b| match (a.job.posted_at, b.job.posted_at) {
+        (Some(ad), Some(bd)) => ad.cmp(&bd),
+        (Some(_), None) => std::cmp::Ordering::Greater,
+        (None, Some(_)) => std::cmp::Ordering::Less,
+        (None, None) => a.job.crawled_at.cmp(&b.job.crawled_at),
     });
 }
 
@@ -950,8 +1006,22 @@ fn infer_country(location: Option<&str>) -> String {
 
     // Check for explicit country names in location text
     let country_names: &[(&str, &[&str])] = &[
-        ("United States", &["united states", "usa", "u.s.a.", "america"][..]),
-        ("United Kingdom", &["united kingdom", "uk", "u.k.", "england", "scotland", "wales", "britain"][..]),
+        (
+            "United States",
+            &["united states", "usa", "u.s.a.", "america"][..],
+        ),
+        (
+            "United Kingdom",
+            &[
+                "united kingdom",
+                "uk",
+                "u.k.",
+                "england",
+                "scotland",
+                "wales",
+                "britain",
+            ][..],
+        ),
         ("Canada", &["canada"][..]),
         ("Australia", &["australia"][..]),
         ("Germany", &["germany", "deutschland"][..]),
@@ -987,12 +1057,10 @@ fn infer_country(location: Option<&str>) -> String {
 
     // Check for US state abbreviations (2-letter codes)
     let us_states = [
-        "AL", "AK", "AZ", "AR", "CA", "CO", "CT", "DE", "FL", "GA",
-        "HI", "ID", "IL", "IN", "IA", "KS", "KY", "LA", "ME", "MD",
-        "MA", "MI", "MN", "MS", "MO", "MT", "NE", "NV", "NH", "NJ",
-        "NM", "NY", "NC", "ND", "OH", "OK", "OR", "PA", "RI", "SC",
-        "SD", "TN", "TX", "UT", "VT", "VA", "WA", "WV", "WI", "WY",
-        "DC", "PR",
+        "AL", "AK", "AZ", "AR", "CA", "CO", "CT", "DE", "FL", "GA", "HI", "ID", "IL", "IN", "IA",
+        "KS", "KY", "LA", "ME", "MD", "MA", "MI", "MN", "MS", "MO", "MT", "NE", "NV", "NH", "NJ",
+        "NM", "NY", "NC", "ND", "OH", "OK", "OR", "PA", "RI", "SC", "SD", "TN", "TX", "UT", "VT",
+        "VA", "WA", "WV", "WI", "WY", "DC", "PR",
     ];
     // Check for ", XX" pattern at end of location (e.g. "San Francisco, CA")
     for word in loc.split(&[',', ' '][..]).filter(|w| !w.is_empty()) {
@@ -1154,7 +1222,11 @@ mod tests {
 
     #[test]
     fn test_sort_by_score_desc() {
-        let mut results = vec![make_result(0.5, 5), make_result(0.9, 1), make_result(0.5, 2)];
+        let mut results = vec![
+            make_result(0.5, 5),
+            make_result(0.9, 1),
+            make_result(0.5, 2),
+        ];
         sort_by_score_desc(&mut results);
         assert_eq!(results[0].score, 0.9);
         // scores equal → newer first

@@ -47,8 +47,8 @@
 //! keybinding reference overlay.
 
 use anyhow::Result;
-use colored::Colorize;
 use chrono::Utc;
+use colored::Colorize;
 use console::Term;
 
 use crate::applicant;
@@ -64,41 +64,62 @@ pub fn clickable(url: &str, text: &str) -> String {
     format!("\x1b]8;;{url}\x1b\\{text}\x1b]8;;\x1b\\")
 }
 
+// ─── Box Drawing ────────────────────────────────────────────────────────────
+
+/// Width of the box interior — must match the number of `═` in the border.
+/// Content lines are padded to this width so the right edge always lines up.
+const BOX_WIDTH: usize = 54;
+
+/// Top border of a box (`╔══…══╗`).
+pub(crate) fn box_top() -> String {
+    format!("  ╔{}╗", "═".repeat(BOX_WIDTH))
+}
+
+/// Bottom border of a box (`╚══…══╝`).
+pub(crate) fn box_bottom() -> String {
+    format!("  ╚{}╝", "═".repeat(BOX_WIDTH))
+}
+
+/// Separator row (`╠══…══╣`).
+fn box_sep() -> String {
+    format!("  ╠{}╣", "═".repeat(BOX_WIDTH))
+}
+
+/// A `║`-bordered content line, padded so both edges align with the border.
+pub(crate) fn box_line(text: &str) -> String {
+    format!("  ║  {:<width$}║", text, width = BOX_WIDTH - 2)
+}
+
+/// A `║`-bordered title line, centred within the box.
+fn box_title(text: &str) -> String {
+    let total = BOX_WIDTH - 2;
+    let left = (total.saturating_sub(text.len())) / 2;
+    let right = total.saturating_sub(text.len() + left);
+    format!("  ║  {}{}{}║", " ".repeat(left), text, " ".repeat(right))
+}
+
 // ─── Banner ────────────────────────────────────────────────────────────────
 
-/// Render the startup banner.
+/// Render the startup banner. Version is read from `Cargo.toml` so it can
+/// never drift from the released crate version.
 pub fn banner() {
+    let version = env!("CARGO_PKG_VERSION");
     println!();
+    println!("{}", box_top().bright_blue());
     println!(
-        "  {}",
-        "╔══════════════════════════════════════════════════════╗"
-            .bright_blue()
+        "{}",
+        box_line(&format!("JobSense-Parker  v{version}")).bright_blue()
     );
     println!(
-        "  {}  JobSense-Parker  v0.3                          {}",
-        "║".bright_blue(),
-        "║".bright_blue(),
+        "{}",
+        box_line("Hunt the internet for your next gig.").bright_blue()
     );
     println!(
-        "  {}  Hunt the internet for your next gig.           {}",
-        "║".bright_blue(),
-        "║".bright_blue()
+        "{}",
+        box_line("Type '?' at any results view for keybindings").bright_blue()
     );
-    println!(
-        "  {}  Type '?' at any results view for keybindings   {}",
-        "║".bright_blue(),
-        "║".bright_blue()
-    );
-    println!(
-        "  {}  (LinkedIn-free zone)                           {}",
-        "║".bright_blue(),
-        "║".bright_blue()
-    );
-    println!(
-        "  {}",
-        "╚══════════════════════════════════════════════════════╝"
-            .bright_blue()
-    );
+    println!("{}", box_line("(LinkedIn-free zone)").bright_blue());
+    println!("{}", box_bottom().bright_blue());
     println!();
 }
 
@@ -107,9 +128,9 @@ pub fn banner() {
 /// Display the parsed contents of a resume (with enriched intelligence).
 pub fn show_resume(r: &Resume) {
     println!();
-    println!("  {}", "╔══════════════════════════════════════════════════════╗".bright_blue());
-    println!("  {}  Resume Intelligence                               {}", "║".bright_blue(), "║".bright_blue());
-    println!("  {}", "╚══════════════════════════════════════════════════════╝".bright_blue());
+    println!("{}", box_top().bright_blue());
+    println!("{}", box_line("Resume Intelligence").bright_blue());
+    println!("{}", box_bottom().bright_blue());
     println!();
 
     if let Some(s) = r.seniority {
@@ -155,7 +176,11 @@ pub fn show_resume(r: &Resume) {
         println!(
             "  {}    {}",
             "Edu:".bright_white(),
-            r.education.iter().map(|e| e.to_string()).collect::<Vec<_>>().join("; ")
+            r.education
+                .iter()
+                .map(|e| e.to_string())
+                .collect::<Vec<_>>()
+                .join("; ")
         );
     }
     if !r.certifications.is_empty() {
@@ -183,24 +208,34 @@ pub fn show_resume(r: &Resume) {
 
 const PAGE_SIZE: usize = 10;
 
-/// Keybinding reference overlay.
-const KEYBINDINGS: &str = r"
-  ╔═══════════════════════════════════════╗
-  ║          Results Viewer Keys          ║
-  ╠═══════════════════════════════════════╣
-  ║  j / ↓        Move selection down     ║
-  ║  k / ↑        Move selection up       ║
-  ║  n / →        Next page               ║
-  ║  p / ←        Previous page           ║
-  ║  g            First page              ║
-  ║  G            Last page               ║
-  ║  Enter / o    Open job URL in browser ║
-  ║  a            Auto-fill application form ║
-  ║               (name, email, phone, etc.) ║
-  ║  q / Esc      Back to menu            ║
-  ║  ?            Toggle this help        ║
-  ╚═══════════════════════════════════════╝
-";
+/// Render the keybinding reference overlay as a box-aligned string.
+fn render_keybindings() -> String {
+    let rows = [
+        ("j / ↓", "Move selection down"),
+        ("k / ↑", "Move selection up"),
+        ("n / →", "Next page"),
+        ("p / ←", "Previous page"),
+        ("g", "First page"),
+        ("G", "Last page"),
+        ("Enter / o", "Open job URL in browser"),
+        ("a", "Auto-fill application form"),
+        ("", "(name, email, phone, etc.)"),
+        ("q / Esc", "Back to menu"),
+        ("?", "Toggle this help"),
+    ];
+    let mut out = String::new();
+    out.push_str(&format!("{}\n", box_top()));
+    out.push_str(&format!("{}\n", box_title("Results Viewer Keys")));
+    out.push_str(&format!("{}\n", box_sep()));
+    for (key, description) in rows {
+        out.push_str(&format!(
+            "{}\n",
+            box_line(&format!("{key:<12}{description}"))
+        ));
+    }
+    out.push_str(&box_bottom());
+    out
+}
 
 /// Run the vim-style paginated results viewer.
 ///
@@ -215,7 +250,7 @@ const KEYBINDINGS: &str = r"
 /// | `g` | First page |
 /// | `G` | Last page |
 /// | `Enter` / `o` | Open selected job URL in browser |
-/// | `a` | Auto-apply: generate cover letter, open URL, track application |
+/// | `a` | Auto-fill the job application form with your saved profile |
 /// | `q` / `Esc` | Back to menu |
 /// | `?` | Toggle keybinding help |
 pub fn run_results_viewer(results: &[MatchResult]) -> Result<()> {
@@ -254,7 +289,11 @@ pub fn run_results_viewer(results: &[MatchResult]) -> Result<()> {
 
         for (i, result) in page_results.iter().enumerate() {
             let is_selected = i == selected;
-            let prefix = if is_selected { "▸".yellow() } else { " ".into() };
+            let prefix = if is_selected {
+                "▸".yellow()
+            } else {
+                " ".into()
+            };
 
             let idx = start + i + 1;
             let score_pct = format!("{:.0}%", result.score * 100.0);
@@ -286,7 +325,10 @@ pub fn run_results_viewer(results: &[MatchResult]) -> Result<()> {
                     result.job.source,
                     company,
                     ago,
-                ).on_blue().black().to_string()
+                )
+                .on_blue()
+                .black()
+                .to_string()
             } else {
                 format!(
                     " {}{:>2}. {} {} [{}]{}  {}",
@@ -303,26 +345,23 @@ pub fn run_results_viewer(results: &[MatchResult]) -> Result<()> {
 
             // URL as clickable link
             let url_display = if is_selected {
-                clickable(&result.job.url, &result.job.url).dimmed().to_string()
+                clickable(&result.job.url, &result.job.url)
+                    .dimmed()
+                    .to_string()
             } else {
-                format!("     {}", clickable(&result.job.url, &result.job.url).dimmed())
+                format!(
+                    "     {}",
+                    clickable(&result.job.url, &result.job.url).dimmed()
+                )
             };
             println!("{url_display}");
 
             // Matched skills on selected item
             if is_selected && !result.matched_skills.is_empty() {
-                println!(
-                    "     {} {}",
-                    "+".green(),
-                    result.matched_skills.join(", ")
-                );
+                println!("     {} {}", "+".green(), result.matched_skills.join(", "));
             }
             if is_selected && !result.missing_skills.is_empty() {
-                println!(
-                    "     {} {}",
-                    "-".red(),
-                    result.missing_skills.join(", ")
-                );
+                println!("     {} {}", "-".red(), result.missing_skills.join(", "));
             }
 
             println!();
@@ -338,7 +377,7 @@ pub fn run_results_viewer(results: &[MatchResult]) -> Result<()> {
 
         // ── Help overlay ─────────────────────────────────────────────
         if show_help {
-            for line in KEYBINDINGS.lines() {
+            for line in render_keybindings().lines() {
                 println!("{}", line.bright_yellow());
             }
             println!();
@@ -442,7 +481,7 @@ fn relative_time(time: Option<chrono::DateTime<Utc>>) -> String {
 }
 
 /// Open a URL in the system browser.
-fn open_url(url: &str) -> Result<()> {
+pub(crate) fn open_url(url: &str) -> Result<()> {
     #[cfg(target_os = "macos")]
     {
         std::process::Command::new("open").arg(url).spawn()?;
@@ -571,4 +610,44 @@ pub fn print_help() {
     println!();
     println!("  URLs are clickable (Cmd+click on macOS, Ctrl+click elsewhere).");
     println!();
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    /// Count display columns: box drawing pads by character, so alignment is
+    /// measured in characters (not bytes — `═` is 3 UTF-8 bytes).
+    fn char_width(s: &str) -> usize {
+        s.chars().count()
+    }
+
+    /// Every rendered row in a box must be exactly as wide as its border —
+    /// otherwise the right edge (`║` vs `╗`) drifts out of alignment.
+    #[test]
+    fn test_box_rows_align_with_border() {
+        let top = box_top();
+        assert_eq!(char_width(&top), char_width(&box_bottom()));
+        assert_eq!(char_width(&top), char_width(&box_line("x")));
+        assert_eq!(
+            char_width(&top),
+            char_width(&box_title("Results Viewer Keys"))
+        );
+        for row in render_keybindings().lines() {
+            assert_eq!(
+                char_width(row),
+                char_width(&top),
+                "keybinding row out of alignment: {row:?}"
+            );
+        }
+    }
+
+    /// The banner must render the exact crate version from Cargo.toml so the
+    /// boxed header can never drift from the released version.
+    #[test]
+    fn test_banner_version_matches_cargo() {
+        let version = env!("CARGO_PKG_VERSION");
+        let row = box_line(&format!("JobSense-Parker  v{version}"));
+        assert_eq!(char_width(&row), char_width(&box_top()));
+    }
 }
