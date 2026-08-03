@@ -60,12 +60,13 @@ jobs:
         with:
           key: ${{ matrix.target }}
 
-      # cargo-zigbuild is only needed for cross-compiling Linux arm64.
-      - name: Install cargo-zigbuild
+      # cargo-zigbuild cross-compiles Linux arm64; it needs the `zig`
+      # compiler on PATH (cargo-zigbuild errors instantly without it).
+      - name: Install cargo-zigbuild + zig
         if: matrix.zigbuild
         uses: taiki-e/install-action@v2
         with:
-          tool: cargo-zigbuild
+          tool: cargo-zigbuild, zig
 
       - name: Build (native)
         if: ${{ !matrix.zigbuild }}
