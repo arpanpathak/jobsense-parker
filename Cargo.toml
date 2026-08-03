@@ -21,8 +21,9 @@ tokio = { version = "1", features = ["full"] }
 # Filesystem directories
 dirs-next = "2"
 
-# HTTP client
-reqwest = { version = "0.12", features = ["json"] }
+# HTTP client (rustls — pure Rust TLS, so the CLI cross-compiles cleanly
+# without a system OpenSSL and stays dependency-free for end users)
+reqwest = { version = "0.12", default-features = false, features = ["json", "rustls-tls", "http2", "charset"] }
 
 # HTML parsing
 scraper = "0.21"
