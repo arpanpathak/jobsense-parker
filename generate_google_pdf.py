@@ -54,6 +54,7 @@ def svg_icon(name, color, size=11):
         "layers": '<polygon points="12 2 2 7 12 12 22 7 12 2"/><polyline points="2 17 12 22 22 17"/><polyline points="2 12 12 17 22 12"/>',
         "camera": '<path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/>',
         "book": '<path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/>',
+        "activity": '<polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/>',
     }
     p = paths.get(name, "")
     return (
@@ -79,6 +80,7 @@ def convert(md_text, icon_color="#0f766e", project_color="#0f766e", muted_color=
         "APIs & Serialization": "plug",
         "ML Inference & AI": "zap",
         "Cloud & Infra": "cloud",
+        "Observability": "activity",
         "Data & Storage": "database",
         "Core CS": "layers",
     }
@@ -187,7 +189,7 @@ def convert(md_text, icon_color="#0f766e", project_color="#0f766e", muted_color=
 CSS = """
 @page {
     size: letter;
-    margin: 0.5in 0.65in;
+    margin: 0.45in 0.6in;
     background: __BG__;
 }
 body {
@@ -281,8 +283,8 @@ p.bullet-sm strong {
     letter-spacing: 0.6px;
     border-bottom: 2px solid __ACCENT__;
     padding: 3px 8px;
-    margin-top: 10px;
-    margin-bottom: 5px;
+    margin-top: 8px;
+    margin-bottom: 4px;
     border-radius: 4px;
     box-shadow: __HEADER_SHADOW__;
     background: linear-gradient(90deg, __HEADING_BG__, transparent);
@@ -293,7 +295,7 @@ p.bullet-sm strong {
     align-items: baseline;
     column-gap: 6px;
     font-size: 10.5pt;
-    margin: 7px 0 2px 0;
+    margin: 5px 0 2px 0;
     line-height: 1.3;
     padding: 3px 8px;
     border-radius: 6px;

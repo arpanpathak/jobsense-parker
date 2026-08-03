@@ -32,7 +32,7 @@ Software Engineer with nearly 8 years of industry experience architecting perfor
 - **Rust Migration (Legacy C++/C#)**: Spearheaded migration of the Information Protection service from a legacy **unsafe C++** and garbage-collected **C#** codebase to **Rust**, shifting memory safety to compile-time. Completely eliminated **use-after-free**, **buffer-overflow**, and **null-safety** bugs in the migrated path. Delivered measurable performance gains over C#, **~40% lower P99 latency**, **~2x throughput**, and **~3x lower memory consumption per request**, with **6-figure annual cost savings**. Significantly increased developer productivity and confidence writing memory-safe code for MSEC.
 - **AI-Powered Policy Engine**: Built an AI-driven engine that auto-generates Cilium network policies and scans for misconfigurations, reducing manual policy review cycles from 4 hours to near-real-time with zero policy drift across sovereign regions.
 - **Zero-Trust Sovereign Cloud Networking**: Architected **zero-trust sovereign cloud networking** using **eBPF and Cilium-based network policies** to ensure **data residency** and **SecNumCloud** compliance standards. Built **Kubernetes operators** to auto-generate network policies with CI/CD pipelines.
-- **Developer Workflows**: Established CI/CD pipelines, containerized microservices, and automated validation frameworks ensuring reliable multi-region releases.
+- **CI/CD & Observability**: Established CI/CD pipelines, containerized microservices, and automated validation frameworks ensuring reliable multi-region releases. Integrated observability with **Prometheus** and **Azure Monitor**, and implemented **blue-green deployments**, improving operational efficiency.
 - TechStack: **Rust, C++, Kubernetes, eBPF**
 
 ### Senior Software Engineer | **Oracle Cloud Infrastructure**, Seattle, WA | Oct 2024 – Mar 2025
@@ -82,6 +82,8 @@ Software Engineer with nearly 8 years of industry experience architecting perfor
 **ML Inference & AI**: PyTorch, TensorFlow, XGBoost, Transformer Models (BERT), ONNX Runtime, On-Device/Edge Inference, Model Pruning & Quantization, Computer Vision (YOLOv8/v11), Artificial Neural Networks (ANN), Convolutional Neural Networks (CNN), Sequential Models, Natural Language Processing (NLP), Deep Learning, Recommendation Systems, MLOps
 
 **Cloud & Infra**: AWS (EC2, ECS, Lambda, Kinesis, EMR, SageMaker), Google Cloud, Azure (AKS), Kubernetes (EKS, AKS), Docker, Terraform, Kubebuilder, Istio
+
+**Observability**: Prometheus, Grafana, Azure Monitor, AWS CloudWatch
 
 **Data & Storage**: DynamoDB, PostgreSQL, Redis, MongoDB, Amazon Redshift, Amazon S3
 
