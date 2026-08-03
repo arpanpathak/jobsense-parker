@@ -360,8 +360,8 @@ pub enum Command {
     RemoveCompany(String),
     /// Show the scan history.
     ShowScanHistory,
-    /// Show the list of jobs we've applied to.
-    ShowAppliedJobs,
+    /// Set or update your personal profile for auto-filling applications.
+    SetProfile,
     /// Exit the application.
     Quit,
 }
@@ -384,6 +384,16 @@ pub struct UserPreferences {
     pub active_sources: Vec<JobSource>,
     /// Maximum results per scan.
     pub max_results: usize,
+    /// Full name for auto-filling application forms.
+    pub full_name: Option<String>,
+    /// Email address for auto-filling application forms.
+    pub email: Option<String>,
+    /// Phone number for auto-filling application forms.
+    pub phone: Option<String>,
+    /// LinkedIn profile URL.
+    pub linkedin_url: Option<String>,
+    /// GitHub or portfolio URL.
+    pub github_url: Option<String>,
 }
 
 impl Default for UserPreferences {
@@ -398,6 +408,11 @@ impl Default for UserPreferences {
                 JobSource::HackerNews,
             ],
             max_results: 50,
+            full_name: None,
+            email: None,
+            phone: None,
+            linkedin_url: None,
+            github_url: None,
         }
     }
 }

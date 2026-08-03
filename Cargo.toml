@@ -59,3 +59,6 @@ futures = "0.3"
 
 # PDF text extraction
 pdf-extract = "0.12"
+
+# Browser automation (CDP-based, no chromedriver needed)
+headless_chrome = "1.0"

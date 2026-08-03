@@ -195,8 +195,8 @@ const KEYBINDINGS: &str = r"
   ║  g            First page              ║
   ║  G            Last page               ║
   ║  Enter / o    Open job URL in browser ║
-  ║  a            Auto-apply (gen cover   ║
-  ║               letter + open URL)      ║
+  ║  a            Auto-fill application form ║
+  ║               (name, email, phone, etc.) ║
   ║  q / Esc      Back to menu            ║
   ║  ?            Toggle this help        ║
   ╚═══════════════════════════════════════╝
@@ -218,7 +218,7 @@ const KEYBINDINGS: &str = r"
 /// | `a` | Auto-apply: generate cover letter, open URL, track application |
 /// | `q` / `Esc` | Back to menu |
 /// | `?` | Toggle keybinding help |
-pub fn run_results_viewer(results: &[MatchResult], resume: Option<&Resume>) -> Result<()> {
+pub fn run_results_viewer(results: &[MatchResult]) -> Result<()> {
     if results.is_empty() {
         println!("  No results to display.");
         return Ok(());
@@ -396,17 +396,8 @@ pub fn run_results_viewer(results: &[MatchResult], resume: Option<&Resume>) -> R
                 }
             }
             console::Key::Char('a') => {
-                let result = &results[start + selected];
-                match resume {
-                    Some(r) => {
-                        applicant::apply_to_job(result, r);
-                    }
-                    None => {
-                        println!("  No resume loaded. Load a resume first to auto-apply.");
-                        // Pause so user can see the message
-                        std::thread::sleep(std::time::Duration::from_secs(2));
-                    }
-                }
+                let job = &results[start + selected].job;
+                applicant::auto_apply(&job.url, &job.title, job.company.as_deref());
             }
             console::Key::Char('?') => {
                 show_help = !show_help;

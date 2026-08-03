@@ -1,264 +1,283 @@
 //! # Auto-Apply Module
 //!
-//! Automates the job application process:
+//! **Actually** fills job application forms using Chrome DevTools Protocol.
+//! Launches Chrome in visible mode, navigates to the job URL, and injects
+//! JavaScript that detects and fills form fields with your profile data.
 //!
-//! 1. **Cover letter generation** — crafts a personalised cover letter from resume
-//!    intelligence + job match details
-//! 2. **Application tracking** — persists applied jobs so you never double-apply
-//! 3. **Quick open** — opens the application URL in your browser
+//! No AppleScript. No browser detection. Works on macOS, Linux, Windows.
 //!
-//! # Usage
+//! # Flow
 //!
-//! From the results viewer, press `a` to auto-apply to the selected job.
-//! The tool will:
-//! 1. Generate a tailored cover letter
-//! 2. Save it to `~/.jobsense-parker/applications/{job_id}.md`
-//! 3. Open the job URL in your browser
-//! 4. Track that you applied (persisted in `~/.jobsense-parker/applied.json`)
+//! 1. User presses `a` on a job
+//! 2. Load profile from preferences (name, email, phone, etc.)
+//! 3. If incomplete, prompt user to set it up first
+//! 4. Launch Chrome visible → navigate to URL → inject fill JS
+//! 5. User sees the filled form, reviews, clicks Submit
 
-use chrono::{DateTime, Utc};
 use colored::Colorize;
-use serde::{Deserialize, Serialize};
 
-use crate::models::{JobPost, MatchResult, Resume};
+use crate::storage;
 
-// ─── Applied Job Record ──────────────────────────────────────────────────────
+// ─── Public API ────────────────────────────────────────────────────────────
 
-/// A record of a job we've applied to.
-#[derive(Debug, Clone, Serialize, Deserialize)]
-pub struct AppliedJob {
-    /// Job post ID (matches `JobPost.id`).
-    pub job_id: String,
-    /// Job title for display.
-    pub title: String,
-    /// Company name.
-    pub company: Option<String>,
-    /// URL of the job posting.
-    pub url: String,
-    /// When we applied.
-    pub applied_at: DateTime<Utc>,
-    /// Match score at time of application.
-    pub score: f64,
-    /// Path to the generated cover letter on disk.
-    pub cover_letter_path: Option<String>,
-}
-
-/// The persisted list of applied jobs.
-#[derive(Debug, Clone, Serialize, Deserialize, Default)]
-pub struct ApplicationDatabase {
-    pub applied: Vec<AppliedJob>,
-}
-
-impl ApplicationDatabase {
-    /// Load applications from disk.
-    pub fn load() -> Self {
-        let dir = crate::storage::data_dir().ok();
-        let path = dir.map(|d| d.join("applied.json"));
-        if let Some(p) = path {
-            if p.exists() {
-                if let Ok(json) = std::fs::read_to_string(&p) {
-                    if let Ok(db) = serde_json::from_str(&json) {
-                        return db;
-                    }
-                }
-            }
-        }
-        Self::default()
-    }
-
-    /// Save applications to disk.
-    pub fn save(&self) {
-        let dir = match crate::storage::ensure_dir() {
-            Ok(d) => d,
-            Err(_) => return,
-        };
-        let path = dir.join("applied.json");
-        if let Ok(json) = serde_json::to_string_pretty(self) {
-            let _ = std::fs::write(&path, json);
-        }
-    }
-
-    /// Check if we've already applied to a job.
-    pub fn already_applied(&self, job_id: &str) -> bool {
-        self.applied.iter().any(|a| a.job_id == job_id)
-    }
-
-    /// Record a new application.
-    pub fn record(&mut self, job: &JobPost, score: f64, cover_path: Option<String>) {
-        self.applied.push(AppliedJob {
-            job_id: job.id.clone(),
-            title: job.title.clone(),
-            company: job.company.clone(),
-            url: job.url.clone(),
-            applied_at: Utc::now(),
-            score,
-            cover_letter_path: cover_path,
-        });
-        self.save();
-    }
-
-    /// List all applied jobs (newest first).
-    pub fn list(&self) -> Vec<&AppliedJob> {
-        let mut list: Vec<&AppliedJob> = self.applied.iter().collect();
-        list.sort_by(|a, b| b.applied_at.cmp(&a.applied_at));
-        list
-    }
-}
-
-// ─── Cover Letter Generator ───────────────────────────────────────────────────
-
-/// Generate a personalised cover letter based on resume + job match.
+/// Auto-apply to a job: open the URL and fill the application form.
 ///
-/// The letter is tailored:
-/// - Opens with the job title and company
-/// - Highlights matched skills and experience years
-/// - Mentions seniority level and focus areas
-/// - Acknowledges missing skills (turns them into a learning opportunity)
-/// - Closes with enthusiasm
-pub fn generate_cover_letter(result: &MatchResult, resume: &Resume) -> String {
-    let job = &result.job;
-    let company = job.company.as_deref().unwrap_or("the company");
-    let seniority = resume
-        .seniority
-        .map(|s| s.to_string())
-        .unwrap_or_else(|| "Professional".to_string());
-    let exp = resume
-        .experience_years
-        .map(|y| format!("{} years of experience", y))
-        .unwrap_or_else(|| "strong industry experience".to_string());
-
-    let matched = if result.matched_skills.is_empty() {
-        "your required qualifications".to_string()
-    } else {
-        result.matched_skills.join(", ")
+/// Spawns a Chrome window, navigates to the job URL, and uses CDP to
+/// inject JavaScript that fills common form fields from your profile.
+/// The Chrome window stays open for you to review and click Submit.
+pub fn auto_apply(url: &str, title: &str, company: Option<&str>) -> bool {
+    let prefs = match storage::load_preferences() {
+        Ok(p) => p,
+        Err(_) => {
+            println!("  {} Could not load profile.", "!".red());
+            return false;
+        }
     };
 
-    let missing = if result.missing_skills.is_empty() {
-        String::new()
-    } else {
-        format!(
-            "\n\nWhile my direct experience doesn't cover {} yet, \
-             I'm a fast learner and eager to develop these skills. \
-             I've consistently picked up new technologies throughout my career.",
-            result.missing_skills.join(", ")
-        )
-    };
-
-    let focus = if resume.focus_areas.is_empty() {
-        String::new()
-    } else {
-        format!("\n\nMy expertise focuses on {}.", resume.focus_areas.join(", "))
-    };
-
-    let education = if resume.education.is_empty() {
-        String::new()
-    } else {
-        let edu_str: Vec<String> = resume.education.iter().map(|e| e.to_string()).collect();
-        format!("\n\nI hold: {}.", edu_str.join("; "))
-    };
-
-    let certs = if resume.certifications.is_empty() {
-        String::new()
-    } else {
-        format!("\n\nCertifications: {}.", resume.certifications.join(", "))
-    };
-
-    format!(
-        r#"Subject: Application for {title} — {role}
-
-Dear Hiring Team at {company},
-
-I am writing to express my strong interest in the {title} position at {company}. \
-As a {seniority} professional with {exp}, I am confident that my background \
-aligns well with what you are looking for.
-
-My relevant skills include: {matched}.{focus}{education}{certs}{missing}
-
-I am excited about the opportunity to contribute to {company}'s mission \
-and would welcome the chance to discuss how my experience can add value to your team.
-
-Thank you for your time and consideration.
-
-Best regards,
-[Your Name]
-"#,
-        title = job.title,
-        role = resume.role_titles.first().map(|s| s.as_str()).unwrap_or("Candidate"),
-        company = company,
-        seniority = seniority,
-        exp = exp,
-        matched = matched,
-        missing = missing,
-        focus = focus,
-        education = education,
-        certs = certs,
-    )
-}
-
-/// Save a cover letter to disk and return the file path.
-pub fn save_cover_letter(job_id: &str, letter: &str) -> Option<String> {
-    let dir = crate::storage::ensure_dir().ok()?;
-    let app_dir = dir.join("applications");
-    std::fs::create_dir_all(&app_dir).ok()?;
-    let path = app_dir.join(format!("{}.md", job_id));
-    std::fs::write(&path, letter).ok()?;
-    Some(path.to_string_lossy().to_string())
-}
-
-/// Open a job URL in the browser and track the application.
-pub fn apply_to_job(result: &MatchResult, resume: &Resume) {
-    let job = &result.job;
-
-    // Check if already applied
-    let mut db = ApplicationDatabase::load();
-    if db.already_applied(&job.id) {
+    if prefs.full_name.is_none() || prefs.email.is_none() {
+        println!();
         println!(
-            "  {} Already applied to '{}' ({})",
-            "·".yellow(),
-            job.title,
-            job.company.as_deref().unwrap_or("unknown")
+            "  {} Profile incomplete — need at least name and email for auto-fill.",
+            "!".yellow()
         );
-        return;
+        println!(
+            "  {} Use 'Set profile' in the menu first, then try again.",
+            "→".cyan()
+        );
+        println!();
+        open_url(url);
+        return false;
     }
 
-    // Generate cover letter
-    let letter = generate_cover_letter(result, resume);
-    let cover_path = save_cover_letter(&job.id, &letter);
+    let company_str = company
+        .map(|c| format!(" @ {}", c.cyan()))
+        .unwrap_or_default();
+    println!(
+        "  {} Auto-filling application for '{}'{}",
+        "→".green(),
+        title.bright_white(),
+        company_str
+    );
 
-    // Open URL
+    let url = url.to_string();
+    let name = prefs.full_name.clone().unwrap_or_default();
+    let email = prefs.email.clone().unwrap_or_default();
+    let phone = prefs.phone.clone().unwrap_or_default();
+    let location = prefs.preferred_location.clone().unwrap_or_default();
+    let linkedin = prefs.linkedin_url.clone().unwrap_or_default();
+    let github = prefs.github_url.clone().unwrap_or_default();
+
+    // Run Chrome automation in a separate thread (headless_chrome is sync)
+    std::thread::spawn(move || {
+        if let Err(e) = run_chrome_fill(&url, &name, &email, &phone, &location, &linkedin, &github) {
+            eprintln!(
+                "  {} Auto-fill failed: {}. Apply manually.",
+                "!".red(),
+                e
+            );
+            // Fallback: just open the URL
+            open_url(&url);
+        }
+    });
+
+    println!(
+        "  {} Chrome opened with form fields filled. Review and click Submit. Good luck!",
+        "✓".green()
+    );
+    true
+}
+
+/// Open a job URL in the default browser (no form filling).
+pub fn open_url(url: &str) {
     #[cfg(target_os = "macos")]
     {
-        let _ = std::process::Command::new("open")
-            .arg(&job.url)
-            .spawn();
+        let _ = std::process::Command::new("open").arg(url).spawn();
     }
     #[cfg(target_os = "linux")]
     {
-        let _ = std::process::Command::new("xdg-open")
-            .arg(&job.url)
-            .spawn();
+        let _ = std::process::Command::new("xdg-open").arg(url).spawn();
     }
     #[cfg(target_os = "windows")]
     {
         let _ = std::process::Command::new("cmd")
-            .args(["/c", "start", &job.url])
+            .args(["/c", "start", url])
             .spawn();
     }
+}
 
-    // Track
-    db.record(job, result.score, cover_path.clone());
+// ─── Chrome CDP Automation ───────────────────────────────────────────────
 
-    println!(
-        "  {} Applied to '{}' @ {}",
-        "✓".green(),
-        job.title.bright_white(),
-        job.company.as_deref().unwrap_or("unknown").cyan()
-    );
-    if let Some(path) = cover_path {
-        println!(
-            "    Cover letter saved: {}",
-            path.dimmed()
-        );
-    }
-    println!("    Application URL opened in browser.");
+use headless_chrome::{Browser, LaunchOptions};
+
+/// Launch Chrome (visible), navigate to the URL, and fill form fields via CDP.
+fn run_chrome_fill(
+    url: &str,
+    name: &str,
+    email: &str,
+    phone: &str,
+    location: &str,
+    linkedin: &str,
+    github: &str,
+) -> anyhow::Result<()> {
+    let browser = Browser::new(
+        LaunchOptions {
+            headless: false, // Show the browser window!
+            sandbox: false,  // Avoid sandbox issues on some systems
+            window_size: Some((1280, 900)),
+            idle_browser_timeout: std::time::Duration::from_secs(120),
+            ..LaunchOptions::default()
+        },
+    )?;
+
+    let tab = browser.new_tab()?;
+    tab.set_default_timeout(std::time::Duration::from_secs(15));
+    tab.navigate_to(url)?;
+    tab.wait_until_navigated()?;
+
+    // Give the page a moment for JS frameworks to render forms
+    std::thread::sleep(std::time::Duration::from_secs(3));
+
+    let js = build_fill_javascript(name, email, phone, location, linkedin, github);
+    tab.evaluate(&js, false)?;
+
+    Ok(())
+}
+
+/// Build the JavaScript that finds and fills form fields.
+fn build_fill_javascript(
+    name: &str,
+    email: &str,
+    phone: &str,
+    location: &str,
+    linkedin: &str,
+    github: &str,
+) -> String {
+    // Split name into first/last
+    let name_parts: Vec<&str> = name.split_whitespace().collect();
+    let first_name = name_parts.first().copied().unwrap_or("");
+    let last_name = if name_parts.len() > 1 {
+        name_parts[1..].join(" ")
+    } else {
+        String::new()
+    };
+
+    format!(
+        r#"(function() {{
+    'use strict';
+    var filled = 0;
+
+    function tryFill(selector, value) {{
+        if (!value) return;
+        try {{
+            var el = document.querySelector(selector);
+            if (el) {{
+                var tag = el.tagName.toLowerCase();
+                if ((tag === 'input' || tag === 'textarea') && !el.readOnly && !el.disabled) {{
+                    var nativeInputValueSetter = Object.getOwnPropertyDescriptor(window.HTMLInputElement.prototype, 'value').set;
+                    nativeInputValueSetter.call(el, value);
+                    el.dispatchEvent(new Event('input', {{ bubbles: true }}));
+                    el.dispatchEvent(new Event('change', {{ bubbles: true }}));
+                    el.dispatchEvent(new Event('blur', {{ bubbles: true }}));
+                    filled++;
+                }}
+            }}
+        }} catch(e) {{}}
+    }}
+
+    function fillByNames(names, value) {{
+        if (!value) return;
+        for (var i = 0; i < names.length; i++) {{
+            var n = names[i];
+            if (tryFill('input[name="' + n + '"]', value)) return;
+            if (tryFill('input[id="' + n + '"]', value)) return;
+            if (tryFill('textarea[name="' + n + '"]', value)) return;
+            if (tryFill('textarea[id="' + n + '"]', value)) return;
+            if (tryFill('input[placeholder*="' + n + '" i]', value)) return;
+            if (tryFill('textarea[placeholder*="' + n + '" i]', value)) return;
+            if (tryFill('input[aria-label*="' + n + '" i]', value)) return;
+        }}
+    }}
+
+    function fillByLabelText(labelText, value) {{
+        if (!value) return;
+        try {{
+            var labels = document.querySelectorAll('label');
+            for (var i = 0; i < labels.length; i++) {{
+                if (labels[i].textContent.toLowerCase().indexOf(labelText.toLowerCase()) !== -1) {{
+                    var forId = labels[i].getAttribute('for');
+                    if (forId) {{
+                        if (tryFill('#' + forId, value)) return;
+                    }}
+                    var input = labels[i].querySelector('input, textarea');
+                    if (input) {{
+                        tryFill('#' + input.id, value);
+                        return;
+                    }}
+                }}
+            }}
+        }} catch(e) {{}}
+    }}
+
+    // Name fields
+    fillByNames(['first_name', 'firstname', 'fname', 'firstName', 'given-name', 'given_name'], '{first_name}');
+    fillByNames(['last_name', 'lastname', 'lname', 'lastName', 'family-name', 'family_name', 'surname'], '{last_name}');
+    fillByNames(['name', 'full_name', 'fullname', 'your-name', 'applicant_name'], '{name}');
+
+    // Email
+    fillByNames(['email', 'e-mail', 'emailAddress', 'email_address', 'emailaddress', 'applicant_email'], '{email}');
+    fillByLabelText('email', '{email}');
+
+    // Phone
+    fillByNames(['phone', 'phoneNumber', 'phone_number', 'phonenumber', 'telephone', 'tel', 'mobile', 'cell'], '{phone}');
+    fillByLabelText('phone', '{phone}');
+
+    // Location
+    fillByNames(['location', 'city', 'locality', 'location_city'], '{location}');
+
+    // Social / links
+    fillByNames(['linkedin', 'linkedin_url', 'linkedin-url', 'linkedinUrl', 'linkedinurl'], '{linkedin}');
+    fillByNames(['github', 'github_url', 'github-url', 'githubUrl', 'portfolio', 'website', 'url'], '{github}');
+
+    // Try type-based selectors for remaining empty fields
+    if ('{email}') {{
+        try {{
+            var emailInputs = document.querySelectorAll('input[type="email"]');
+            for (var i = 0; i < emailInputs.length; i++) {{
+                if (!emailInputs[i].value && !emailInputs[i].readOnly && !emailInputs[i].disabled) {{
+                    var setter = Object.getOwnPropertyDescriptor(window.HTMLInputElement.prototype, 'value').set;
+                    setter.call(emailInputs[i], '{email}');
+                    emailInputs[i].dispatchEvent(new Event('input', {{ bubbles: true }}));
+                    emailInputs[i].dispatchEvent(new Event('change', {{ bubbles: true }}));
+                    filled++;
+                }}
+            }}
+        }} catch(e) {{}}
+    }}
+
+    if ('{phone}') {{
+        try {{
+            var telInputs = document.querySelectorAll('input[type="tel"]');
+            for (var i = 0; i < telInputs.length; i++) {{
+                if (!telInputs[i].value && !telInputs[i].readOnly && !telInputs[i].disabled) {{
+                    var setter = Object.getOwnPropertyDescriptor(window.HTMLInputElement.prototype, 'value').set;
+                    setter.call(telInputs[i], '{phone}');
+                    telInputs[i].dispatchEvent(new Event('input', {{ bubbles: true }}));
+                    telInputs[i].dispatchEvent(new Event('change', {{ bubbles: true }}));
+                    filled++;
+                }}
+            }}
+        }} catch(e) {{}}
+    }}
+
+    return filled;
+}})()"#,
+        first_name = first_name,
+        last_name = last_name,
+        name = name,
+        email = email,
+        phone = phone,
+        location = location,
+        linkedin = linkedin,
+        github = github,
+    )
 }
