@@ -33,8 +33,10 @@ jobs:
       fail-fast: false
       matrix:
         include:
+          # Both macOS targets build on macos-14 (Apple Silicon runner);
+          # the x86_64 target cross-compiles fine on the same SDK.
           - target: x86_64-apple-darwin
-            os: macos-13
+            os: macos-14
             archive: tar.gz
           - target: aarch64-apple-darwin
             os: macos-14
