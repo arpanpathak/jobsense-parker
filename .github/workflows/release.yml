@@ -62,11 +62,17 @@ jobs:
 
       # cargo-zigbuild cross-compiles Linux arm64; it needs the `zig`
       # compiler on PATH (cargo-zigbuild errors instantly without it).
-      - name: Install cargo-zigbuild + zig
+      # Note: `zig` is not a taiki-e/install-action tool, so install it
+      # via mlugg/setup-zig (the Zig project's recommended action).
+      - name: Install cargo-zigbuild
         if: matrix.zigbuild
         uses: taiki-e/install-action@v2
         with:
-          tool: cargo-zigbuild, zig
+          tool: cargo-zigbuild
+
+      - name: Install Zig compiler
+        if: matrix.zigbuild
+        uses: mlugg/setup-zig@v1
 
       - name: Build (native)
         if: ${{ !matrix.zigbuild }}
