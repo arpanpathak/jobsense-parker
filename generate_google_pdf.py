@@ -52,6 +52,8 @@ def svg_icon(name, color, size=11):
         "cloud": '<path d="M18 10h-1.26A8 8 0 1 0 9 20h9a5 5 0 0 0 0-10z"/>',
         "database": '<ellipse cx="12" cy="5" rx="9" ry="3"/><path d="M21 12c0 1.66-4 3-9 3s-9-1.34-9-3"/><path d="M3 5v14c0 1.66 4 3 9 3s9-1.34 9-3V5"/>',
         "layers": '<polygon points="12 2 2 7 12 12 22 7 12 2"/><polyline points="2 17 12 22 22 17"/><polyline points="2 12 12 17 22 12"/>',
+        "camera": '<path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/>',
+        "book": '<path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/>',
     }
     p = paths.get(name, "")
     return (
@@ -139,6 +141,10 @@ def convert(md_text, icon_color="#0f766e", project_color="#0f766e", muted_color=
                 if stripped == "PERSONAL PROJECTS":
                     line = svg_icon("rocket", project_color, 11) + line
                 elif "github" in line and "[" in line:
+                    if "Driving-CivicSense" in line or "Vision" in line:
+                        line = svg_icon("camera", project_color, 10) + line
+                    elif "Book" in line or "Physics" in line:
+                        line = svg_icon("book", project_color, 10) + line
                     line = line.replace("[", svg_icon("github", project_color, 10) + "[", 1)
                 html.append(f'<p class="project-text">{line}</p>')
             elif contact_open:
