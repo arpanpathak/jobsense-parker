@@ -1,6 +1,6 @@
 [package]
 name = "jobsense-parker"
-version = "0.3.0"
+version = "0.4.0"
 edition = "2021"
 description = "A CLI job crawler that hunts the internet for hiring posts matching your resume — because LinkedIn sucks."
 license = "MIT"

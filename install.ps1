@@ -4,7 +4,7 @@
 # Usage (PowerShell):
 #   irm https://raw.githubusercontent.com/arpanpathak/jobsense-parker/master/install.ps1 | iex
 #   irm .../install.ps1 | iex -   # with a pinned version:
-#   $v = "v0.3.0"; irm .../install.ps1 -Body @{ version = $v } | iex
+#   $v = "v0.4.0"; irm .../install.ps1 -Body @{ version = $v } | iex
 #
 # Downloads the prebuilt x86_64 Windows binary from the GitHub Release,
 # installs it to %USERPROFILE%\.local\bin (or $env:JOBSENSE_INSTALL_DIR),

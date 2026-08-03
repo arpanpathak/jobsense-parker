@@ -13,7 +13,7 @@
 
 ```text
 ╔══════════════════════════════════════════════════════╗
-║  JobSense-Parker  v0.3.0                             ║
+║  JobSense-Parker  v0.4.0                             ║
 ║  Hunt the internet for your next gig.                ║
 ║  Type '?' at any results view for keybindings        ║
 ║  (LinkedIn-free zone)                                ║
@@ -54,7 +54,7 @@ curl -fsSL https://raw.githubusercontent.com/arpanpathak/jobsense-parker/master/
 Pin a version:
 
 ```bash
-curl -fsSL https://raw.githubusercontent.com/arpanpathak/jobsense-parker/master/install.sh | bash -s -- v0.3.0
+curl -fsSL https://raw.githubusercontent.com/arpanpathak/jobsense-parker/master/install.sh | bash -s -- v0.4.0
 ```
 
 ### Windows — one-liner (PowerShell)

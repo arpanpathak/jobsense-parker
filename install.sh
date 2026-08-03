@@ -4,7 +4,7 @@
 #
 # Usage:
 #   curl -fsSL https://raw.githubusercontent.com/arpanpathak/jobsense-parker/master/install.sh | bash
-#   curl -fsSL .../install.sh | bash -s -- v0.3.0   # pin a specific version
+#   curl -fsSL .../install.sh | bash -s -- v0.4.0   # pin a specific version
 #
 # Downloads the prebuilt binary for your OS/arch from the GitHub Release,
 # installs it to ~/.local/bin (or $JOBSENSE_INSTALL_DIR), and prints PATH help.
