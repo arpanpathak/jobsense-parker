@@ -21,7 +21,7 @@ GitHub: [github.com/arpanpathak](https://github.com/arpanpathak)
 
 ## SUMMARY
 
-Software Engineer with nearly 8 years of industry experience architecting high-performance **database internals**, **cloud infrastructure**, **distributed systems**, and real-time **ML inference** pipelines at **Amazon**, **Microsoft**, and **Oracle**. Deep expertise in **Kotlin (JVM)**, **Rust**, **C++**, **Go**, and **Python**: lock-free concurrency, memory safety, low-latency streaming (**Kafka**), and ML inference at scale. Proven track record shipping high-throughput, resource-efficient systems at global scale — from lock-free database engines and cloud control planes to real-time ML ranking and petabyte-scale data platforms.
+Software Engineer with nearly 8 years of industry experience architecting high-performance **database internals**, **cloud infrastructure**, **distributed systems**, and real-time **ML inference** pipelines at **Amazon**, **Microsoft**, and **Oracle**. Deep expertise in **Kotlin (JVM)**, **Rust**, **C++**, **Go**, and **Python**: lock-free concurrency, memory safety, event-driven distributed systems using **Kafka**, big data processing in **Apache Spark** and **AWS Glue**, and ML inference at scale. Proven track record shipping high-throughput, resource-efficient systems at global scale, from lock-free database engines and cloud control planes to real-time ML ranking and petabyte-scale data platforms.
 
 ---
 
