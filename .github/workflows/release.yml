@@ -93,12 +93,14 @@ jobs:
 
       - name: Package (zip)
         if: matrix.archive == 'zip'
-        shell: bash
+        # `zip` is not available in Git Bash on Windows runners, so use
+        # PowerShell's Compress-Archive (native on Windows).
+        shell: pwsh
         run: |
-          BIN=jobsense-parker.exe
-          mkdir -p dist
-          cp target/${{ matrix.target }}/release/$BIN dist/
-          cd dist && zip -r ../jobsense-parker-${{ matrix.target }}.zip $BIN
+          $BIN = 'jobsense-parker.exe'
+          New-Item -ItemType Directory -Force -Path dist | Out-Null
+          Copy-Item "target/${{ matrix.target }}/release/$BIN" "dist/$BIN"
+          Compress-Archive -Path "dist/$BIN" -DestinationPath "jobsense-parker-${{ matrix.target }}.zip" -Force
 
       - name: Upload release asset
         uses: softprops/action-gh-release@v2
