@@ -35,17 +35,16 @@ case "$(uname -m)" in
 esac
 
 # ── Resolve latest version if not pinned ────────────────────────────────────
-if [ "$VERSION" = "latest" ]; then
-  echo "→ Resolving latest release…"
-  VERSION="$(
-    curl -fsSL "https://api.github.com/repos/$REPO/releases/latest" \
-      | grep -o '"tag_name": *"[^"]*"' \
-      | cut -d'"' -f4
-  )"
-fi
-
+# ── Resolve download URL ─────────────────────────────────────────────────────
+# GitHub's `/releases/latest/download/<asset>` redirect serves the newest
+# release's asset without any API call (the API is rate-limited when
+# unauthenticated and can return 403).
 ASSET="jobsense-parker-$TARGET_ARCH-$TARGET_OS.tar.gz"
-URL="https://github.com/$REPO/releases/download/$VERSION/$ASSET"
+if [ "$VERSION" = "latest" ]; then
+  URL="https://github.com/$REPO/releases/latest/download/$ASSET"
+else
+  URL="https://github.com/$REPO/releases/download/$VERSION/$ASSET"
+fi
 TMP_DIR="$(mktemp -d)"
 trap 'rm -rf "$TMP_DIR"' EXIT
 
@@ -58,7 +57,7 @@ mkdir -p "$INSTALL_DIR"
 install -m 755 "$TMP_DIR/jobsense-parker" "$INSTALL_DIR/jobsense-parker"
 
 # ── Done ────────────────────────────────────────────────────────────────────
-echo "✓ Installed jobsense-parker $VERSION to $INSTALL_DIR"
+echo "✓ Installed jobsense-parker ($VERSION) to $INSTALL_DIR"
 
 case ":$PATH:" in
   *":$INSTALL_DIR:"*) ;;

@@ -30,15 +30,16 @@ $Arch = if ($env:PROCESSOR_ARCHITECTURE -eq "ARM64") {
     "x86_64"
 }
 
-# ── Resolve latest version if not pinned ────────────────────────────────────
-if ($Version -eq "latest") {
-    Write-Host "-> Resolving latest release..."
-    $Release = Invoke-RestMethod -Uri "https://api.github.com/repos/$Repo/releases/latest"
-    $Version = $Release.tag_name
-}
-
+# ── Resolve download URL ─────────────────────────────────────────────────────
+# GitHub's `/releases/latest/download/<asset>` redirect serves the newest
+# release's asset without any API call (the API is rate-limited when
+# unauthenticated and can return 403).
 $Asset = "jobsense-parker-$Arch-pc-windows-msvc.zip"
-$Url = "https://github.com/$Repo/releases/download/$Version/$Asset"
+$Url = if ($Version -eq "latest") {
+    "https://github.com/$Repo/releases/latest/download/$Asset"
+} else {
+    "https://github.com/$Repo/releases/download/$Version/$Asset"
+}
 $TmpZip = Join-Path $env:TEMP $Asset
 
 # ── Download + extract ──────────────────────────────────────────────────────
@@ -54,7 +55,7 @@ Copy-Item (Join-Path $TmpDir "jobsense-parker.exe") (Join-Path $InstallDir "jobs
 Remove-Item -Recurse -Force $TmpDir
 Remove-Item -Force $TmpZip
 
-Write-Host "`u{2713} Installed jobsense-parker $Version to $InstallDir" -ForegroundColor Green
+Write-Host "`u{2713} Installed jobsense-parker ($Version) to $InstallDir" -ForegroundColor Green
 
 # ── PATH help ───────────────────────────────────────────────────────────────
 $InPath = ($env:Path -split ";" | Where-Object { $_ -eq $InstallDir })
