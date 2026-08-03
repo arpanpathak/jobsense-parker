@@ -30,12 +30,12 @@ No recruiter spam. No LinkedIn. Just clean, scored results from real job sources
 
 - **4 job sources**: Remote OK, Reddit (5 hiring subreddits), Hacker News "Who is Hiring?", and **80+ company career sites** — auto-crawled during every scan
 - **Resume matching**: Paste your resume or a PDF/JSON file — skills, roles, and keywords are extracted automatically and matched against every job
-- **Smart scoring**: Weighted algorithm (skill overlap 50%, keywords 25%, role title 10%, location 10%, job type 5%) with Jaro-Winkler fuzzy matching
+- **Smart scoring**: Weighted algorithm — title skill match 35%, skill coverage 30%, keyword ratio 15%, role title 10%, location 5%, job type 5% — with word-boundary + alias-aware matching (`k8s` ≈ `kubernetes`, `golang` ≈ `go`)
 - **Auto-discovery**: Company names extracted from job posts are cached locally — future scans automatically crawl their career pages
 - **Vim-style results viewer**: Full-screen paginated browser with `j`/`k` navigation, `Enter` to open URLs, `?` for help
 - **OSC 8 clickable links**: Cmd+click (macOS) or Ctrl+click (Linux/Windows) any job URL to open in your browser
 - **Progress spinner**: Real-time feedback during crawling — no more silent waiting
-- **Auto-fill applications**: Press `a` on a job — Chrome auto-fills the application form with your profile via CDP (headless browser automation, no chromedriver)
+- **Auto-fill applications**: Press `a` on a job — a visible Chrome window opens and **types** the application form fields with your profile via CDP (real key events, no chromedriver), then stays open for you to review and Submit
 - **Fully concurrent**: All sources are crawled simultaneously; HN comments are fetched in parallel
 - **Persistent**: Resumes, preferences, company database, scan history — all saved to `~/.jobsense-parker/`
 
@@ -160,26 +160,29 @@ Select "View results" from the menu to enter the full-screen paginated browser:
 | `g` | First page |
 | `G` | Last page |
 | `Enter` / `o` | Open job URL in browser |
-| `a` | Auto-fill the application form (headless Chrome CDP) |
+| `a` | Auto-fill the application form (visible Chrome, real typing) |
 | `q` / `Esc` | Back to menu |
 | `?` | Toggle keybinding help overlay |
 
 All URLs support **Cmd+click** (macOS) or **Ctrl+click** (Linux/Windows) to open directly.
 
-### 🤖 Auto-Fill Applications (headless browser)
+### 🤖 Auto-Fill Applications (visible browser)
 
-Press `a` on any job and jobsense-parker launches Chrome, navigates to the job
-page, and **auto-fills common application form fields** with your profile via
-Chrome DevTools Protocol (no chromedriver needed):
+Press `a` on any job and jobsense-parker launches Chrome in a **visible window**,
+navigates to the job page, and **types** common application form fields with
+your profile using Chrome DevTools Protocol — real key events, so React-based
+ATS forms (Greenhouse, Lever, ...) register the input correctly (no chromedriver
+needed):
 
 - Name (first/last/full), email, phone, location
 - LinkedIn and GitHub / portfolio URLs
-- Detects fields by `name`/`id`, `placeholder`, `aria-label`, and `<label>` text
+- Detects fields by `name` (exact or substring), `autocomplete`, `placeholder`,
+  `aria-label`, and `<label>` text
 
 Set your profile once from the menu (**Set profile (for auto-fill)**) — it is
-stored in `~/.jobsense-parker/preferences.json`. Chrome opens in **visible mode**
-so you can review the filled form before clicking Submit. Requires a local
-Chrome/Chromium install.
+stored in `~/.jobsense-parker/preferences.json`. The Chrome window **stays open
+after filling** so you can review the form and click Submit yourself. Requires a
+local Chrome/Chromium install.
 
 ---
 
@@ -273,12 +276,12 @@ jobsense-parker/
   ┌──────────────────────────────────────────────┐
   │                 Matcher                       │
   │  score_all(jobs) → Vec<MatchResult>           │
-  │  • Skill overlap (50%)                        │
-  │  • Keyword ratio (25%)                        │
+  │  • Title skill match (35%)                    │
+  │  • Skill coverage (30%)                       │
+  │  • Keyword ratio (15%)                        │
   │  • Role-title match (10%)                     │
-  │  • Location match (10%)                       │
-  │  • Job-type match (5%)                        │
-  │  • Jaro-Winkler fuzzy matching                │
+  │  • Location & job-type (5% each)              │
+  │  • Word-boundary + alias matching             │
   └──────────────────┬───────────────────────────┘
                      │
                      ▼ sorted by score (desc)
@@ -325,13 +328,14 @@ jobsense-parker/
 
 | Component | Weight | How it works |
 |-----------|--------|-------------|
-| **Skill ratio** | 50% | `matched_skills / total_skills` — what fraction of your skills appear in the job description? |
-| **Keyword ratio** | 25% | `matched_keywords / total_keywords` — broad keyword overlap |
-| **Role-title match** | 10% | Does the job title contain one of your role titles? Uses Jaro-Winkler fuzzy match. |
-| **Location match** | 10% | Does the job location contain your preferred location? Fuzzy matched. |
-| **Job-type match** | 5% | Does the job type match your preferred type (e.g. "remote")? |
+| **Title skill match** | 35% | Any of your resume skills appearing in the job TITLE (e.g. "Rust Engineer") — the strongest possible signal |
+| **Skill coverage** | 30% | How many of your skills appear in the job text; saturates at `min(10, total_skills)` so broad resumes aren't penalised for knowing more |
+| **Keyword ratio** | 15% | Fraction of resume keywords found in the job text |
+| **Role-title match** | 10% | Job title contains one of your role titles ("software engineer", "developer") |
+| **Location match** | 5% | Job location aligns with your preferred location |
+| **Job-type match** | 5% | Job type matches your preferred type (e.g. "remote") |
 
-Fuzzy matching uses the [Jaro-Winkler distance](https://en.wikipedia.org/wiki/Jaro%E2%80%93Winkler_distance) with a 0.85 threshold — catches typos and close variants.
+Skills are matched with **word boundaries** — so `"go"` doesn't match `"google"` and `"rust"` doesn't match `"trust"` — plus **aliases**: `k8s` ≈ `kubernetes`, `golang` ≈ `go`, `cpp` ≈ `c++`, `js` ≈ `javascript`, `postgres` ≈ `postgresql`. Role titles and locations additionally use the [Jaro-Winkler distance](https://en.wikipedia.org/wiki/Jaro%E2%80%93Winkler_distance) with a 0.85 threshold to catch typos and close variants.
 
 ---
 
