@@ -7,6 +7,10 @@
 # and Windows (x86_64), archives them, and attaches them to the GitHub Release
 # created for the tag. `install.sh` / `install.ps1` download these archives.
 #
+# Every target is built natively on a matching runner (Linux arm64 uses GitHub's
+# ARM64 runner — no cross toolchains needed). Rustls keeps the dependency tree
+# free of system C libraries, so all targets build cleanly.
+#
 # To create a release:
 #   git tag v0.3.0 && git push origin v0.3.0
 # ─────────────────────────────────────────────────────────────────────────────
@@ -39,9 +43,8 @@ jobs:
             os: ubuntu-latest
             archive: tar.gz
           - target: aarch64-unknown-linux-gnu
-            os: ubuntu-latest
+            os: ubuntu-24.04-arm
             archive: tar.gz
-            zigbuild: true
           - target: x86_64-pc-windows-msvc
             os: windows-latest
             archive: zip
@@ -60,27 +63,8 @@ jobs:
         with:
           key: ${{ matrix.target }}
 
-      # cargo-zigbuild cross-compiles Linux arm64; it needs the `zig`
-      # compiler on PATH (cargo-zigbuild errors instantly without it).
-      # Note: `zig` is not a taiki-e/install-action tool, so install it
-      # via mlugg/setup-zig (the Zig project's recommended action).
-      - name: Install cargo-zigbuild
-        if: matrix.zigbuild
-        uses: taiki-e/install-action@v2
-        with:
-          tool: cargo-zigbuild
-
-      - name: Install Zig compiler
-        if: matrix.zigbuild
-        uses: mlugg/setup-zig@v1
-
-      - name: Build (native)
-        if: ${{ !matrix.zigbuild }}
+      - name: Build release binary
         run: cargo build --release --locked --target ${{ matrix.target }}
-
-      - name: Build (zigbuild cross-compile)
-        if: matrix.zigbuild
-        run: cargo zigbuild --release --locked --target ${{ matrix.target }}
 
       - name: Package (tar.gz)
         if: matrix.archive == 'tar.gz'
