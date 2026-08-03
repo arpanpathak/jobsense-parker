@@ -13,6 +13,10 @@ use scoring::{build_job_text, compute_score};
 /// Compares a resume against job posts and produces scored results.
 pub struct Matcher {
     resume: Option<Resume>,
+    /// Alias-normalised skill names (k8s→kubernetes, golang→go, ...), computed
+    /// once when the resume is loaded so per-job scoring doesn't re-normalise
+    /// 100+ skills on every call.
+    normalized_skills: Vec<String>,
     threshold: f64,
 }
 
@@ -21,12 +25,18 @@ impl Matcher {
     pub fn new() -> Self {
         Self {
             resume: None,
+            normalized_skills: Vec::new(),
             threshold: 0.05,
         }
     }
 
     /// Load (or replace) the resume to match against.
     pub fn load_resume(&mut self, resume: Resume) {
+        self.normalized_skills = resume
+            .skills
+            .iter()
+            .map(|s| scoring::normalize_text(s))
+            .collect();
         self.resume = Some(resume);
     }
 
@@ -47,19 +57,19 @@ impl Matcher {
         let resume = self.resume.as_ref()?;
 
         let job_text = build_job_text(job);
-        let job_lower = job_text.to_lowercase();
+        // Normalise once (aliases: k8s→kubernetes, golang→go, ...) so every
+        // skill check reuses the same expanded text.
+        let job_normalized = scoring::normalize_text(&job_text);
 
         let mut matched_skills = Vec::new();
         let mut missing_skills = Vec::new();
 
-        for skill in &resume.skills {
-            let skill_lower = skill.to_lowercase();
-            // Exact substring match — fast path. `fuzzy_match` via Jaro-Winkler
-            // is orders of magnitude slower (splits full text into words, O(n*m)
-            // per call) and catches <1% of real matches. We skip it here and
-            // only keep it in compute_score() for role-title matching where it
-            // actually matters on a tiny input set.
-            if job_lower.contains(&skill_lower) {
+        for (skill, norm) in resume.skills.iter().zip(&self.normalized_skills) {
+            // Word-boundary + alias-aware matching (see scoring.rs). The old
+            // raw substring match let "go" match "google" and "rust" match
+            // "trust"; fuzzy Jaro-Winkler on full text was orders of magnitude
+            // slower and caught <1% of real matches.
+            if scoring::skill_in_normalized(norm, &job_normalized) {
                 matched_skills.push(skill.clone());
             } else {
                 missing_skills.push(skill.clone());
@@ -76,7 +86,7 @@ impl Matcher {
 
         for kw in &all_keywords {
             let kw_lower = kw.to_lowercase();
-            if job_lower.contains(&kw_lower) {
+            if job_normalized.contains(&kw_lower) {
                 matched_keywords.push(kw.clone());
             }
         }

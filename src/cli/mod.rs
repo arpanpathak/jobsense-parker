@@ -40,8 +40,14 @@ impl App {
         let company_db = storage::load_company_database().unwrap_or_default();
 
         let mut matcher = Matcher::new();
-        if let Some(r) = &resume {
-            matcher.load_resume(r.clone());
+        if let Some(mut r) = resume {
+            // The resume parser only catches "based in X" style locations; the
+            // user's saved preference (e.g. "Seattle") is more reliable.
+            // Backfill so the location bonus in scoring actually fires.
+            if r.preferred_location.is_none() {
+                r.preferred_location = prefs.preferred_location.clone();
+            }
+            matcher.load_resume(r);
             eprintln!("  + Auto-loaded resume from storage.");
         }
 
@@ -342,8 +348,24 @@ impl App {
             return;
         }
         if let Some(r) = self.matcher.resume() {
-            let mut kws = r.skills.clone();
-            kws.extend(r.role_titles.clone());
+            // Build a FOCUSED query, not the full skill list. Dumping all
+            // 100+ skills into the search makes the crawler post-filter require
+            // dozens of keyword hits per job — which filters out everything.
+            // The parser sorts skills by confidence, so the first 8 are the
+            // user's primary stack.
+            let mut kws: Vec<String> = Vec::new();
+            for s in r.skills.iter().take(8) {
+                if !kws.contains(s) {
+                    kws.push(s.clone());
+                }
+            }
+            // Add short, clean role titles ("software engineer", "developer").
+            for t in &r.role_titles {
+                let wc = t.split_whitespace().count();
+                if wc <= 3 && t.len() >= 4 && !kws.contains(t) {
+                    kws.push(t.clone());
+                }
+            }
             if !kws.is_empty() {
                 self.config.keywords = kws;
             }

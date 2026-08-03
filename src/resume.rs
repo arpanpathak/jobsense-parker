@@ -14,6 +14,159 @@
 use regex::Regex;
 use serde::{Deserialize, Serialize};
 
+// ─── Curated Tech Skill Dictionary ────────────────────────────────────────────
+//
+// The anchor for skill extraction. Heuristic signals (capitalisation, all-caps,
+// word frequency) pull in junk like "Built", "Seattle", "2026", "techstack".
+// Matching against this curated list of real technologies is the primary signal;
+// context-phrase and section-marker extraction are fallbacks.
+
+const KNOWN_TECH: &[&str] = &[
+    // Languages
+    "rust", "c++", "c", "c#", "go", "golang", "python", "java", "kotlin",
+    "typescript", "javascript", "shell script", "bash", "shell", "sql", "scala",
+    "swift", "objective-c", "ruby", "php", "perl", "html", "css", "solidity",
+    // Frameworks & web
+    "spring", "spring boot", "springboot", "angular", "react", "react.js", "reactjs",
+    "vue", "vue.js", "node.js", "nodejs", "next.js", "django", "flask", "fastapi",
+    "express", ".net", "asp.net", "gin", "rails", "svelte", "jquery", "bootstrap",
+    "tailwind", "graphql", "rest", "restful", "grpc", "protobuf", "thrift", "avro",
+    // Systems / performance
+    "lock-free", "concurrency", "memory safety", "zero-copy", "low-latency",
+    "high-performance", "systems programming", "embedded", "firmware", "kernel",
+    "os internals", "jvm", "llvm", "simd", "caching", "microservices",
+    "event-driven", "change data capture", "cdc", "message queue", "database internals",
+    "query optimization", "b-tree", "lsm", "multithreading", "parallel computing",
+    "real-time", "on-device",
+    // Networking
+    "tcp/ip", "udp", "http", "http/2", "http/3", "https", "tls", "mtls", "dns",
+    "websockets", "socket programming", "networking", "vpc", "subnet", "subnets",
+    "routing", "nat", "vpn", "peering", "load balancer", "load balancing", "firewall",
+    "security groups", "packet processing", "xdp", "kernel-level networking",
+    // Security
+    "ebpf", "cilium", "istio", "zero-trust", "data residency", "secnumcloud",
+    "encryption", "cryptography", "oauth", "jwt", "saml", "key management",
+    "secret management", "vault", "identity and access management", "iam",
+    // Cloud & infra
+    "aws", "ec2", "ecs", "eks", "lambda", "kinesis", "emr", "sagemaker", "s3",
+    "dynamodb", "redshift", "cloudwatch", "route 53", "cdk", "google cloud", "gcp",
+    "azure", "aks", "azure monitor", "kubernetes", "k8s", "docker", "terraform",
+    "kubebuilder", "helm", "openshift", "serverless", "control plane",
+    "infrastructure as code", "ci/cd", "blue-green", "canary",
+    // Data
+    "apache kafka", "kafka", "apache spark", "spark", "apache flink", "flink",
+    "hadoop", "postgresql", "postgres", "mysql", "mongodb", "redis", "snowflake",
+    "bigquery", "data lake", "data warehouse", "etl", "olap", "oltp", "glue",
+    "databricks", "nosql", "data pipelines", "big data", "petabyte", "spark api",
+    // ML / AI
+    "pytorch", "tensorflow", "keras", "xgboost", "lightgbm", "scikit-learn",
+    "bert", "transformers", "transformer models", "onnx", "onnx runtime", "cnn",
+    "convolutional neural networks", "ann", "artificial neural networks", "rnn",
+    "deep learning", "machine learning", "mlops", "computer vision", "yolov8",
+    "yolov11", "yolo", "object detection", "model pruning", "quantization",
+    "recommendation systems", "ranking", "natural language processing", "nlp",
+    "llm", "rag", "embeddings", "fine-tuning", "hugging face", "opencv",
+    "inference", "inference engine", "ensemble", "gradient boosting",
+    // Observability
+    "prometheus", "grafana", "jaeger", "opentelemetry", "datadog", "new relic",
+    "splunk", "elasticsearch", "logstash", "kibana", "azure monitor",
+    // Tools
+    "git", "github", "gitlab", "jenkins", "github actions", "gitlab ci", "argo",
+    "argocd", "circleci", "gradle", "maven", "cargo", "cmake", "makefile",
+    "docker compose", "kubectl",
+    // CS concepts
+    "data structures", "algorithms", "system design", "operating systems",
+    "computer architecture", "distributed systems", "consensus", "replication",
+    "sharding", "two-phase commit", "serializable isolation",
+];
+
+/// Strip markdown syntax (headers, bold, italic, code spans, bullets) from
+/// resume text so extraction doesn't pick up `##`, `**`, backticks, etc.
+fn strip_markdown(text: &str) -> String {
+    let mut out = String::new();
+    for line in text.lines() {
+        let mut line = line.trim_start();
+        // Strip `### `-style headers
+        line = line.trim_start_matches('#').trim_start();
+        // Strip markdown bullets / list markers
+        for prefix in ["- ", "* ", "+ ", "• "] {
+            if let Some(rest) = line.strip_prefix(prefix) {
+                line = rest;
+                break;
+            }
+        }
+        // Strip inline bold / code spans
+        let line = line.replace("**", "").replace('`', "");
+        out.push_str(&line);
+        out.push('\n');
+    }
+    out
+}
+
+/// Words that should never be extracted as skills — verbs, generic domain words,
+/// dates, months, cities, company names, markdown leftovers.
+fn is_junk_skill(word: &str) -> bool {
+    let junk: &[&str] = &[
+        // verbs
+        "built", "designed", "developed", "architected", "engineered", "integrated",
+        "implemented", "shipped", "managed", "led", "created", "improved", "reduced",
+        "increased", "delivered", "established", "maintained", "migrated", "optimized",
+        "automated", "processed", "handled", "served", "spearheaded", "deployed",
+        "launched", "wrote", "produced", "generated", "authored", "published",
+        "released", "driving", "running", "building", "designing", "developing",
+        "integrating", "supporting", "maintaining", "migrating", "reducing",
+        "increasing", "achieving", "applying", "training", "fine-tuned", "planning",
+        "combining", "processing", "serving", "handling", "using", "extracting",
+        "scanning", "checking", "planning", "learning", "deep", "high",
+        // generic words / domain words (not specific enough to match on)
+        "engineer", "engineers", "engineering", "developer", "developers", "software",
+        "hardware", "data", "cloud", "systems", "system", "engine", "design",
+        "development", "technology", "technologies", "technical", "library",
+        "libraries", "platform", "platforms", "models", "model", "multiple",
+        "across", "various", "including", "processing", "performance", "memory",
+        "security", "networking", "computer", "computers", "inference", "networks",
+        "network", "observability", "infrastructure", "application", "applications",
+        "service", "services", "team", "teams", "project", "projects", "experience",
+        "years", "work", "working", "management", "operations", "architecture",
+        "internals", "proprietary", "publisher", "autonomous", "ai-driven",
+        "ai-powered", "event-driven", "high-performance", "low-latency", "real-time",
+        "on-device", "kernel-level", "zero-trust", "lock-free", "developer-facing",
+        "zero-copy", "large-scale", "petabyte", "cost", "savings", "revenue",
+        "million", "month", "ops", "qps", "tpm", "ctr", "sla", "uptime", "latency",
+        "throughput", "production", "customer", "users", "user", "company",
+        "companies", "global", "scale", "native", "cloud-native", "internal",
+        // dates / time / locations
+        "jan", "feb", "mar", "apr", "may", "jun", "jul", "aug", "sep", "oct",
+        "nov", "dec", "2025", "2026", "2024", "2023", "2022", "2021", "2020",
+        "2019", "2018", "2017", "2016", "2015", "2027", "2014", "2013", "2012",
+        "present", "seattle", "redmond", "bengaluru", "hyderabad", "kolkata",
+        "india", "usa", "washington", "california", "texas", "new", "york",
+        "san", "francisco", "bay", "area", "remote", "wa", "ii", "iii", "iv",
+        "sr", "jr",
+        // company names (handled by curated list if part of a real skill)
+        "amazon", "microsoft", "oracle", "razorpay", "mindfire", "google", "nvidia",
+        // markdown / noise
+        "##", "###", "**", "–", "-", "|", "techstack", "etc", "sdk", "api",
+        "llm", "ml", "ai",
+    ];
+    junk.contains(&word)
+}
+
+/// Check whether a known tech name appears in lowercased text.
+///
+/// Multi-word, long, or slash-containing names ("machine learning", "kubernetes",
+/// "http/2") are safe as substring matches. Short names and names with special
+/// chars ("go", "c", "c++", "s3", "c#") use token matching so "go" doesn't match
+/// "google" and "rust" doesn't match "trust".
+fn tech_present(lower: &str, name: &str) -> bool {
+    if name.contains(' ') || name.len() >= 5 || name.contains('/') {
+        return lower.contains(name);
+    }
+    lower
+        .split(|c: char| !c.is_ascii_alphanumeric() && c != '+' && c != '#' && c != '.')
+        .any(|tok| tok == name || (name.contains(['+', '#', '.']) && tok.starts_with(name)))
+}
+
 // ─── Comprehensive Tech Skill Dictionary ──────────────────────────────────────
 //
 // Organized by domain so we can infer the candidate's area of expertise.
@@ -137,15 +290,31 @@ impl SkillDictionary {
         }
     }
 
-    /// Extract tech skills from text using context-weighted analysis.
+    /// Extract tech skills from text.
     ///
-    /// Strategy: scan the text for signals that a term is a tech skill,
-    /// score each candidate, return the highest-confidence ones.
+    /// Strategy (in order of confidence):
+    ///
+    /// 1. **Curated tech list** (+4) — real technologies found in the text
+    /// 2. **Context phrases** (+3) — terms near "experience with", "proficient in"
+    /// 3. **Section headers** (+2) — terms in "Technologies:", "Skills:" sections
+    /// 4. **Special-char tokens** (+2) — C++, Node.js, YOLOv8/v11
+    ///
+    /// The old "any capitalised word" / "all-caps acronym" / "word frequency"
+    /// signals were removed because they pull in junk ("Built", "Seattle",
+    /// "2026", "###", "techstack").
     pub fn find_skills(&self, text: &str) -> Vec<KnownSkill> {
         let lower = text.to_lowercase();
         let mut candidates: std::collections::HashMap<String, i32> = std::collections::HashMap::new();
 
-        // ── Signal 1: Context phrases (+3 confidence) ──────────────
+        // ── Signal 1: Curated tech list (+4 confidence) ────────────
+        // The anchor: real technologies found anywhere in the resume.
+        for name in KNOWN_TECH {
+            if tech_present(&lower, name) {
+                *candidates.entry(name.to_string()).or_insert(0) += 4;
+            }
+        }
+
+        // ── Signal 2: Context phrases (+3 confidence) ──────────────
         // "experience with Rust" → "Rust" is almost certainly a skill
         for phrase in &self.context_phrases {
             // Find each occurrence of the phrase, then grab the next 1-3 words
@@ -183,7 +352,7 @@ impl SkillDictionary {
             }
         }
 
-        // ── Signal 2: Section markers (+2 confidence) ──────────────
+        // ── Signal 3: Section markers (+2 confidence) ──────────────
         // "Technologies: Rust, Python, Docker" → list items are skills
         for marker in &self.section_markers {
             if let Some(pos) = lower.find(marker) {
@@ -198,68 +367,33 @@ impl SkillDictionary {
             }
         }
 
-        // ── Signal 3: Capitalisation pattern (+2 confidence) ───────
-        // Words that start with uppercase or have mixed case (like "TypeScript")
-        // are often proper nouns = tech names
+        // ── Signal 4: Special-char tokens (C++, Node.js, YOLOv8/v11) ──
         for word in text.split_whitespace() {
             let clean = word.trim_matches(|c: char| !c.is_alphanumeric() && c != '+' && c != '#' && c != '.');
-
-            if clean.len() < 2 || self.stop_words.iter().any(|s| *s == clean.to_lowercase().as_str()) {
+            if clean.len() < 2 {
                 continue;
             }
-
-            let has_upper = clean.chars().any(|c| c.is_uppercase());
-            let has_lower = clean.chars().any(|c| c.is_lowercase());
-            let has_special = clean.contains(|c: char| c == '+' || c == '#' || c == '.' || c == '-');
-            let has_digit = clean.chars().any(|c| c.is_ascii_digit());
-
-            // Capitalized or mixed case → likely a tech term
-            if has_upper && has_lower && clean.len() >= 3 {
+            let has_special = clean.contains(|c: char| c == '+' || c == '#' || c == '.');
+            if has_special {
                 *candidates.entry(clean.to_lowercase()).or_insert(0) += 2;
-            }
-
-            // Has special chars (C++, .NET, Node.js) → likely tech
-            if has_special && clean.len() >= 2 {
-                *candidates.entry(clean.to_lowercase()).or_insert(0) += 2;
-            }
-
-            // Has digits (Python3, Webpack5) → likely tech
-            if has_digit && clean.len() >= 2 {
-                *candidates.entry(clean.to_lowercase()).or_insert(0) += 1;
-            }
-        }
-
-        // ── Signal 4: Uppercase acronyms (AWS, GCP, API) ───────────
-        for word in text.split_whitespace() {
-            let clean = word.trim_matches(|c: char| !c.is_alphanumeric());
-            if clean.len() >= 2 && clean.len() <= 6
-                && clean.chars().all(|c| c.is_uppercase() || c.is_ascii_digit())
-            {
-                *candidates.entry(clean.to_lowercase()).or_insert(0) += 1;
-            }
-        }
-
-        // ── Signal 5: All-caps short words (Rust, Go, Vue) ────────
-        for word in text.split_whitespace() {
-            let clean = word.trim_matches(|c: char| !c.is_alphanumeric());
-            if clean.len() >= 2 && clean.len() <= 8
-                && clean.chars().all(|c| c.is_uppercase())
-            {
-                *candidates.entry(clean.to_lowercase()).or_insert(0) += 1;
             }
         }
 
         // ── Filter and sort results ────────────────────────────────
-        // Remove candidates with very low confidence
-        candidates.retain(|_, score| *score >= 2);
+        // Keep curated-list matches (score >= 4: curated ± context/section/special
+        // boosts). Context-only and section-only hits (score 2-3) are dropped as
+        // noise. This resume is dense (~150 real tech terms), so no aggressive
+        // count cap is applied.
+        candidates.retain(|_, score| *score >= 4);
+        candidates.retain(|name, _| !is_junk_skill(name));
 
-        // Sort by score descending
+        // Sort by score descending, then alphabetically for stability
         let mut sorted: Vec<(String, i32)> = candidates.into_iter().collect();
-        sorted.sort_by(|a, b| b.1.cmp(&a.1));
+        sorted.sort_by(|a, b| b.1.cmp(&a.1).then_with(|| a.0.cmp(&b.0)));
 
         // Return top N as KnownSkills
         sorted.into_iter()
-            .take(80)
+            .take(150)
             .map(|(name, _)| KnownSkill {
                 name,
                 domain: SkillDomain::Other,
@@ -381,11 +515,14 @@ impl std::fmt::Display for Education {
 
 /// Parse raw resume text into structured intelligence.
 pub fn parse_resume(text: &str) -> ResumeIntelligence {
+    // Strip markdown first so `##`, `**`, backticks and bullets don't leak
+    // into skill/role extraction.
+    let text = strip_markdown(text);
     let dict = SkillDictionary::new();
     let lower = text.to_lowercase();
 
     // 1. Find known tech skills (the dictionary-driven approach)
-    let known_skills = dict.find_skills(text);
+    let known_skills = dict.find_skills(&text);
 
     // 2. Find context-inferred skills (patterns like "experience with X")
     let inferred_skills = extract_context_skills(&lower, &dict);
@@ -407,7 +544,7 @@ pub fn parse_resume(text: &str) -> ResumeIntelligence {
 
     // 8. Derive focus areas dynamically from resume text
     // (no hardcoded skill→domain categories — reads what the resume says)
-    let focus_areas = derive_focus_areas(text, &role_titles);
+    let focus_areas = derive_focus_areas(&text, &role_titles);
 
     // 9. Extract education
     let education = extract_education(&lower);
@@ -533,10 +670,6 @@ fn extract_roles(text: &str) -> Vec<String> {
 
     // ── Method 2: Date-driven titles ────────────────────────────────
     // The line BEFORE a date range in a resume is typically a job title.
-    // Uses a simple two-step scan (NO complex regex that can freeze):
-    // Step 1: find lines that look like date ranges
-    // Step 2: grab the line before each date range
-    // This avoids catastrophic backtracking from chained lazy quantifiers.
     let simple_date_re = Regex::new(
         r"(?i)\b\d{4}\s*[–\-to]+\s*(?:\d{4}|present|current|now)\b"
     ).unwrap();
@@ -545,16 +678,16 @@ fn extract_roles(text: &str) -> Vec<String> {
     for (i, line) in lines.iter().enumerate() {
         if i == 0 { continue; }
         if simple_date_re.is_match(line) {
-            let candidate = lines[i - 1].trim().to_string();
-            if looks_like_role_line(&candidate) && !roles.contains(&candidate) {
-                roles.push(candidate);
+            if let Some(candidate) = clean_role(lines[i - 1].trim()) {
+                if !roles.contains(&candidate) {
+                    roles.push(candidate);
+                }
             }
         }
     }
 
-    // ── Method 3: Broad role keyword + capitalisation ───────────────
-    // Catches any line that looks like it could be a job title,
-    // without requiring specific words.
+    // ── Method 3: Broad role keyword ────────────────────────────────
+    // Any line containing a role keyword, cleaned to just the title part.
     let role_keywords = [
         "engineer", "developer", "architect", "programmer", "scientist",
         "analyst", "designer", "manager", "director", "lead", "head",
@@ -564,19 +697,20 @@ fn extract_roles(text: &str) -> Vec<String> {
 
     for line in text.lines() {
         let trimmed = line.trim();
-        if trimmed.is_empty() || trimmed.len() > 80 {
+        // No length pre-check here: clean_role() rejects anything that isn't a
+        // short title-shaped line after cutting company/date segments.
+        if trimmed.is_empty() {
             continue;
         }
         let lower_line = trimmed.to_lowercase();
-
-        // Check if any word in the line is a role keyword
         let words: Vec<&str> = lower_line.split_whitespace().collect();
         let has_keyword = role_keywords.iter().any(|kw| words.contains(kw));
 
-        if has_keyword && looks_like_role_line(trimmed) {
-            let title = trimmed.to_string();
-            if !roles.contains(&title) {
-                roles.push(title);
+        if has_keyword {
+            if let Some(title) = clean_role(trimmed) {
+                if !roles.contains(&title) {
+                    roles.push(title);
+                }
             }
         }
     }
@@ -586,49 +720,64 @@ fn extract_roles(text: &str) -> Vec<String> {
     roles
 }
 
-/// Heuristic: does this line look like a job title?
-/// Job titles have capitalised words, aren't section headers, aren't
-/// bullet points, and have meaningful length.
-fn looks_like_role_line(line: &str) -> bool {
-    let lower = line.to_lowercase().trim().to_string();
-
-    // Exclude section headers
-    let section_headers = [
-        "experience", "education", "skills", "summary", "objective",
-        "projects", "publications", "certifications", "references",
-        "volunteer", "leadership", "languages", "interests",
-        "achievements", "awards", "honors", "contact", "profile",
-        "technical", "work", "employment", "background", "qualifications",
-        "training", "courses", "patents",
-    ];
-    if section_headers.iter().any(|h| lower == *h || lower.starts_with(&format!("{}:", h))) {
-        return false;
+/// Clean a candidate role line down to a proper job title.
+///
+/// Strips company/location/date segments ("Software Developer II | Microsoft,
+/// Redmond, WA | Jun 2025 – Aug 2026" → "Software Developer"), trailing roman
+/// numerals, and rejects fragments that aren't title-shaped (2–5 words).
+fn clean_role(line: &str) -> Option<String> {
+    let line = line.trim();
+    // The full line may include company/location/dates; allow generous length
+    // BEFORE cutting at separators.
+    if line.is_empty() || line.len() > 120 {
+        return None;
     }
 
-    if line.len() < 5 || line.len() > 80 {
-        return false;
+    // Cut off company / location / date segments after `|` or `@`
+    let mut title = line;
+    if let Some(pos) = line.find('|') {
+        title = &line[..pos];
+    }
+    if let Some(pos) = title.find('@') {
+        title = &title[..pos];
+    }
+    let title = title.trim();
+    // The title part itself must be short
+    if title.len() > 45 {
+        return None;
     }
 
-    // Must have at least one uppercase letter or digit
-    if !line.chars().any(|c| c.is_uppercase()) && !line.chars().any(|c| c.is_ascii_digit()) {
-        return false;
+    // Cut off trailing date ranges ("Software Engineer 2018 - 2020")
+    let date_re = Regex::new(r"(?i)\s*\d{4}\s*[–\-to]+\s*(?:\d{4}|present|current|now).*$").unwrap();
+    let title = date_re.replace_all(title, "").trim().to_string();
+
+    // Drop markdown leftovers and bullet markers
+    let title = title.trim_start_matches(['#', '-', '*', '•', '·']).trim().to_string();
+    let title = title.replace("**", "").trim().to_string();
+
+    // Drop trailing roman numerals ("Software Developer II" → "Software Developer")
+    let mut words: Vec<String> = title
+        .split_whitespace()
+        .map(|w| w.to_string())
+        .collect();
+    if let Some(last) = words.last() {
+        if ["ii", "iii", "iv", "v", "i"].contains(&last.to_lowercase().as_str()) {
+            words.pop();
+        }
     }
 
-    // Must have at least 2 words (or 1 word >= 5 chars)
-    let word_count = line.split_whitespace().count();
-    if word_count < 2 && line.len() < 5 {
-        return false;
+    let title = words.join(" ");
+    if title.is_empty() {
+        return None;
     }
 
-    // Exclude bullet points / list items
-    let trimmed = line.trim_start();
-    if trimmed.starts_with('-') || trimmed.starts_with('•')
-        || trimmed.starts_with('*') || trimmed.starts_with("·") {
-        return false;
+    // Must be a plausible title shape: 2–5 words, sane length
+    let wc = title.split_whitespace().count();
+    if !(2..=5).contains(&wc) || title.len() < 4 || title.len() > 40 {
+        return None;
     }
 
-    // At least one word has 3+ chars
-    line.split_whitespace().any(|w| w.len() >= 3)
+    Some(title)
 }
 
 /// Infer seniority level from role titles and text.
@@ -636,79 +785,96 @@ fn looks_like_role_line(line: &str) -> bool {
 /// Strategy: role titles are the PRIMARY signal (they're explicit about level).
 /// Text is the FALLBACK. And we check highest levels first so "senior engineer"
 /// doesn't get overridden by "intern" appearing somewhere irrelevant in the text.
+///
+/// All level keywords use word boundaries so "factors" doesn't count as "cto"
+/// and "internal" doesn't count as "intern".
 fn infer_seniority(roles: &[String], text: &str) -> Option<SeniorityLevel> {
-    let combined = format!("{} {}", roles.join(" "), text).to_lowercase();
+    let combined = format!("{} {}\n{}", roles.join(" "), text, roles.join(" ")).to_lowercase();
 
     // ── Role-title-driven checks (strongest signal) ─────────────────
     // If any role title explicitly says the level, trust it first.
     for role in roles {
         let r = role.to_lowercase();
-        if r.contains("vice president") || r.contains("vp ") || r.contains("chief") || r.contains("cto") || r.contains("ceo") {
+        if contains_level(&r, "vice president") || contains_level(&r, "vp")
+            || contains_level(&r, "chief") || contains_level(&r, "cto") || contains_level(&r, "ceo")
+        {
             return Some(SeniorityLevel::Executive);
         }
-        if r.contains("director") {
+        if contains_level(&r, "director") {
             return Some(SeniorityLevel::Director);
         }
-        if r.contains("principal") {
+        if contains_level(&r, "principal") {
             return Some(SeniorityLevel::Principal);
         }
-        if r.contains("staff") {
+        if contains_level(&r, "staff") {
             return Some(SeniorityLevel::Staff);
         }
-        if r.contains("senior") || r.contains("sr ") {
+        if contains_level(&r, "senior") {
             return Some(SeniorityLevel::Senior);
         }
-        if r.contains("lead") {
+        if contains_level(&r, "lead") {
             return Some(SeniorityLevel::Lead);
         }
-        if r.contains("junior") || r.contains("jr ") || r.contains("jr,") {
+        if contains_level(&r, "junior") {
             return Some(SeniorityLevel::Junior);
         }
-        if r.contains("intern") {
+        if contains_level(&r, "intern") {
             return Some(SeniorityLevel::Intern);
         }
     }
 
     // ── Text-fallback checks (weaker signal, check high→low) ────────
-    // Use word-boundary checks to avoid "internal" → "intern" false positive
-    if combined.contains("vp ") || combined.contains("vice president") || combined.contains("chief") || combined.contains("cto") || combined.contains("ceo") {
+    if contains_level(&combined, "vice president") || contains_level(&combined, "vp")
+        || contains_level(&combined, "chief") || contains_level(&combined, "cto")
+        || contains_level(&combined, "ceo")
+    {
         return Some(SeniorityLevel::Executive);
     }
-    if combined.contains("director") {
+    if contains_level(&combined, "director") {
         return Some(SeniorityLevel::Director);
     }
-    if combined.contains("principal") {
+    if contains_level(&combined, "principal") {
         return Some(SeniorityLevel::Principal);
     }
-    if combined.contains("staff") {
-        // "staff" is common in resumes ("staff engineer" vs "staff augmentation")
-        // Only trust if near engineering/technical context
-        let ctx = format!("staff {} {}", text, roles.join(" ")).to_lowercase();
-        if ctx.contains("staff engineer") || ctx.contains("staff software") || ctx.contains("staff scientist") {
-            return Some(SeniorityLevel::Staff);
-        }
+    if contains_level(&combined, "staff engineer")
+        || contains_level(&combined, "staff software")
+        || contains_level(&combined, "staff scientist")
+    {
+        return Some(SeniorityLevel::Staff);
     }
-    if combined.contains("senior") || combined.contains("sr ") {
+    if contains_level(&combined, "senior") {
         return Some(SeniorityLevel::Senior);
     }
-    if combined.contains("lead") {
+    if contains_level(&combined, "lead") {
         return Some(SeniorityLevel::Lead);
     }
-    if combined.contains("junior") || combined.contains("jr ") {
+    if contains_level(&combined, "junior") {
         return Some(SeniorityLevel::Junior);
     }
-    // Only match "intern" as a standalone word, not "internal" or "internship"
-    if combined.contains(" intern ") || combined.starts_with("intern ") || combined.ends_with(" intern") || combined.contains("\nintern") {
+    if contains_level(&combined, "intern") {
         return Some(SeniorityLevel::Intern);
     }
 
     None
 }
 
+/// Case-insensitive, word-boundary-aware substring check.
+fn contains_level(text: &str, needle: &str) -> bool {
+    if needle.contains(' ') {
+        text.contains(needle)
+    } else {
+        text.split(|c: char| !c.is_alphanumeric())
+            .any(|w| w == needle)
+    }
+}
+
 /// Extract years of experience.
 fn extract_experience_years(text: &str) -> Option<f32> {
-    // Primary: "N years of experience", "N+ years exp"
-    let re = Regex::new(r"(?i)(\d{1,2})\+?\s*(?:years?|yrs?)\s*(?:of\s+)?(?:experience|exp)").unwrap();
+    // Primary: "N years of experience", "N+ years exp", "N years of industry experience"
+    // (allow one descriptor word between "years of" and "experience")
+    let re = Regex::new(
+        r"(?i)(\d{1,2})\+?\s*(?:years?|yrs?)\s*(?:of\s+)?(?:(?:industry|professional|relevant|software|development|engineering|work|it)\s+)?(?:experience|exp)\b"
+    ).unwrap();
     if let Some(cap) = re.captures(text) {
         if let Ok(y) = cap.get(1)?.as_str().parse::<f32>() {
             if y > 0.0 && y < 50.0 {
@@ -717,8 +883,8 @@ fn extract_experience_years(text: &str) -> Option<f32> {
         }
     }
 
-    // Fallback: "N+ years" in experience section context
-    let re2 = Regex::new(r"(?i)(?:over|>|more\s+than)\s*(\d{1,2})\+?\s*years?").unwrap();
+    // Fallback: "N+ years" / "over N years" in experience context
+    let re2 = Regex::new(r"(?i)(?:over|>|more\s+than|nearly|almost|close\s+to)\s*(\d{1,2})\+?\s*years?\b").unwrap();
     if let Some(cap) = re2.captures(text) {
         if let Ok(y) = cap.get(1)?.as_str().parse::<f32>() {
             if y > 0.0 && y < 50.0 {
@@ -732,6 +898,19 @@ fn extract_experience_years(text: &str) -> Option<f32> {
 
 /// Extract preferred location.
 fn extract_location(text: &str) -> Option<String> {
+    // Contact-line pattern: "Seattle, Washington, USA", "New York, NY", "Remote, USA"
+    // Captures just the city (optionally "New York"-style two-word cities).
+    let contact_re = Regex::new(
+        r"(?m)^\s*([a-z][a-z ]{1,30}?)\s*,\s*[a-z][a-z ]{1,30}?\s*,\s*(?:usa|united states|uk|canada|india|germany|remote)\b"
+    ).unwrap();
+    if let Some(cap) = contact_re.captures(text) {
+        let loc = cap.get(1)?.as_str().trim().to_string();
+        if !loc.is_empty() && loc.len() <= 40 {
+            return Some(loc);
+        }
+    }
+
+    // "based in X", "located in X", "open to relocation to X"
     let re = Regex::new(
         r"(?i)(?:based|located|living|situated|relocated|willing\s+to\s+relocate\s+to)\s+(?:in|at|near|to)\s+([a-z][a-z\s.-]{2,40}?)(?:[,.!]|$)"
     ).unwrap();
@@ -781,13 +960,15 @@ fn derive_focus_areas(text: &str, role_titles: &[String]) -> Vec<String> {
     // 1. Extract multi-word phrases that look like focus areas
     // Look for patterns like "distributed systems", "systems programming",
     // "machine learning", "data infrastructure", etc.
+    // NOTE: the phrase char class is [a-z \-/] (no newline!) so phrases can't
+    // span lines and pick up fragments like "er-facing\nlibrary used across...".
     let phrase_re = Regex::new(
-        r"(?i)(?:focus|area|expertise|specializ|field|domain|discipline|responsib|work\s+on|work\s+in|work\s+with|build|design|develop|architect|lead|manage|drive)\s*(?:ed|ing|es)?\s*:?\s*([a-z][a-z\s\-/]{3,60}?)(?:[.!,]|$)"
+        r"(?i)(?:focus|area|expertise|specializ|field|domain|discipline|responsib|work\s+on|work\s+in|work\s+with|build|design|develop|architect|lead|manage|drive)\s*(?:ed|ing|es|ment)?\s*:?\s*([a-z][a-z \-/]{3,60}?)(?:[.!,]|$)"
     ).unwrap();
 
     for cap in phrase_re.captures_iter(text) {
         let phrase = cap.get(1).unwrap().as_str().trim().to_string();
-        if phrase.len() >= 8 && phrase.len() <= 80 {
+        if phrase.len() >= 8 && phrase.len() <= 80 && !contains_junk(phrase.as_str()) {
             let words: Vec<&str> = phrase.split_whitespace().collect();
             if words.len() >= 2 {
                 areas.push(phrase);
@@ -858,6 +1039,12 @@ fn is_stop_word(word: &str) -> bool {
         "see", "may", "though", "every", "good", "great", "best",
     ];
     stops.contains(&word)
+}
+
+/// Does a phrase contain stop words that make it useless as a focus area?
+/// ("and lane awareness", "er-facing library used across multiple publisher teams")
+fn contains_junk(phrase: &str) -> bool {
+    phrase.split_whitespace().any(is_stop_word)
 }
 
 fn is_stop_phrase(phrase: &str) -> bool {

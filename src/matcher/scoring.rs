@@ -1,53 +1,108 @@
 //! # Scoring Algorithm
 //!
-//! Computes a compatibility score between a [`Resume`] and a [`JobPost`]
-//! using weighted fuzzy matching. The score is a float between 0.0 (no match)
-//! and 1.0 (perfect match).
+//! Computes a compatibility score between a [`Resume`] and a [`JobPost`].
+//! The score is a float between 0.0 (no match) and 1.0 (perfect match).
 //!
 //! ## Score Breakdown
 //!
 //! | Component | Weight | How it works |
 //! |-----------|--------|-------------|
-//! | **Skill ratio** | 50% | `matched_skills / total_skills` — what fraction of your skills appear in the job description? |
-//! | **Keyword ratio** | 25% | `matched_keywords / total_keywords` — broad keyword overlap |
-//! | **Role-title match** | 10% | Does the job title contain one of your role titles (e.g. "engineer")? Uses Jaro-Winkler fuzzy match. |
-//! | **Location match** | 10% | Does the job location contain your preferred location (or vice versa)? Fuzzy matched. |
-//! | **Job-type match** | 5% | Does the job type match your preferred type (e.g. "remote", "full-time")? |
+//! | **Title skill match** | 35% | Any skill from your resume appearing in the job TITLE ("Senior Rust Engineer" = full title credit) |
+//! | **Skill coverage** | 30% | How many of your skills appear in the job text (saturates at min(10, total skills) — broad resumes aren't penalised for knowing more) |
+//! | **Keyword ratio** | 15% | Fraction of resume keywords found in the job text |
+//! | **Role-title match** | 10% | Job title contains one of your role titles ("software engineer", "developer") |
+//! | **Location match** | 5% | Job location aligns with preferred location |
+//! | **Job-type match** | 5% | Job type matches preferred type |
 //!
-//! ## Fuzzy Matching
+//! ## Matching
 //!
-//! Where exact substring matching fails, we fall back to
-//! [Jaro-Winkler similarity](https://en.wikipedia.org/wiki/Jaro%E2%80%93Winkler_distance)
-//! with a threshold of 0.85. This catches typos and small variations:
-//!
-//! | Input | Match | Score |
-//! |-------|-------|-------|
-//! | `"kubernetes"` | `"k8s"` | High (fuzzy) |
-//! | `"typescript"` | `"TypeScript"` | Exact (case-insensitive) |
-//! | `"javascript"` | `"js"` | No (too short for fuzzy) |
+//! Skills are matched with **word boundaries** (so `"go"` doesn't match
+//! `"google"` and `"rust"` doesn't match `"trust"`) and **aliases** (`k8s` ≈
+//! `kubernetes`, `golang` ≈ `go`, `cpp` ≈ `c++`, `js` ≈ `javascript`).
 
 use crate::models::{JobPost, Resume};
+use regex::Regex;
+use std::sync::OnceLock;
 use strsim::jaro_winkler;
+
+/// Token aliases expanded before matching. Job text and skill names are both
+/// normalised so `"k8s"` counts as `"kubernetes"`, `"golang"` as `"go"`, etc.
+const ALIASES: &[(&str, &str)] = &[
+    ("k8s", "kubernetes"),
+    ("kube", "kubernetes"),
+    ("golang", "go"),
+    ("cpp", "c++"),
+    ("js", "javascript"),
+    ("ts", "typescript"),
+    ("node.js", "node"),
+    ("nodejs", "node"),
+    ("react.js", "react"),
+    ("reactjs", "react"),
+    ("postgres", "postgresql"),
+    ("gcp", "google cloud"),
+];
+
+/// Compiled alias regexes, cached once. Compiling per call was the hot path:
+/// `normalize_text` is invoked per-skill (100+ times per job) and each
+/// `Regex::new` costs ~0.3ms.
+fn alias_regexes() -> &'static [(Regex, &'static str)] {
+    static REGEXES: OnceLock<Vec<(Regex, &'static str)>> = OnceLock::new();
+    REGEXES.get_or_init(|| {
+        ALIASES
+            .iter()
+            .filter_map(|(from, to)| {
+                Regex::new(&format!(r"\b{}\b", regex::escape(from)))
+                    .ok()
+                    .map(|re| (re, *to))
+            })
+            .collect()
+    })
+}
+
+/// Expand aliases and lowercase a skill name or job text for matching.
+pub fn normalize_text(text: &str) -> String {
+    let mut out = text.to_lowercase();
+    for (re, to) in alias_regexes() {
+        out = re.replace_all(&out, *to).to_string();
+    }
+    out
+}
+
+/// Does a (already-normalised) skill appear in normalised job text?
+///
+/// Multi-word, long, or slash-containing skills ("machine learning",
+/// "kubernetes", "http/2") are safe as substring matches. Short names and
+/// names with special chars ("go", "c", "c++", "s3", "c#") use token matching
+/// so `"go"` doesn't match `"google"` and `"rust"` doesn't match `"trust"`.
+pub fn skill_in_normalized(skill: &str, normalized_text: &str) -> bool {
+    let s = normalize_text(skill);
+    if s.contains(' ') || s.len() >= 5 || s.contains('/') {
+        return normalized_text.contains(&s);
+    }
+    normalized_text
+        .split(|c: char| !c.is_ascii_alphanumeric() && c != '+' && c != '#' && c != '.')
+        .any(|tok| tok == s || (s.contains(['+', '#', '.']) && tok.starts_with(&s)))
+}
 
 /// Compute a composite match score between 0.0 and 1.0.
 ///
 /// # Scoring breakdown
 ///
-/// - **Title skill match** (35%): fraction of resume skills found in the job TITLE
-///   (skills in the title are 3x more relevant than in the description)
-/// - **Description skill match** (25%): fraction of resume skills found in the
-///   job description / combined text
-/// - **Keyword ratio** (20%): fraction of resume keywords found in job text
-/// - **Role-title match** (10%): bonus if job title contains a role from resume
-/// - **Location match** (5%): bonus if job location aligns with preferred location
-/// - **Job-type match** (5%): bonus if job type matches preferred type
+/// - **Title skill match** (35%): skills found in the job TITLE, saturating
+///   at 2. A skill in the title is the strongest possible signal.
+/// - **Skill coverage** (30%): fraction of resume skills found in the job
+///   description, saturating at 12 matches so a broad resume isn't penalised.
+/// - **Keyword ratio** (15%): fraction of resume keywords found in job text.
+/// - **Role-title match** (10%): bonus if job title contains a role from resume.
+/// - **Location match** (5%): bonus if job location aligns with preferred location.
+/// - **Job-type match** (5%): bonus if job type matches preferred type.
 ///
-/// # Why the split?
+/// # Why saturation?
 ///
-/// A skill in the job TITLE (e.g., "Senior Rust Engineer") is a much stronger
-/// signal than the same skill buried in the description. The old scoring treated
-/// both equally, so "Senior Vice President" at a tech company could score as
-/// high as "Rust Engineer" because the description mentioned every tech stack.
+/// The old formula divided by ALL resume skills. With 100+ real skills on a
+/// broad engineer's resume, even a perfect match scored ~15%. Saturation makes
+/// the score reflect "how many of MY core skills does this job need", not
+/// "what fraction of my entire career does this job cover".
 pub fn compute_score(
     matched_skills: &[String],
     all_skills: &[String],
@@ -61,29 +116,36 @@ pub fn compute_score(
     }
 
     let mut score = 0.0;
-    let title_lower = job.title.to_lowercase();
+    let title_lower = normalize_text(&job.title.to_lowercase());
 
     // ── Title skill match (35%) ──────────────────────────────────────────
-    // Skills appearing in the job title are 3x more relevant. This prevents
-    // "Senior Vice President" from scoring high just because the description
-    // has a tech stack dump.
+    // Skills in the job title are the strongest possible signal: if ANY of
+    // your skills is literally in the title ("Rust Engineer", "Python
+    // Developer"), the job is almost certainly a match.
     if !all_skills.is_empty() {
-        let title_skill_matches = all_skills.iter().filter(|s| {
-            title_lower.contains(&s.to_lowercase())
-        }).count();
-        let title_ratio = title_skill_matches as f64 / all_skills.len() as f64;
-        score += title_ratio * 0.35;
-
-        // Description-only skill match (25%)
-        let desc_only_matches = matched_skills.len().saturating_sub(title_skill_matches);
-        let desc_ratio = desc_only_matches as f64 / all_skills.len() as f64;
-        score += desc_ratio.min(1.0) * 0.25;
+        let title_skills = all_skills
+            .iter()
+            .filter(|s| skill_in_normalized(s, &title_lower))
+            .count();
+        if title_skills >= 1 {
+            score += 0.35;
+        }
     }
 
-    // ── Keyword ratio (20%) ─────────────────────────────────────────────
+    // ── Skill coverage (30%) ────────────────────────────────────────────
+    // How many resume skills appear in the job text. Saturates at
+    // min(10, total_skills) so a broad 100+ skill resume isn't penalised for
+    // knowing more, while a 2-skill resume gets full credit when fully matched.
+    let cov_denom = all_skills.len().min(10) as f64;
+    if cov_denom > 0.0 {
+        let coverage = (matched_skills.len() as f64 / cov_denom).min(1.0);
+        score += coverage * 0.30;
+    }
+
+    // ── Keyword ratio (15%) ─────────────────────────────────────────────
     if !all_keywords.is_empty() {
         let kw_ratio = matched_keywords.len() as f64 / all_keywords.len() as f64;
-        score += kw_ratio * 0.20;
+        score += kw_ratio * 0.15;
     }
 
     // ── Role-title match (10%) ──────────────────────────────────────────
@@ -120,21 +182,6 @@ pub fn compute_score(
 /// using the [Jaro-Winkler distance](https://en.wikipedia.org/wiki/Jaro%E2%80%93Winkler_distance)
 /// with a threshold of 0.85.
 ///
-/// # How it works
-///
-/// 1. Splits `text` into whitespace-separated words
-/// 2. Strips non-alphanumeric characters from each word
-/// 3. Compares each word (case-insensitive) against `keyword` using
-///    [`jaro_winkler`] from the `strsim` crate
-/// 4. Returns `true` if any word scores ≥ 0.85
-///
-/// # Examples
-///
-/// ```ignore
-/// assert!(fuzzy_match("kubernetes", "We use k8s at scale"));
-/// assert!(!fuzzy_match("rust", "We use ruby and java"));
-/// ```
-///
 /// # Limitations
 ///
 /// - Requires keywords to be at least 3 characters long (avoids false
@@ -164,14 +211,9 @@ pub fn fuzzy_match(keyword: &str, text: &str) -> bool {
 /// **`tags` are deliberately excluded** because job boards like Remote OK
 /// dump platform-level tag clouds onto every job listing.
 ///
-/// Also strips marker sections like \"Tags:\", \"Technologies:\" etc. from
-/// descriptions so platform tag dumps don't inflate skill matches.
-///
-/// # Example output
-///
-/// ```text
-/// \"Senior Rust Engineer We are looking for a Rust engineer... Stripe San Francisco $200k full-time\"
-/// ```
+/// Also strips marker sections like \"Tags:\" from descriptions so platform
+/// tag dumps don't inflate skill matches. NOTE: \"Requirements:\" is NOT
+/// stripped — that's where the actual required skills live.
 pub fn build_job_text(job: &JobPost) -> String {
     let desc = strip_tag_cloud(&job.description);
     let mut parts = vec![job.title.clone(), desc];
@@ -192,16 +234,14 @@ pub fn build_job_text(job: &JobPost) -> String {
 
 /// Strip tag-cloud sections from job descriptions.
 ///
-/// Many job boards append a comma-separated tag cloud of every keyword.
-/// These inflate skill matching scores. We detect common section markers
-/// and truncate before them.
+/// Some job boards append a comma-separated tag cloud of every keyword.
+/// These inflate skill matching scores. We detect common tag-dump markers
+/// and truncate before them. Real content markers like \"Requirements:\",
+/// \"Skills:\" and \"Nice to have:\" are kept — they contain the skills we
+/// actually want to match against.
 fn strip_tag_cloud(text: &str) -> String {
     let lower = text.to_lowercase();
-    let markers = [
-        "tags:", "technologies:", "tech stack:", "skills:",
-        "requirements:", "nice to have:", "bonus points:",
-        "preferred qualifications:",
-    ];
+    let markers = ["tags:", "technologies:", "tech stack:"];
 
     let mut earliest = None;
     for marker in &markers {
@@ -217,5 +257,33 @@ fn strip_tag_cloud(text: &str) -> String {
     match earliest {
         Some(pos) => text[..pos].trim().to_string(),
         None => text.to_string(),
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn word_boundaries_prevent_false_positives() {
+        assert!(!skill_in_normalized("go", &normalize_text("We use Google and strong engineering")));
+        assert!(!skill_in_normalized("rust", &normalize_text("We trust the compiler")));
+        assert!(skill_in_normalized("go", &normalize_text("Written in Go and Rust")));
+        assert!(skill_in_normalized("c++", &normalize_text("C++17 systems programming")));
+    }
+
+    #[test]
+    fn aliases_are_expanded() {
+        assert!(skill_in_normalized("kubernetes", &normalize_text("k8s at scale")));
+        assert!(skill_in_normalized("go", &normalize_text("golang backend")));
+        assert!(skill_in_normalized("c++", &normalize_text("modern cpp")));
+        assert!(skill_in_normalized("javascript", &normalize_text("node.js and js")));
+        assert!(skill_in_normalized("postgresql", &normalize_text("postgres db")));
+    }
+
+    #[test]
+    fn multiword_skills_match_phrases() {
+        assert!(skill_in_normalized("machine learning", &normalize_text("machine learning engineer")));
+        assert!(skill_in_normalized("distributed systems", &normalize_text("building distributed systems")));
     }
 }

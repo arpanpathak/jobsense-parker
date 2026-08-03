@@ -182,16 +182,23 @@ impl CrawlerCoordinator {
             let kw_count = config.keywords.len();
             let kw_lower: Vec<String> = config.keywords.iter().map(|k| k.to_lowercase()).collect();
 
-            // Minimum keywords required: 1 of 1, 2 of 2, 2 of 3, half of 4+
-            let min_required = if kw_count == 1 {
-                1
-            } else if kw_count <= 3 {
-                kw_count - 1 // 2 of 2, 2 of 3
-            } else {
-                kw_count / 2
+            // Minimum keywords required for the FULL-TEXT soft-AND:
+            // 1 of 1, 2 of 2, 2 of 3, capped at 3 for larger sets. The old
+            // formula (`kw_count / 2`) broke resume scans that pass a focused
+            // 8-10 keyword query — requiring 4-5 hits filtered out everything.
+            let min_required = match kw_count {
+                0 | 1 => kw_count,
+                2 | 3 => kw_count - 1,
+                _ => 3.min(kw_count / 2),
             };
 
-            // Pass 1: Title-gate — min_required keywords must appear in TITLE.
+            // The TITLE gate is deliberately lenient (1 keyword): resume scans
+            // pass ~10 keywords, and real job titles rarely contain more than
+            // 1-2 of them ("Senior Rust Engineer" hits "rust", not the whole
+            // query). The role-keyword gate below does the real filtering.
+            let title_min = 1.min(kw_count);
+
+            // Pass 1: Title-gate — at least one keyword must appear in TITLE.
             // This eliminates "Senior Vice President" when searching
             // "senior software engineer" because the title only has "senior".
             //
@@ -229,7 +236,7 @@ impl CrawlerCoordinator {
 
                 // Standard title keyword count
                 let title_matches = kw_lower.iter().filter(|kw| title_lower.contains(kw.as_str())).count();
-                title_matches >= min_required
+                title_matches >= title_min
             });
 
             // Pass 2: Soft-AND on full text (NOT including tags — they

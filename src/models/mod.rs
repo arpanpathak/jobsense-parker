@@ -189,12 +189,17 @@ impl Resume {
 
     /// Build a `Resume` from the rich intelligence extracted by the engine.
     pub fn from_intelligence(i: ResumeIntelligence) -> Self {
-        let skills: Vec<String> = i
+        let mut skills: Vec<String> = Vec::new();
+        for name in i
             .known_skills
             .iter()
             .map(|ks| ks.name.clone())
             .chain(i.inferred_skills.iter().cloned())
-            .collect();
+        {
+            if !skills.contains(&name) {
+                skills.push(name);
+            }
+        }
 
         Self {
             skills,
@@ -294,10 +299,11 @@ pub struct MatchResult {
     /// Overall compatibility score (0.0 – 1.0).
     ///
     /// Computed as a weighted sum:
-    /// - Skill ratio: 50%
-    /// - Keyword ratio: 25%
+    /// - Title skill match: 35%
+    /// - Skill coverage: 30%
+    /// - Keyword ratio: 15%
     /// - Role-title match: 10%
-    /// - Location match: 10%
+    /// - Location match: 5%
     /// - Job-type match: 5%
     pub score: f64,
     /// Skills from the resume that were found in the job description.
