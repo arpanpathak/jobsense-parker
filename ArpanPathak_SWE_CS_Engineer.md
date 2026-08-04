@@ -6,7 +6,7 @@ PERSONAL PROJECTS
 - On-device AI perception system built in **Rust** for intersection discipline and lane awareness, running entirely on-device (**< 50ms inference latency**, no cloud dependency) for aftermarket dashcam and AR-glasses form factors.
 - Fine-tunes **YOLOv8/v11** and custom **CNN** architectures; applies model pruning and quantization to fit tight memory and power budgets on low-powered single-board computers (Raspberry Pi 5).
 - Trains on cloud GPU infrastructure with synthetic data augmentation; planning to release a public driving-behavior dataset on **Hugging Face**.
-**Seeing Machines: Deep Learning & Computer Vision from Python to Bare Metal (Book)** | [arpanpathak.github.io/seeing-machines-book](https://arpanpathak.github.io/seeing-machines-book/foreword.html) | 2026
+- Companion book: **Seeing Machines: Deep Learning & Computer Vision from Python to Bare Metal** — [arpanpathak.github.io/seeing-machines-book](https://arpanpathak.github.io/seeing-machines-book/foreword.html)
 **Physics & Mathematics of Game Development in Rust (Book)** | [arpanpathak.github.io/bevy-physics-book](https://arpanpathak.github.io/bevy-physics-book/ch01-foreword.html) | 2026
 - Authored an unpublished book on the **physics and mathematics of game development in Rust**, deep-diving the math and systems behind real-time simulation.
 :::

@@ -132,7 +132,10 @@ def convert(md_text, icon_color="#0f766e", project_color="#0f766e", muted_color=
         elif stripped.startswith("- "):
             item = stripped[2:]
             if in_project_box:
-                html.append(f'<p class="bullet-sm">\u2022 {item}</p>')
+                if "Companion book" in item:
+                    html.append(f'<p class="bullet-sm">{svg_icon("book", project_color, 10)}{item}</p>')
+                else:
+                    html.append(f'<p class="bullet-sm">\u2022 {item}</p>')
             elif item.startswith("TechStack"):
                 label, _, rest = item.partition(":")
                 html.append(f'<p class="techstack-box">{svg_icon("code", tech_color, 10)}<span class="techstack-label">{label}</span>:{rest}</p>')
@@ -190,13 +193,13 @@ def convert(md_text, icon_color="#0f766e", project_color="#0f766e", muted_color=
 CSS = """
 @page {
     size: letter;
-    margin: 0.45in 0.6in;
+    margin: 0.35in 0.55in;
     background: __BG__;
 }
 body {
     font-family: 'Avenir Next', 'Avenir', 'Helvetica Neue', Helvetica, Arial, sans-serif;
     font-size: 10pt;
-    line-height: 1.34;
+    line-height: 1.28;
     color: __TEXT__;
     background: __BG__;
 }
@@ -283,9 +286,9 @@ p.bullet-sm strong {
     text-transform: uppercase;
     letter-spacing: 0.6px;
     border-bottom: 2px solid __ACCENT__;
-    padding: 3px 8px;
-    margin-top: 8px;
-    margin-bottom: 4px;
+    padding: 2px 8px;
+    margin-top: 6px;
+    margin-bottom: 3px;
     border-radius: 4px;
     box-shadow: __HEADER_SHADOW__;
     background: linear-gradient(90deg, __HEADING_BG__, transparent);
@@ -296,9 +299,9 @@ p.bullet-sm strong {
     align-items: baseline;
     column-gap: 6px;
     font-size: 10.5pt;
-    margin: 5px 0 2px 0;
-    line-height: 1.3;
-    padding: 3px 8px;
+    margin: 4px 0 1px 0;
+    line-height: 1.28;
+    padding: 2px 8px;
     border-radius: 6px;
     border-left: 3px solid __ACCENT__;
     background: __HEADER_BG__;
