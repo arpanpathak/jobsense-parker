@@ -144,10 +144,10 @@ def convert(md_text, icon_color="#0f766e", project_color="#0f766e", muted_color=
                 if stripped == "PERSONAL PROJECTS":
                     line = svg_icon("rocket", project_color, 11) + line
                 elif "github" in line and "[" in line:
-                    if "Driving-CivicSense" in line or "Vision" in line:
-                        line = svg_icon("camera", project_color, 10) + line
-                    elif "Book" in line or "Physics" in line:
+                    if "Book" in line or "Physics" in line:
                         line = svg_icon("book", project_color, 10) + line
+                    elif "Driving-CivicSense" in line or "Vision" in line:
+                        line = svg_icon("camera", project_color, 10) + line
                     line = line.replace("[", svg_icon("github", project_color, 10) + "[", 1)
                 html.append(f'<p class="project-text">{line}</p>')
             elif contact_open:
