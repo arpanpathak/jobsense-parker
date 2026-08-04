@@ -81,6 +81,8 @@ Software Engineer with nearly 8 years of industry experience architecting high-p
 
 **ML Inference & AI**: PyTorch, TensorFlow, XGBoost, Transformer Models (BERT), ONNX Runtime, On-Device/Edge Inference, Model Pruning & Quantization, Computer Vision (YOLOv8/v11), Artificial Neural Networks (ANN), Convolutional Neural Networks (CNN), Sequential Models, Natural Language Processing (NLP), Deep Learning, Recommendation Systems, MLOps
 
+**GPU & Parallel Computing**: CUDA, CUDA-Oxide (actively exploring), GPU Kernel Programming, Parallel Computing, GPU-Accelerated Computing
+
 **Cloud & Infra**: AWS (EC2, ECS, Lambda, Kinesis, EMR, SageMaker), Google Cloud, Azure (AKS), Kubernetes (EKS, AKS), Docker, Terraform, Kubebuilder, Istio
 
 **Observability**: Prometheus, Grafana, Azure Monitor, AWS CloudWatch

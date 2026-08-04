@@ -79,6 +79,7 @@ def convert(md_text, icon_color="#0f766e", project_color="#0f766e", muted_color=
         "Distributed Systems & Streaming": "server",
         "APIs & Serialization": "plug",
         "ML Inference & AI": "zap",
+        "GPU & Parallel Computing": "cpu",
         "Cloud & Infra": "cloud",
         "Observability": "activity",
         "Data & Storage": "database",
