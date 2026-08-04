@@ -265,17 +265,18 @@ p.project-text strong {
     color: __PROJECT__;
 }
 p.book-line {
-    margin: 5px 0 5px 2px;
-    padding: 4px 9px;
-    border-left: 3px solid __PROJECT__;
-    border-radius: 0 5px 5px 0;
-    background: __HEADER_BG__;
+    margin: 6px 0 6px 2px;
+    padding: 5px 10px;
+    border: 1px solid __CHIP_BORDER__;
+    border-left: 4px solid __PROJECT__;
+    border-radius: 8px;
+    background: __CHIP_BG__;
     font-size: 7.5pt;
-    line-height: 1.32;
+    line-height: 1.34;
 }
 p.book-line svg {
     vertical-align: -2px;
-    margin-right: 3px;
+    margin-right: 4px;
 }
 p.book-line strong {
     font-size: 8pt;
@@ -302,14 +303,14 @@ p.bullet-sm strong {
     font-weight: 600;
     color: __NAME__;
     text-transform: uppercase;
-    letter-spacing: 0.6px;
+    letter-spacing: 0.8px;
     border-bottom: 2px solid __ACCENT__;
-    padding: 3px 8px;
-    margin-top: 10px;
-    margin-bottom: 5px;
+    padding: 4px 10px;
+    margin-top: 14px;
+    margin-bottom: 6px;
     border-radius: 4px;
     box-shadow: __HEADER_SHADOW__;
-    background: linear-gradient(90deg, __HEADING_BG__, transparent);
+    background: linear-gradient(90deg, __HEADING_BG__ 55%, transparent);
 }
 
 .job-header {
@@ -317,7 +318,7 @@ p.bullet-sm strong {
     align-items: baseline;
     column-gap: 6px;
     font-size: 10.5pt;
-    margin: 6px 0 3px 0;
+    margin: 8px 0 3px 0;
     line-height: 1.28;
     padding: 3px 8px;
     border-radius: 6px;
@@ -360,13 +361,13 @@ p.skill-group strong {
 p.bullet {
     margin: 1px 0 1px 16px;
     font-size: 9.5pt;
-    line-height: 1.28;
+    line-height: 1.26;
     text-indent: -8px;
 }
 
 p.techstack-box {
-    margin: 4px 0 8px 16px;
-    line-height: 1.34;
+    margin: 3px 0 5px 16px;
+    line-height: 1.32;
 }
 span.techstack-label {
     font-style: italic;
@@ -410,6 +411,7 @@ THEMES = {
         "SHADOW": "4px 4px 14px rgba(0, 0, 0, 0.15), 1px 1px 4px rgba(0, 0, 0, 0.08)",
         "HEADER_SHADOW": "0 1px 3px rgba(0, 0, 0, 0.12)",
         "HEADING_BG": "#f0f6ff", "HEADER_BG": "#f8f9fa",
+        "CHIP_BG": "#dce8fb", "CHIP_BORDER": "#b8cdf5",
     },
     "nightowl": {
         "BG": "#011627", "TEXT": "#d6deeb", "NAME": "#ffffff", "STRONG": "#e8eef5",
@@ -420,6 +422,7 @@ THEMES = {
         "SHADOW": "4px 4px 14px rgba(0, 0, 0, 0.45), 1px 1px 4px rgba(0, 0, 0, 0.3)",
         "HEADER_SHADOW": "0 1px 4px rgba(0, 0, 0, 0.5)",
         "HEADING_BG": "#152238", "HEADER_BG": "#0e2737",
+        "CHIP_BG": "#1e2a4a", "CHIP_BORDER": "#33415e",
     },
     "pink": {
         "BG": "#ffffff", "TEXT": "#1a1a1a", "NAME": "#111111", "STRONG": "#111111",
@@ -430,6 +433,7 @@ THEMES = {
         "SHADOW": "4px 4px 14px rgba(0, 0, 0, 0.12), 1px 1px 4px rgba(0, 0, 0, 0.06)",
         "HEADER_SHADOW": "0 1px 3px rgba(0, 0, 0, 0.08)",
         "HEADING_BG": "#fdf0f6", "HEADER_BG": "#fff7fb",
+        "CHIP_BG": "#fbe4f0", "CHIP_BORDER": "#f3c0da",
     },
     "vivid": {
         "BG": "#ffffff", "TEXT": "#1f2937", "NAME": "#111827", "STRONG": "#1f2937",
@@ -440,6 +444,7 @@ THEMES = {
         "SHADOW": "0 2px 6px rgba(15, 23, 42, 0.10)",
         "HEADER_SHADOW": "0 1px 4px rgba(15, 23, 42, 0.12)",
         "HEADING_BG": "#f1f5f9", "HEADER_BG": "#f1f5f9",
+        "CHIP_BG": "#d9efea", "CHIP_BORDER": "#a9d8cd",
     },
 }
 
