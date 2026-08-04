@@ -132,10 +132,7 @@ def convert(md_text, icon_color="#0f766e", project_color="#0f766e", muted_color=
         elif stripped.startswith("- "):
             item = stripped[2:]
             if in_project_box:
-                if "Companion book" in item:
-                    html.append(f'<p class="bullet-sm">{svg_icon("book", project_color, 10)}{item}</p>')
-                else:
-                    html.append(f'<p class="bullet-sm">\u2022 {item}</p>')
+                html.append(f'<p class="bullet-sm">\u2022 {item}</p>')
             elif item.startswith("TechStack"):
                 label, _, rest = item.partition(":")
                 html.append(f'<p class="techstack-box">{svg_icon("code", tech_color, 10)}<span class="techstack-label">{label}</span>:{rest}</p>')
@@ -144,15 +141,19 @@ def convert(md_text, icon_color="#0f766e", project_color="#0f766e", muted_color=
 
         else:
             if in_project_box:
+                cls = "project-text"
                 if stripped == "PERSONAL PROJECTS":
                     line = svg_icon("rocket", project_color, 11) + line
                 elif "github" in line and "[" in line:
                     if "Book" in line or "Physics" in line:
                         line = svg_icon("book", project_color, 10) + line
+                        cls = "project-text book-line"
                     elif "Driving-CivicSense" in line or "Vision" in line:
                         line = svg_icon("camera", project_color, 10) + line
-                    line = line.replace("[", svg_icon("github", project_color, 10) + "[", 1)
-                html.append(f'<p class="project-text">{line}</p>')
+                        line = line.replace("[", svg_icon("github", project_color, 10) + "[", 1)
+                    else:
+                        line = line.replace("[", svg_icon("github", project_color, 10) + "[", 1)
+                html.append(f'<p class="{cls}">{line}</p>')
             elif contact_open:
                 ico = "pin"
                 if "Email:" in line:
@@ -241,7 +242,7 @@ body {
     margin-bottom: 10px;
     border: 1.5px solid __PROJECT__;
     border-radius: 8px;
-    padding: 8px 11px;
+    padding: 9px 12px;
     background: __BOX_BG__;
     box-shadow: __SHADOW__;
 }
@@ -251,22 +252,35 @@ body {
     color: __PROJECT__;
     text-transform: uppercase;
     letter-spacing: 1.2px;
-    margin: 0 0 3px 0;
+    margin: 0 0 4px 0;
 }
 p.project-text {
     font-size: 8pt;
-    line-height: 1.28;
-    margin: 2px 0;
+    line-height: 1.3;
+    margin: 3px 0;
     color: __MUTED__;
 }
 p.project-text strong {
     font-size: 8.5pt;
     color: __PROJECT__;
 }
-p.bullet-sm {
-    margin: 1px 0 1px 12px;
+p.book-line {
+    margin: 4px 0 4px 2px;
+    padding: 3px 8px;
+    border-left: 3px solid __PROJECT__;
+    border-radius: 0 5px 5px 0;
+    background: __HEADER_BG__;
+    font-size: 7.5pt;
+    line-height: 1.3;
+}
+p.book-line strong {
     font-size: 8pt;
-    line-height: 1.28;
+    color: __PROJECT__;
+}
+p.bullet-sm {
+    margin: 1.5px 0 1.5px 12px;
+    font-size: 8pt;
+    line-height: 1.3;
     text-indent: -7px;
     color: __MUTED__;
 }
