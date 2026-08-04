@@ -146,7 +146,7 @@ def convert(md_text, icon_color="#0f766e", project_color="#0f766e", muted_color=
                     line = svg_icon("rocket", project_color, 11) + line
                 elif "github" in line and "[" in line:
                     if "Book" in line or "Physics" in line:
-                        line = svg_icon("book", project_color, 10) + line
+                        line = svg_icon("book", project_color, 13) + line
                         cls = "project-text book-line"
                     elif "Driving-CivicSense" in line or "Vision" in line:
                         line = svg_icon("camera", project_color, 10) + line
@@ -265,13 +265,17 @@ p.project-text strong {
     color: __PROJECT__;
 }
 p.book-line {
-    margin: 4px 0 4px 2px;
-    padding: 3px 8px;
+    margin: 5px 0 5px 2px;
+    padding: 4px 9px;
     border-left: 3px solid __PROJECT__;
     border-radius: 0 5px 5px 0;
     background: __HEADER_BG__;
     font-size: 7.5pt;
-    line-height: 1.3;
+    line-height: 1.32;
+}
+p.book-line svg {
+    vertical-align: -2px;
+    margin-right: 3px;
 }
 p.book-line strong {
     font-size: 8pt;
@@ -300,9 +304,9 @@ p.bullet-sm strong {
     text-transform: uppercase;
     letter-spacing: 0.6px;
     border-bottom: 2px solid __ACCENT__;
-    padding: 2px 8px;
-    margin-top: 6px;
-    margin-bottom: 3px;
+    padding: 3px 8px;
+    margin-top: 10px;
+    margin-bottom: 5px;
     border-radius: 4px;
     box-shadow: __HEADER_SHADOW__;
     background: linear-gradient(90deg, __HEADING_BG__, transparent);
@@ -313,9 +317,9 @@ p.bullet-sm strong {
     align-items: baseline;
     column-gap: 6px;
     font-size: 10.5pt;
-    margin: 4px 0 1px 0;
+    margin: 6px 0 3px 0;
     line-height: 1.28;
-    padding: 2px 8px;
+    padding: 3px 8px;
     border-radius: 6px;
     border-left: 3px solid __ACCENT__;
     background: __HEADER_BG__;
@@ -342,7 +346,7 @@ p.bullet-sm strong {
 p {
     margin: 1px 0;
     font-size: 9.5pt;
-    line-height: 1.32;
+    line-height: 1.3;
 }
 
 p.skill-group {
@@ -356,13 +360,13 @@ p.skill-group strong {
 p.bullet {
     margin: 1px 0 1px 16px;
     font-size: 9.5pt;
-    line-height: 1.32;
+    line-height: 1.28;
     text-indent: -8px;
 }
 
 p.techstack-box {
     margin: 4px 0 8px 16px;
-    line-height: 1.38;
+    line-height: 1.34;
 }
 span.techstack-label {
     font-style: italic;

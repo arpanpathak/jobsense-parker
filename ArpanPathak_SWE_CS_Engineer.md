@@ -8,7 +8,6 @@ PERSONAL PROJECTS
 - Trains on cloud GPU infrastructure with synthetic data augmentation; planning to release a public driving-behavior dataset on **Hugging Face**.
 **Companion Book: Seeing Machines: Deep Learning & Computer Vision from Python to Bare Metal** | [arpanpathak.github.io/seeing-machines-book](https://arpanpathak.github.io/seeing-machines-book/foreword.html)
 **Physics & Mathematics of Game Development in Rust (Book)** | [arpanpathak.github.io/bevy-physics-book](https://arpanpathak.github.io/bevy-physics-book/ch01-foreword.html) | 2026
-- Authored an unpublished book on the **physics and mathematics of game development in Rust**, deep-diving the math and systems behind real-time simulation.
 :::
 
 **Seattle, Washington, USA** | Open to Relocation  
