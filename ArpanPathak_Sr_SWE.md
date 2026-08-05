@@ -88,7 +88,7 @@ Software Engineer with nearly 8 years of industry experience architecting high-p
 
 **Frontend**: React.JS, TypeScript, Angular
 
-**ML Inference & AI**: PyTorch, TensorFlow, XGBoost, Transformer Models (BERT), ONNX Runtime, On-Device/Edge Inference, Model Pruning & Quantization, Computer Vision (YOLOv8/v11), Artificial Neural Networks (ANN), Convolutional Neural Networks (CNN), Sequential Models, Natural Language Processing (NLP), Deep Learning, Recommendation Systems, MLOps
+**ML Inference & AI**: PyTorch, TensorFlow, XGBoost, Transformer Models (BERT), Large Language Models (LLM), ONNX Runtime, On-Device/Edge Inference, Model Pruning & Quantization, Computer Vision (YOLOv8/v11), Artificial Neural Networks (ANN), Convolutional Neural Networks (CNN), Sequential Models, Natural Language Processing (NLP), Deep Learning, Recommendation Systems, MLOps
 
 **GPU & Parallel Computing**: CUDA, CUDA-Oxide (actively exploring), GPU Kernel Programming, Parallel Computing, GPU-Accelerated Computing
 
