@@ -83,7 +83,7 @@ Software Engineer with nearly 8 years of industry experience architecting high-p
 
 **Real-Time Streaming**: Apache Kafka, Apache Flink
 
-**Big Data**: Apache Spark
+**Big Data**: Apache Spark, AWS Glue, AWS EMR
 
 **APIs & Serialization**: gRPC, REST API Design, Protobuf
 
@@ -93,11 +93,11 @@ Software Engineer with nearly 8 years of industry experience architecting high-p
 
 **GPU & Parallel Computing**: CUDA, CUDA-Oxide (actively exploring), GPU Kernel Programming, Parallel Computing, GPU-Accelerated Computing
 
-**Cloud & Infra**: AWS (EC2, ECS, Lambda, Kinesis, EMR, SageMaker), Google Cloud, Azure (AKS), Kubernetes (EKS, AKS), Docker, Terraform, Kubebuilder, Istio
+**Cloud & Infra**: AWS (EC2, ECS, Lambda, Kinesis, SageMaker), Google Cloud, Azure (AKS), Kubernetes (EKS, AKS), Docker, Terraform, Kubebuilder, Istio
 
 **Observability**: Prometheus, Grafana, Azure Monitor, AWS CloudWatch
 
-**Data & Storage**: DynamoDB, PostgreSQL, Redis, MongoDB, Amazon Redshift, Amazon S3
+**Data & Storage**: DynamoDB, PostgreSQL, Redis, MongoDB, MySQL, Amazon Redshift, Amazon S3
 
 **Core CS**: Data Structures & Algorithms, System Design, Operating Systems, Linux, Computer Architecture
 
