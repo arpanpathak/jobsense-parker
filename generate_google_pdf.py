@@ -7,6 +7,7 @@ import weasyprint
 
 MD_FILE = sys.argv[1] if len(sys.argv) > 1 else "/Users/arpanpathak/Projects/rust/jobsense-parker/ArpanPathak_Google_Android.md"
 THEME_NAME = sys.argv[2] if len(sys.argv) > 2 else "google"
+NO_ICONS = "--no-icons" in sys.argv
 PDF_FILE = MD_FILE.replace(".md", ".pdf")
 
 with open(MD_FILE, "r") as f:
@@ -64,7 +65,7 @@ def svg_icon(name, color, size=11):
     )
 
 
-def convert(md_text, icon_color="#0f766e", project_color="#0f766e", muted_color="#475569", tech_color="#0f766e", skill_color="#b45309"):
+def convert(md_text, icon_color="#0f766e", project_color="#0f766e", muted_color="#475569", tech_color="#0f766e", skill_color="#b45309", show_icons=True):
     """Convert markdown to clean HTML with proper link rendering."""
     lines = md_text.split("\n")
     html = []
@@ -107,7 +108,8 @@ def convert(md_text, icon_color="#0f766e", project_color="#0f766e", muted_color=
         elif line.startswith("## "):
             title = line[3:]
             ic = heading_icons.get(title.upper(), "target")
-            html.append(f'<div class="section-heading">{svg_icon(ic, icon_color, 12)}{title}</div>')
+            icon = svg_icon(ic, icon_color, 12) if show_icons else ""
+            html.append(f'<div class="section-heading">{icon}{title}</div>')
 
         elif line.startswith("### "):
             content = line[4:]
@@ -135,7 +137,8 @@ def convert(md_text, icon_color="#0f766e", project_color="#0f766e", muted_color=
                 html.append(f'<p class="bullet-sm">\u2022 {item}</p>')
             elif item.startswith("TechStack"):
                 label, _, rest = item.partition(":")
-                html.append(f'<p class="techstack-box">{svg_icon("code", tech_color, 10)}<span class="techstack-label">{label}</span>:{rest}</p>')
+                icon = svg_icon("code", tech_color, 10) if show_icons else ""
+                html.append(f'<p class="techstack-box">{icon}<span class="techstack-label">{label}</span>:{rest}</p>')
             else:
                 html.append(f'<p class="bullet">\u2022 {item}</p>')
 
@@ -143,15 +146,18 @@ def convert(md_text, icon_color="#0f766e", project_color="#0f766e", muted_color=
             if in_project_box:
                 cls = "project-text"
                 if stripped == "PERSONAL PROJECTS":
-                    line = svg_icon("rocket", project_color, 11) + line
+                    if show_icons:
+                        line = svg_icon("rocket", project_color, 11) + line
                 elif "github" in line and "[" in line:
                     if "Book" in line or "Physics" in line:
-                        line = svg_icon("book", project_color, 15) + line
+                        if show_icons:
+                            line = svg_icon("book", project_color, 15) + line
                         cls = "project-text book-line"
                     elif "Driving-CivicSense" in line or "Vision" in line:
-                        line = svg_icon("camera", project_color, 10) + line
-                        line = line.replace("[", svg_icon("github", project_color, 10) + "[", 1)
-                    else:
+                        if show_icons:
+                            line = svg_icon("camera", project_color, 10) + line
+                            line = line.replace("[", svg_icon("github", project_color, 10) + "[", 1)
+                    elif show_icons:
                         line = line.replace("[", svg_icon("github", project_color, 10) + "[", 1)
                 html.append(f'<p class="{cls}">{line}</p>')
             elif contact_open:
@@ -166,12 +172,13 @@ def convert(md_text, icon_color="#0f766e", project_color="#0f766e", muted_color=
                     ico = "github"
                 elif line.startswith("**Visa"):
                     ico = "shield"
-                html.append(f'<div class="contact-item"><span class="contact-ico">{svg_icon(ico, muted_color, 11)}</span><span class="contact-txt">{line}</span></div>')
+                html.append(f'<div class="contact-item"><span class="contact-ico">{svg_icon(ico, muted_color, 11) if show_icons else ""}</span><span class="contact-txt">{line}</span></div>')
             else:
                 if line.startswith("**") and "**: " in line:
                     label = line.split(":", 1)[0].strip("*")
                     ic = skill_icons.get(label, "layers")
-                    line = svg_icon(ic, skill_color, 10) + line
+                    icon = svg_icon(ic, skill_color, 10) if show_icons else ""
+                    line = icon + line
                     html.append(f'<p class="skill-group">{line}</p>')
                 else:
                     html.append(f'<p>{line}</p>')
@@ -227,6 +234,9 @@ body {
     flex: 0 0 16px;
     text-align: center;
     margin-right: 5px;
+}
+.no-icons .contact-ico {
+    display: none;
 }
 .contact-ico svg {
     vertical-align: middle;
@@ -399,6 +409,31 @@ span.metric-pct {
     color: __METRIC_PCT__;
     font-weight: 700;
 }
+
+/* ATS single-column mode: slightly denser so content fits 2 pages */
+.no-icons p {
+    font-size: 9pt;
+    line-height: 1.24;
+}
+.no-icons p.bullet {
+    font-size: 9pt;
+    line-height: 1.22;
+}
+.no-icons .job-header {
+    font-size: 10pt;
+    margin: 6px 0 2px 0;
+}
+.no-icons .section-heading {
+    margin-top: 9px;
+    padding: 3px 10px;
+    margin-bottom: 5px;
+}
+.no-icons .contact-item {
+    font-size: 9pt;
+}
+.no-icons .skill-group {
+    margin: 3px 0 2px 0;
+}
 """
 
 THEMES = {
@@ -453,15 +488,17 @@ for token, value in theme.items():
     CSS = CSS.replace("__" + token + "__", value)
 
 body_html = convert(md, icon_color=theme["ACCENT"], project_color=theme["PROJECT"],
-                    muted_color=theme["MUTED"], tech_color=theme["TECH"], skill_color=theme["SKILL"])
+                    muted_color=theme["MUTED"], tech_color=theme["TECH"], skill_color=theme["SKILL"],
+                    show_icons=not NO_ICONS)
 
+body_class = " class=\"no-icons\"" if NO_ICONS else ""
 full_html = f"""<!DOCTYPE html>
 <html lang="en">
 <head>
 <meta charset="UTF-8">
 <style>{CSS}</style>
 </head>
-<body>
+<body{body_class}>
 {body_html}
 </body>
 </html>
