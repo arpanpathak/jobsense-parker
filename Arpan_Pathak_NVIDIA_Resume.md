@@ -16,7 +16,7 @@ Systems Software Engineer with 8+ years architecting high-performance distribute
 
 ## EXPERIENCE
 
-### Software Developer II | **Microsoft** — Redmond, WA | June 2025 – Present
+### Software Developer II | **Microsoft** — Redmond, WA | Jun 2025 – Aug 2026
 
 - **eBPF & Kernel-Level Networking**: Designed and deployed eBPF-based network policies using **Cilium** for Microsoft Purview's sovereign cloud regions. Engineered the control plane to enforce L7 filtering based on geographic traffic origins, and authored custom **Kubernetes Operators** (Kubebuilder) to reconcile compliance states automatically across AKS clusters in France and Germany.
 - **AI-Powered Policy Engine**: Built an AI-driven engine that auto-generates Cilium network policies and scans for misconfigurations, reducing manual policy review cycles from 4 hours to near-real-time with zero policy drift across sovereign regions.
