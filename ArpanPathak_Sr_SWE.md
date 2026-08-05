@@ -5,7 +5,6 @@ Email: arpan.pathak47@gmail.com
 Phone: +1 (206) 306-6059  
 LinkedIn: [linkedin.com/in/arpan-pathak-272341424](https://linkedin.com/in/arpan-pathak-272341424)  
 GitHub: [github.com/arpanpathak](https://github.com/arpanpathak)  
-**Visa: Requires H1B Transfer sponsorship**
 
 ---
 
