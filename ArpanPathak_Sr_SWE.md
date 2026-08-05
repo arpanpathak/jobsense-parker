@@ -20,7 +20,7 @@ Software Engineer with nearly 8 years of industry experience architecting high-p
 **Driving-CivicSense (Edge AI Vision)** | [github.com/arpanpathak/driving-civicsense-vision-model](https://github.com/arpanpathak/driving-civicsense-vision-model) | 2026
 
 - On-device AI perception system built in **Rust** for intersection discipline and lane awareness, running entirely on-device (**< 50ms inference latency**, no cloud dependency) for aftermarket dashcam and AR-glasses form factors.
-- Fine-tunes **YOLOv8/v11** and custom **CNN** architectures; applies model pruning and quantization to fit tight memory and power budgets on low-powered single-board computers (Raspberry Pi 5).
+- Fine-tunes **YOLOv8/v11** and custom **CNN** architectures; applies model pruning and quantization to fit tight memory and power budgets on low-power ARM single-board computers (Raspberry Pi Zero, Raspberry Pi 5, and other low-power ARM processor boards).
 - Trains on cloud GPU infrastructure with synthetic data augmentation; planning to release a public driving-behavior dataset on **Hugging Face**.
 
 **Companion Book: Seeing Machines: Deep Learning & Computer Vision from Python to Bare Metal** | [arpanpathak.github.io/seeing-machines-book](https://arpanpathak.github.io/seeing-machines-book/foreword.html)
