@@ -52,7 +52,8 @@ Software Engineer with nearly 8 years of industry experience architecting high-p
 - **Distributed Systems & SDK Design**: Designed a uniqueness constraint indexing solution and **SDK** for a multi-tenant NoSQL datastore using **two-phase commit**, achieving **serializable isolation** at **3K writes/second**, a developer-facing library used across multiple publisher teams.
 - **Conversational AI (BERT)**: Developed a **BERT-based inference service** handling **5,000 QPS** at peak, reducing support ticket triage SLA from 7 days to 2 hours.
 - **Big Data Platform & Data Lake**: Built big data platform, data warehouse, and data lake infrastructure for Amazon WorkEvents data handling **1 petabyte** of data and serving OLTP use cases. Designed a **domain-specific language (DSL) execution engine** to deploy datasets to **AWS QuickSight** for business intelligence, using **AWS Glue**, **Kotlin Spark API**, and **AWS CDK (TypeScript)** to orchestrate job infrastructure and data refresh strategies.
-- TechStack: **Kotlin, Java, Python, TypeScript, AWS CDK, React.Js, DynamoDB, Redshift, AWS, PostgreSQL, PyTorch, XGBoost**
+- **Frontend Modernization (WorkEvents)**: Modernized a monolithic **React.js** codebase for Amazon WorkEvents into a **microfrontend architecture** using **TypeScript**, **React.js**, and **AWS CloudFront** as the CDN, cutting UI deployment time from **multiple weeks to a few minutes** and giving WorkEvents teams **full autonomy** to ship their UI modules without waiting for approval from away teams.
+- TechStack: **Kotlin, Java, Python, TypeScript, AWS CDK, React.Js, AWS CloudFront, DynamoDB, Redshift, AWS, PostgreSQL, PyTorch, XGBoost**
 
 ### Software Development Engineer | **Razorpay**, Bengaluru, India | Aug 2020 – Feb 2021
 
@@ -64,7 +65,8 @@ Software Engineer with nearly 8 years of industry experience architecting high-p
 
 - Developed full-stack workflow tools and an **AR-based product search microservice**, serving 10,000+ daily queries.
 - Built administrative dashboards reducing data retrieval latency from 5 min to 1 min.
-- TechStack: **Java, SpringBoot, Angular, MySQL, MongoDB, AWS**
+- **Frontend (Angular + TypeScript)**: Delivered the frontend layer of the workflow tools and admin dashboards using **Angular + TypeScript**, covering component-based UI development and state management.
+- TechStack: **Java, SpringBoot, Angular, TypeScript, MySQL, MongoDB, AWS**
 
 ---
 
@@ -86,7 +88,7 @@ Software Engineer with nearly 8 years of industry experience architecting high-p
 
 **APIs & Serialization**: gRPC, REST API Design, Protobuf
 
-**Frontend**: React.JS, TypeScript, Angular
+**Frontend**: React.JS, TypeScript, Angular, HTML5, SCSS, WebAssembly
 
 **ML Inference & AI**: PyTorch, TensorFlow, XGBoost, Transformer Models (BERT), Large Language Models (LLM), ONNX Runtime, On-Device/Edge Inference, Model Pruning & Quantization, Computer Vision (YOLOv8/v11), Artificial Neural Networks (ANN), Convolutional Neural Networks (CNN), Sequential Models, Natural Language Processing (NLP), Deep Learning, Recommendation Systems, MLOps
 
