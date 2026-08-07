@@ -26,6 +26,8 @@ Software Engineer with nearly 8 years of industry experience architecting high-p
 
 **Physics & Mathematics of Game Development in Rust (Book)** | [arpanpathak.github.io/bevy-physics-book](https://arpanpathak.github.io/bevy-physics-book/ch01-foreword.html) | 2026
 
+**CUDA Kernels: GPU & Parallel Programming from First Principles (Book)** | [arpanpathak.github.io/gpu-parallel-book](https://arpanpathak.github.io/gpu-parallel-book/) | [github.com/arpanpathak/gpu-parallel-book](https://github.com/arpanpathak/gpu-parallel-book) | 2026
+
 ---
 
 ## EXPERIENCE
