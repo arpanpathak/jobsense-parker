@@ -180,6 +180,14 @@ def convert(md_text, icon_color="#0f766e", project_color="#0f766e", muted_color=
                     icon = svg_icon(ic, skill_color, 10) if show_icons else ""
                     line = icon + line
                     html.append(f'<p class="skill-group">{line}</p>')
+                elif "github" in line and "[" in line and ("Book" in line or "Physics" in line):
+                    if show_icons:
+                        line = svg_icon("book", project_color, 15) + line
+                    html.append(f'<p class="project-text">{line}</p>')
+                elif "Driving-CivicSense" in line or "Vision" in line:
+                    if show_icons:
+                        line = svg_icon("camera", project_color, 10) + line
+                    html.append(f'<p>{line}</p>')
                 else:
                     html.append(f'<p>{line}</p>')
 
@@ -316,8 +324,8 @@ p.bullet-sm strong {
     letter-spacing: 0.8px;
     border-bottom: 2px solid __ACCENT__;
     padding: 4px 10px;
-    margin-top: 22px;
-    margin-bottom: 10px;
+    margin-top: 18px;
+    margin-bottom: 8px;
     border-radius: 4px;
     box-shadow: __HEADER_SHADOW__;
     background: linear-gradient(90deg, __HEADING_BG__ 55%, transparent);

@@ -1,16 +1,5 @@
 # Arpan Pathak
 
-::: project-box
-PERSONAL PROJECTS
-**Driving-CivicSense (Edge AI Vision)** | [github.com/arpanpathak/driving-civicsense-vision-model](https://github.com/arpanpathak/driving-civicsense-vision-model) | 2026
-- On-device AI perception system built in **Rust** for intersection discipline and lane awareness, running entirely on-device (**< 50ms inference latency**, no cloud dependency) for aftermarket dashcam and AR-glasses form factors.
-- Fine-tunes **YOLOv8/v11** and custom **CNN** architectures; applies model pruning and quantization to fit tight memory and power budgets on low-power ARM single-board computers (Raspberry Pi Zero, Raspberry Pi 5, and other low-power ARM processor boards).
-- Trains on cloud GPU infrastructure with synthetic data augmentation; planning to release a public driving-behavior dataset on **Hugging Face**.
-**Companion Book: Seeing Machines: Deep Learning & Computer Vision from Python to Bare Metal** | [arpanpathak.github.io/seeing-machines-book](https://arpanpathak.github.io/seeing-machines-book/foreword.html)
-**Physics & Mathematics of Game Development in Rust (Book)** | [arpanpathak.github.io/bevy-physics-book](https://arpanpathak.github.io/bevy-physics-book/ch01-foreword.html) | 2026
-**CUDA Kernels: GPU & Parallel Programming from First Principles (Book)** | [arpanpathak.github.io/gpu-parallel-book](https://arpanpathak.github.io/gpu-parallel-book/) | [github.com/arpanpathak/gpu-parallel-book](https://github.com/arpanpathak/gpu-parallel-book) | 2026
-:::
-
 **Seattle, Washington, USA** | Open to Relocation  
 Email: arpan.pathak47@gmail.com  
 Phone: +1 (206) 306-6059  
@@ -22,6 +11,22 @@ GitHub: [github.com/arpanpathak](https://github.com/arpanpathak)
 ## SUMMARY
 
 Systems Software Engineer with **8 years** architecting high-performance, low-latency systems at **Amazon**, **Microsoft**, and **Oracle** — database internals, kernel-level networking, distributed systems, and real-time ML inference. Deep expertise in **Rust**, **C++**, **Go**, and **C**: lock-free concurrency, memory safety, eBPF/Cilium, and GPU-accelerated computing. Shipped measurable wins: **~40% lower P99 latency**, **2x throughput**, **45,000 ops/s** throughput gains, **5,000 QPS** inference serving, and **$5.4M/month** revenue impact.
+
+---
+
+## PERSONAL PROJECTS
+
+**Driving-CivicSense (Edge AI Vision)** | [github.com/arpanpathak/driving-civicsense-vision-model](https://github.com/arpanpathak/driving-civicsense-vision-model) | 2026
+
+- On-device AI perception system built in **Rust** for intersection discipline and lane awareness, running entirely on-device (**< 50ms inference latency**, no cloud dependency) for aftermarket dashcam and AR-glasses form factors.
+- Fine-tunes **YOLOv8/v11** and custom **CNN** architectures; applies model pruning and quantization to fit tight memory and power budgets on low-power ARM single-board computers (Raspberry Pi Zero, Raspberry Pi 5, and other low-power ARM processor boards).
+- Trains on cloud GPU infrastructure with synthetic data augmentation; planning to release a public driving-behavior dataset on **Hugging Face**.
+
+**Companion Book: Seeing Machines: Deep Learning & Computer Vision from Python to Bare Metal** | [arpanpathak.github.io/seeing-machines-book](https://arpanpathak.github.io/seeing-machines-book/foreword.html)
+
+**Physics & Mathematics of Game Development in Rust (Book)** | [arpanpathak.github.io/bevy-physics-book](https://arpanpathak.github.io/bevy-physics-book/ch01-foreword.html) | 2026
+
+**CUDA Kernels: GPU & Parallel Programming from First Principles (Book)** | [arpanpathak.github.io/gpu-parallel-book](https://arpanpathak.github.io/gpu-parallel-book/) | [github.com/arpanpathak/gpu-parallel-book](https://github.com/arpanpathak/gpu-parallel-book) | 2026
 
 ---
 
