@@ -53,7 +53,7 @@ Systems Software Engineer with **8 years** architecting high-performance, low-la
 - **BERT Inference Service**: Delivered **BERT-based** NLP inference handling **5,000 QPS** at peak, cutting support-ticket triage SLA from **7 days to 2 hours**.
 - **Distributed Systems & SDK Design**: Designed uniqueness-constraint indexing and an **SDK** for a multi-tenant NoSQL store using **two-phase commit**, achieving **serializable isolation** at **3K writes/second**: a developer-facing library used by multiple publisher teams.
 - **Event-Driven Ads (CDC)**: Delivered programmatic guaranteed ad deals via real-time **change data capture (CDC)** with **< 50ms latency** for auction and programmatic buying platforms.
-- **Big Data Platform**: Built **1-petabyte** data lake & warehouse with **Apache Spark**, **AWS Glue**, Kotlin Spark API, and a **DSL execution engine** for OLTP and BI use cases.
+- **Big Data Platform**: Built the Amazon WorkEvents data platform with a **1-petabyte** data warehouse & data lake using **Apache Spark**, **AWS Glue**, Kotlin Spark API, and a **DSL execution engine** for OLTP and BI use cases.
 - TechStack: **Kotlin, Java, Python, PyTorch, XGBoost, Spark, Kafka, DynamoDB, Redshift, AWS**
 
 ### Software Development Engineer | **Razorpay**, Bengaluru, India | Aug 2020 - Feb 2021
