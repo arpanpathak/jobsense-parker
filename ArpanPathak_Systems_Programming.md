@@ -45,7 +45,7 @@ Systems Software Engineer with **8 years** architecting high-performance, low-la
 - **High-Performance Database Internals**: Architected low-latency internals for a proprietary database engine, optimizing **lock-free data structures** to cut contention in high-concurrency read-write paths: **45,000 ops/s** transaction throughput gain.
 - **Infrastructure-as-Code SDK**: Engineered a **Terraform provider** (developer-facing SDK) for Oracle Autonomous Database, replacing legacy control-plane tooling with **$1.2M/month** projected savings.
 - **Security & Key Management**: Integrated OCI Security Vault across control-plane services for secret management and automated key rotation.
-- TechStack: **Rust, C++, Go, Terraform, PostgreSQL internals, OCI**
+- TechStack: **Java, Go, Terraform, Oracle Cloud Infrastructure, Autonomous Database**
 
 ### Software Development Engineer II | **Amazon**, Seattle, WA & Hyderabad, India | Mar 2021 - Oct 2024
 
