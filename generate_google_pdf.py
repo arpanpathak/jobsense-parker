@@ -411,11 +411,17 @@ a {
 span.metric {
     color: __METRIC__;
     font-weight: 700;
+    background: __METRIC_BG__;
+    padding: 0 3px;
+    border-radius: 3px;
 }
 
 span.metric-pct {
     color: __METRIC_PCT__;
     font-weight: 700;
+    background: __METRIC_PCT_BG__;
+    padding: 0 3px;
+    border-radius: 3px;
 }
 
 /* ATS single-column mode: slightly denser so content fits 2 pages */
@@ -448,7 +454,7 @@ THEMES = {
     "google": {
         "BG": "#ffffff", "TEXT": "#1a1a1a", "NAME": "#111111", "STRONG": "#111111",
         "ACCENT": "#1A73E8", "LINK": "#1A73E8", "BOX_BG": "#f0f6ff",
-        "DATE": "#5F6368", "METRIC": "#B8860B", "METRIC_PCT": "#B8860B", "MUTED": "#222222",
+        "DATE": "#5F6368", "METRIC": "#B45309", "METRIC_PCT": "#B91C1C", "METRIC_BG": "#FEF3C7", "METRIC_PCT_BG": "#FEE2E2", "MUTED": "#222222",
         "TECH": "#188038", "PROJECT": "#1A73E8", "TECH_LABEL": "#5F6368",
         "SKILL": "#1A73E8",
         "SHADOW": "4px 4px 14px rgba(0, 0, 0, 0.15), 1px 1px 4px rgba(0, 0, 0, 0.08)",
@@ -459,7 +465,7 @@ THEMES = {
     "nightowl": {
         "BG": "#011627", "TEXT": "#d6deeb", "NAME": "#ffffff", "STRONG": "#e8eef5",
         "ACCENT": "#ec4899", "LINK": "#f472b6", "BOX_BG": "#152238",
-        "DATE": "#8fa3b8", "METRIC": "#f472b6", "METRIC_PCT": "#f472b6", "MUTED": "#c8d3de",
+        "DATE": "#8fa3b8", "METRIC": "#f472b6", "METRIC_PCT": "#f472b6", "METRIC_BG": "#2a1a2e", "METRIC_PCT_BG": "#2a1a2e", "MUTED": "#c8d3de",
         "TECH": "#22d3ee", "PROJECT": "#c792ea", "TECH_LABEL": "#8fa3b8",
         "SKILL": "#ff5874",
         "SHADOW": "4px 4px 14px rgba(0, 0, 0, 0.45), 1px 1px 4px rgba(0, 0, 0, 0.3)",
@@ -470,7 +476,7 @@ THEMES = {
     "pink": {
         "BG": "#ffffff", "TEXT": "#1a1a1a", "NAME": "#111111", "STRONG": "#111111",
         "ACCENT": "#d63384", "LINK": "#d63384", "BOX_BG": "#fdf0f6",
-        "DATE": "#6b7280", "METRIC": "#d63384", "METRIC_PCT": "#d63384", "MUTED": "#333333",
+        "DATE": "#6b7280", "METRIC": "#d63384", "METRIC_PCT": "#d63384", "METRIC_BG": "#fbe4f0", "METRIC_PCT_BG": "#fbe4f0", "MUTED": "#333333",
         "TECH": "#0f766e", "PROJECT": "#a21caf", "TECH_LABEL": "#6b7280",
         "SKILL": "#d63384",
         "SHADOW": "4px 4px 14px rgba(0, 0, 0, 0.12), 1px 1px 4px rgba(0, 0, 0, 0.06)",
@@ -481,7 +487,7 @@ THEMES = {
     "vivid": {
         "BG": "#ffffff", "TEXT": "#1f2937", "NAME": "#111827", "STRONG": "#1f2937",
         "ACCENT": "#1f2937", "LINK": "#0f766e", "BOX_BG": "#f0fdfa",
-        "DATE": "#64748b", "METRIC": "#475569", "METRIC_PCT": "#b45309", "MUTED": "#475569",
+        "DATE": "#64748b", "METRIC": "#475569", "METRIC_PCT": "#b45309", "METRIC_BG": "#e2e8f0", "METRIC_PCT_BG": "#fef3c7", "MUTED": "#475569",
         "TECH": "#0f766e", "PROJECT": "#0f766e", "TECH_LABEL": "#64748b",
         "SKILL": "#0f766e",
         "SHADOW": "0 2px 6px rgba(15, 23, 42, 0.10)",
