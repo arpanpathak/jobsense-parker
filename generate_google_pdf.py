@@ -324,8 +324,8 @@ p.bullet-sm strong {
     letter-spacing: 0.8px;
     border-bottom: 2px solid __ACCENT__;
     padding: 4px 10px;
-    margin-top: 18px;
-    margin-bottom: 8px;
+    margin-top: 16px;
+    margin-bottom: 7px;
     border-radius: 4px;
     box-shadow: __HEADER_SHADOW__;
     background: linear-gradient(90deg, __HEADING_BG__ 55%, transparent);
