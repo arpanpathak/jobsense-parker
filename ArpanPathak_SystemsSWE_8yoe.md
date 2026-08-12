@@ -7,15 +7,7 @@ LinkedIn: [linkedin.com/in/arpan-pathak-272341424](https://linkedin.com/in/arpan
 
 ## SUMMARY
 
-Senior Systems Software Engineer, **8 years**: low-latency systems, performance engineering, distributed ML inference at **Amazon, Microsoft, Oracle**, from kernel (eBPF/Cilium) to GPU (CUDA) to production inference (XGBoost, BERT). Full-stack **Rust, C++, Kotlin, Go, Python, JavaScript**; shipped zero-trust networking, lock-free DB internals, real-time ML ranking.
-
----
-
-## PUBLICATIONS & RESEARCH
-
-**Seeing Machines** (book: Deep Learning & CV from Python to Bare Metal) | [arpanpathak.github.io/seeing-machines-book](https://arpanpathak.github.io/seeing-machines-book/foreword.html)  
-**CUDA Kernels** (book: GPU & Parallel Programming, CUDA-Oxide) | [arpanpathak.github.io/gpu-parallel-book](https://arpanpathak.github.io/gpu-parallel-book/)  
-**Deterministic Intersection Blockage Prediction** (research paper, formal proofs) | [arpanpathak.github.io/driving-civicsense-vision-model/](https://arpanpathak.github.io/driving-civicsense-vision-model/)
+Senior Systems Software Engineer, **8 years**: concurrency, distributed systems, parallel computing, and performance engineering, spanning kernel (eBPF/Cilium) to GPU (CUDA) to production ML inference (XGBoost, BERT) at **Amazon, Microsoft, Oracle**. Full-stack **Rust, C++, Kotlin, Go, Python, JavaScript**; shipped zero-trust networking, lock-free DB internals, real-time ML ranking.
 
 ---
 
@@ -59,6 +51,8 @@ Senior Systems Software Engineer, **8 years**: low-latency systems, performance 
 **Driving-CivicSense: Edge AI Vision System (Rust)** | [github.com/arpanpathak/driving-civicsense-vision-model](https://github.com/arpanpathak/driving-civicsense-vision-model)
 
 - On-device perception in **Rust** on the **NVIDIA Jetson Orin Nano Super** (67 INT8 TOPS): **YOLOv8/v11 INT8 ONNX** (~12 ms) + Deep SORT/Kalman + proven kinematic engine; 100% on-device.
+- Research paper: **Deterministic Intersection Blockage Prediction** | [arpanpathak.github.io/driving-civicsense-vision-model/](https://arpanpathak.github.io/driving-civicsense-vision-model/)
+- Books: **Seeing Machines** | [arpanpathak.github.io/seeing-machines-book](https://arpanpathak.github.io/seeing-machines-book/foreword.html) · **CUDA Kernels** (CUDA-Oxide / Rust-to-CUDA) | [arpanpathak.github.io/gpu-parallel-book](https://arpanpathak.github.io/gpu-parallel-book/)
 
 ---
 
