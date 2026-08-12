@@ -48,7 +48,7 @@ Senior Software Engineer, **8 years**: developer tools, observability platforms,
 
 **Driving-CivicSense: Edge AI Vision System (Rust)**
 
-- Real-time on-device perception in **Rust** for lane & intersection awareness: **YOLOv8/v11** with pruning + quantization fitting tight memory/power budgets, **<50ms** inference on low-power ARM boards (Raspberry Pi Zero/5), fully on-device.
+- Real-time on-device perception pipeline in **Rust** on the **NVIDIA Jetson Orin Nano Super** (67 INT8 TOPS, 8 GB, 7–15 W): **YOLOv8/v11 INT8 ONNX** (~12 ms) + Deep SORT/Kalman tracking + formally-proven kinematic decision engine; 100% on-device, privacy-first.
 - Research paper: **Deterministic Intersection Blockage Prediction** | [arpanpathak.github.io/driving-civicsense-vision-model/](https://arpanpathak.github.io/driving-civicsense-vision-model/) | Code: [github.com/arpanpathak/driving-civicsense-vision-model](https://github.com/arpanpathak/driving-civicsense-vision-model)
 - Books: **Seeing Machines** | [arpanpathak.github.io/seeing-machines-book](https://arpanpathak.github.io/seeing-machines-book/foreword.html) · **CUDA Kernels** (CUDA-Oxide / Rust-to-CUDA) | [arpanpathak.github.io/gpu-parallel-book](https://arpanpathak.github.io/gpu-parallel-book/)
 
