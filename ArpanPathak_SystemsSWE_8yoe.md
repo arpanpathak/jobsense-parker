@@ -38,7 +38,7 @@ Senior Systems Software Engineer, **8 years**: concurrency, distributed systems,
 
 ### SDE | **Razorpay**, Bengaluru, India | Aug 2020 – Feb 2021
 
-- Go UPI gateway: **1M+ txns/hr**, **99.99% uptime**, **150ms P99** at **50K TPM**.
+- Built microservices for **P2P Unified Payments Gateway** (Go, Protobuf): **1M+ txns/hr**, **99.99% uptime**, **150ms P99** at **50K TPM** (AWS, GCP).
 
 ### Software Engineer | **Mindfire**, Bhubaneswar, India | Aug 2018 – Feb 2020
 
