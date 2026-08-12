@@ -1,14 +1,13 @@
 # Arpan Pathak
 
-Seattle, Washington, USA | Open to Relocation  
-Email: arpan.pathak47@gmail.com | Phone: +1 (206) 306-6059  
+Seattle, WA (Open to Relocation) | Email: arpan.pathak47@gmail.com | Phone: +1 (206) 306-6059  
 LinkedIn: [linkedin.com/in/arpan-pathak-272341424](https://linkedin.com/in/arpan-pathak-272341424) | GitHub: [github.com/arpanpathak](https://github.com/arpanpathak)
 
 ---
 
 ## SUMMARY
 
-Senior Software Engineer, **8 years**: developer tools, observability platforms, and performance-critical distributed systems at **Amazon, Microsoft, Oracle**. Full-stack **Rust, C++, Kotlin, Go, Python, JavaScript**; **Kubernetes**, **eBPF/Cilium**, GPU/**CUDA**, cloud **performance optimization**.
+Senior Software Engineer, **8 years** building developer tools, observability platforms, and performance-critical distributed systems at **Amazon, Microsoft, Oracle**. Full-stack **Rust, C++, Kotlin, Go, Python, JavaScript**; **Kubernetes**, **eBPF/Cilium**, GPU/**CUDA**, cloud **performance optimization**.
 
 ---
 
@@ -16,8 +15,7 @@ Senior Software Engineer, **8 years**: developer tools, observability platforms,
 
 ### Software Developer II | **Microsoft**, Redmond, WA | Jun 2025 – Aug 2026
 
-- **Cluster Observability**: **Prometheus + Azure Monitor**, blue-green deployments, automated validation across **AKS** clusters in France and Germany.
-- **Kubernetes Operators & eBPF/Cilium**: Authored **Kubebuilder operators** reconciling network-policy state at scale; eBPF/Cilium-based L7 filtering and network visibility.
+- **Cluster Observability, K8s & eBPF**: **Prometheus + Azure Monitor**, blue-green deployments, Kubebuilder operators, eBPF/Cilium L7 filtering across **AKS** clusters in France and Germany.
 - **C++ → Rust Migration**: Rebuilt Microsoft Information Protection from **legacy C++/C#** in **Rust**, moving memory safety to compile time; **~40% lower P99**, **2x throughput**, **3x lower memory/request**.
 - TechStack: **Rust, C++, eBPF, Cilium, Kubernetes, Linux**
 
@@ -49,7 +47,7 @@ Senior Software Engineer, **8 years**: developer tools, observability platforms,
 
 **Driving-CivicSense: Edge AI Vision System (Rust)**
 
-- Real-time on-device perception pipeline in **Rust** on the **NVIDIA Jetson Orin Nano Super** (67 INT8 TOPS, 8 GB, 7–15 W): **YOLOv8/v11 INT8 ONNX** (~12 ms) + Deep SORT/Kalman + formally-proven kinematic decision engine; 100% on-device, privacy-first.
+- Real-time on-device perception pipeline in **Rust** on the **NVIDIA Jetson Orin Nano Super** (67 INT8 TOPS): **YOLOv8/v11 INT8 ONNX** (~12 ms) + Deep SORT/Kalman + proven kinematic engine; 100% on-device, privacy-first.
 - Research paper: **Deterministic Intersection Blockage Prediction** | [arpanpathak.github.io/driving-civicsense-vision-model/](https://arpanpathak.github.io/driving-civicsense-vision-model/) | Code: [github.com/arpanpathak/driving-civicsense-vision-model](https://github.com/arpanpathak/driving-civicsense-vision-model)
 - Books: **Seeing Machines** | [arpanpathak.github.io/seeing-machines-book](https://arpanpathak.github.io/seeing-machines-book/foreword.html) · **CUDA Kernels** (CUDA-Oxide / Rust-to-CUDA) | [arpanpathak.github.io/gpu-parallel-book](https://arpanpathak.github.io/gpu-parallel-book/)
 
@@ -57,13 +55,16 @@ Senior Software Engineer, **8 years**: developer tools, observability platforms,
 
 ## SKILLS
 
-**Languages**: Rust, C++, Kotlin, Go, C, Java, Python, TypeScript, JavaScript, Shell  
-**Systems Programming & Performance**: Lock-free data structures, concurrency, memory safety, OS internals, computer architecture, performance engineering  
-**Networking & Protocols**: TCP/IP, UDP, TLS, HTTP/2/3, QUIC, RDMA, InfiniBand, DPDK, eBPF, Cilium, VPC, NAT, VPN, load balancing  
-**Distributed Systems & Streaming**: Kafka, Flink, Spark, Spark Streaming, Kinesis, CDC, microservices, consensus/replication/sharding  
-**Cloud & Infra**: AWS (EC2, ECS, Lambda, Kinesis, EMR, SageMaker), Azure (AKS), GCP, Kubernetes (EKS/AKS), Docker, Terraform, Kubebuilder, Istio  
-**ML Inference & AI**: PyTorch, TensorFlow, XGBoost, BERT, LLMs, ONNX Runtime, YOLOv8/v11, CNN, edge inference; CUDA, CUDA-Oxide (Rust-to-CUDA), PTX, SIMT  
-**Observability**: Prometheus, Grafana, Azure Monitor, CloudWatch, trace/sampling, profiling; DynamoDB, PostgreSQL, Redis, MongoDB, Redshift, S3, gRPC, REST, Protobuf, React.js
+**Languages**: Rust, C++, Kotlin, Go, C, Java, Python, TypeScript, JavaScript, Shell Script  
+**Systems Programming & Performance**: Lock-Free Data Structures, Concurrency, Memory Safety, Memory Profiling, Cache Optimization, Performance Engineering, Low-Latency Systems, OS Internals, Computer Architecture  
+**Networking & Protocols**: TCP/IP, UDP, TLS, HTTP/2/3, QUIC, RDMA, InfiniBand, DPDK, eBPF, XDP, Cilium, VPC, NAT, VPN, Load Balancing  
+**Distributed Systems & Streaming**: Consensus, Replication, Sharding, Apache Kafka, Apache Flink, Apache Spark, Spark Streaming, AWS Kinesis, Change Data Capture (CDC), Microservices  
+**Cloud & Infra**: AWS (EC2, ECS, Lambda, Kinesis, EMR, SageMaker), Azure (AKS), Google Cloud, Kubernetes (EKS, AKS), Docker, Terraform, Kubebuilder, Istio  
+**ML Inference & AI**: Deep Learning, Computer Vision, PyTorch, TensorFlow, XGBoost, Transformer Models (BERT), LLMs, ONNX Runtime, YOLOv8/v11, CNN, NLP, Edge Inference; CUDA, CUDA-Oxide (Rust-to-CUDA), SIMT  
+**Observability**: Prometheus, Grafana, Azure Monitor, AWS CloudWatch, Trace & Sampling Data, Performance Profiling  
+**Data & Storage**: DynamoDB, PostgreSQL, Redis, MongoDB, MySQL, Amazon Redshift, Amazon S3  
+**APIs & Serialization**: gRPC, REST API Design, Protobuf, React.js  
+**Core CS**: Data Structures & Algorithms, System Design, Operating Systems, Linux
 
 ---
 
