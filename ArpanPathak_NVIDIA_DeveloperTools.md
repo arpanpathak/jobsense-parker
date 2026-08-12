@@ -8,7 +8,7 @@ LinkedIn: [linkedin.com/in/arpan-pathak-272341424](https://linkedin.com/in/arpan
 
 ## SUMMARY
 
-Senior Software Engineer with **8 years** building developer tools, observability platforms, and performance-critical distributed systems at **Amazon, Microsoft, Oracle**. Full-stack **Python, JavaScript, Go, Rust, C++**; **Kubernetes** clusters, **eBPF/Cilium** networking, GPU/**CUDA**, and cloud **performance optimization**.
+Senior Software Engineer, **8 years**: developer tools, observability platforms, and performance-critical distributed systems at **Amazon, Microsoft, Oracle**. Full-stack **Python, JavaScript, Go, Rust, C++**; **Kubernetes**, **eBPF/Cilium**, GPU/**CUDA**, cloud **performance optimization**.
 
 ---
 
@@ -31,16 +31,17 @@ Senior Software Engineer with **8 years** building developer tools, observabilit
 - **BERT NLP Service**: **5,000 QPS** at peak; cut support-ticket triage SLA from **7 days to 2 hours**.
 - **Full-Stack Developer Platforms**: Led **React.js microfrontend** migration (deploy **5 days → 30 min**); shipped an event-bus **SDK** (Kotlin, **<50ms** end-to-end) adopted by publisher teams.
 
-### SDE | **Razorpay** (Go UPI gateway, 1M+ hourly txns, 99.99% uptime) & **Mindfire** (Java/Spring, JavaScript dashboards) | 2018 – 2021
+### SDE | **Razorpay** (Go UPI gateway, 1M+ txns/hr, 99.99% uptime) & **Mindfire** (Java/Spring) | 2018 – 2021
 
 ---
 
-## SELECTED PROJECTS
+## PERSONAL PROJECTS
 
-**Driving-CivicSense: On-Device Vision (Rust)** | [github.com/arpanpathak/driving-civicsense-vision-model](https://github.com/arpanpathak/driving-civicsense-vision-model)
+**Driving-CivicSense: Edge AI Vision System (Rust)**
 
-- **YOLOv8/v11** on low-power ARM boards at **<50ms** on-device inference; research paper: [Deterministic Intersection Blockage Prediction](https://arpanpathak.github.io/driving-civicsense-vision-model/).
-- Books: [Seeing Machines](https://arpanpathak.github.io/seeing-machines-book/foreword.html), [CUDA Kernels](https://arpanpathak.github.io/gpu-parallel-book/) (incl. CUDA-Oxide / Rust-to-CUDA).
+- Real-time on-device perception in **Rust** for lane & intersection awareness: **YOLOv8/v11** with pruning + quantization fitting tight memory/power budgets, **<50ms** inference on low-power ARM boards (Raspberry Pi Zero/5), fully on-device.
+- Research paper: **Deterministic Intersection Blockage Prediction** | [arpanpathak.github.io/driving-civicsense-vision-model/](https://arpanpathak.github.io/driving-civicsense-vision-model/) | Code: [github.com/arpanpathak/driving-civicsense-vision-model](https://github.com/arpanpathak/driving-civicsense-vision-model)
+- Books: **Seeing Machines** | [arpanpathak.github.io/seeing-machines-book](https://arpanpathak.github.io/seeing-machines-book/foreword.html) · **CUDA Kernels** (CUDA-Oxide / Rust-to-CUDA) | [arpanpathak.github.io/gpu-parallel-book](https://arpanpathak.github.io/gpu-parallel-book/)
 
 ---
 
