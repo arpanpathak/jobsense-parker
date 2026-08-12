@@ -7,7 +7,7 @@ LinkedIn: [linkedin.com/in/arpan-pathak-272341424](https://linkedin.com/in/arpan
 
 ## SUMMARY
 
-Senior Systems Software Engineer, **8 years**: concurrency, distributed systems, parallel computing, and performance engineering, spanning kernel (eBPF/Cilium) to GPU (CUDA) to production ML inference (XGBoost, BERT) at **Amazon, Microsoft, Oracle**. Full-stack **Rust, C++, Kotlin, Go, Python, JavaScript**; shipped zero-trust networking, lock-free DB internals, real-time ML ranking.
+Senior Systems Software Engineer, **8 years**: concurrency, distributed systems, parallel computing, high-performance computing (HPC), and performance engineering, spanning kernel (eBPF/Cilium) to GPU (CUDA) to production ML inference (XGBoost, BERT) at **Amazon, Microsoft, Oracle**. Full-stack **Rust, C++, Kotlin, Go, Python, JavaScript**; shipped zero-trust networking, lock-free DB internals, real-time ML ranking.
 
 ---
 
@@ -64,7 +64,7 @@ Senior Systems Software Engineer, **8 years**: concurrency, distributed systems,
 **Distributed Systems & Streaming**: Consensus, Replication, Sharding, Kafka, Flink, Spark, Spark Streaming, Kinesis, CDC, Microservices; gRPC, REST, Protobuf  
 **Cloud & Infra**: AWS (EC2, ECS, Lambda, Kinesis, EMR, SageMaker), Azure (AKS), Google Cloud, Kubernetes (EKS, AKS), Docker, Terraform, Kubebuilder, Istio  
 **ML Inference & AI**: Deep Learning, Computer Vision, PyTorch, TensorFlow, XGBoost, BERT, LLMs, ONNX Runtime, YOLOv8/v11, CNN, NLP, Edge Inference, MLOps  
-**GPU & Parallel Computing**: CUDA, CUDA-Oxide (Rust-to-CUDA), SIMT, GPU Kernel Programming  
+**GPU & Parallel Computing**: CUDA, CUDA-Oxide (Rust-to-CUDA), SIMT, GPU Kernel Programming, HPC  
 **Observability**: Prometheus, Grafana, Azure Monitor, AWS CloudWatch, Trace & Sampling Data  
 **Data & Storage**: DynamoDB, PostgreSQL, Redis, MongoDB, MySQL, Amazon Redshift, Amazon S3  
 **Core CS**: Data Structures & Algorithms, System Design, Operating Systems, Linux
