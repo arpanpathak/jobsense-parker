@@ -1,88 +1,76 @@
 # Arpan Pathak
 
-::: project-box
-PERSONAL PROJECTS
-**Driving-CivicSense-Vision-Model** | [github.com/arpanpathak/driving-civicsense-vision-model](https://github.com/arpanpathak/driving-civicsense-vision-model) | 2026
-- AI-driven auxiliary perception system built in **Rust** for real-time intersection discipline and lane-awareness — runs entirely on-device (Edge AI, < 50ms latency, no cloud dependency).
-- Combines **YOLOv8/v11** computer vision models with custom inference pipeline to detect stop sign compliance, intersection occupancy violations, and left-lane camping.
-- Trained on cloud GPU infrastructure with focus on **real-time performance**, privacy-first architecture, and aftermarket dashcam/AR glasses deployment.
-:::
-
-**Seattle, Washington, USA** | Open to Relocation  
-Email: arpan.pathak47@gmail.com | Phone: +1 (206) 306-6059  
-LinkedIn: [linkedin.com/in/arpan-pathak-272341424](https://linkedin.com/in/arpan-pathak-272341424)  
-GitHub: [github.com/arpanpathak](https://github.com/arpanpathak)  
-**Visa: Requires H1B Transfer sponsorship**
+Seattle, WA | Email: arpan.pathak47@gmail.com | Phone: +1 (206) 306-6059  
+LinkedIn: [linkedin.com/in/arpan-pathak-272341424](https://linkedin.com/in/arpan-pathak-272341424) | GitHub: [github.com/arpanpathak](https://github.com/arpanpathak) | Open to Relocation
 
 ---
 
 ## SUMMARY
 
-Systems Software Engineer with 8+ years architecting high-performance, developer-facing SDKs, APIs, and distributed systems at **Amazon**, **Microsoft**, and **Oracle**. Deep expertise in **C++**, **Python**, **GPU-accelerated computing**, and **performance-critical software engineering** — building low-latency, high-throughput engines at global scale. Proven track record delivering production-grade software with rigorous CI/CD, testing/validation, containerization, and Kubernetes infrastructure. Passionate about **computer graphics**, **neural reconstruction**, and **Physical AI** — actively exploring **CUDA** and **Rust-to-CUDA (CUDA-Oxide)** paradigms to bridge real-time rendering and simulation.
+Senior Software Engineer, **8 years**: developer tools, observability platforms, performance-critical distributed systems at **Amazon, Microsoft, Oracle**. Full-stack **Rust, C++, Kotlin, Go, Python, JavaScript**; **Kubernetes**, **eBPF/Cilium**, GPU/**CUDA**, cloud **performance optimization**.
 
 ---
 
 ## EXPERIENCE
 
-### Software Developer II | **Microsoft** — Redmond, WA | June 2025 – Present
+### Software Developer II | **Microsoft**, Redmond, WA | Jun 2025 – Aug 2026
 
-- **C++ to Rust Migration**: Spearheaded the migration of the Information Protection service from **C++ to Rust**, shifting memory safety to compile-time. Eliminated use-after-free and buffer-overflow CVEs in the audited path while maintaining full performance parity — a critical win for DORA compliance.
-- **AI-Powered Policy Engine**: Built an AI-driven engine that auto-generates network policies and scans for misconfigurations, reducing manual policy review cycles from 4 hours to near-real-time with zero policy drift across sovereign regions.
-- **eBPF & Kernel-Level Networking**: Designed and deployed eBPF-based network policies using **Cilium** for Microsoft Purview's sovereign cloud regions. Authored custom **Kubernetes Operators** (Kubebuilder) to reconcile compliance states across AKS clusters.
-- **Developer Workflows**: Established CI/CD pipelines, containerized microservices, and automated validation frameworks ensuring reliable multi-region releases.
-- Infra: **C++, Rust, Python, Kubernetes (AKS), Kubebuilder, Docker, CI/CD, Linux**
+- **Zero-Trust Sovereign Cloud Networking**: eBPF + Cilium policies enforcing **data residency** & **SecNumCloud** compliance; Kubebuilder operators reconciling policy state across **AKS** clusters (France, Germany).
+- **C++/C# → Rust Migration (Microsoft Security)**: migrated **Microsoft Information Protection** from unsafe C++/C# to Rust; killed use-after-free/buffer-overflow/null bugs, **~40% lower P99**, **2x throughput**, **3x lower memory**, 6-figure savings.
+- **AI Policy Engine**: auto-generates Cilium policies, scans misconfigurations; review **4 hours → near-real-time**, zero drift.
+- TechStack: **Rust, C++, eBPF, Cilium, Kubernetes (AKS), Kubebuilder, Prometheus, Linux**
 
-### Senior Software Engineer | **Oracle Cloud Infrastructure** — Seattle, WA | Oct 2024 – Mar 2025
+### Senior Software Engineer | **Oracle Cloud Infrastructure**, Seattle, WA | Oct 2024 – Mar 2025
 
-- **High-Performance Engine**: Architected low-latency internals for a proprietary database engine, optimizing **lock-free data structures** to reduce contention in high-concurrency read-write paths, improving transaction throughput by **45,000 ops/s**.
-- **Infrastructure-as-Code SDK**: Engineered Terraform provider (developer-facing SDK) for Oracle Autonomous Database, replacing legacy control plane infrastructure with projected **$1.2M/month cost savings**.
-- **Security & Key Management**: Integrated OCI Security Vault across control plane services for secure secret management and automated key rotation protocols.
-- Infra: **C++, Rust, Go, Terraform, OCI, PostgreSQL internals**
+- **High-Performance Database Engine**: lock-free data structures cutting contention in high-concurrency read-write paths; **45,000 ops/s** throughput gain.
+- **Infrastructure-as-Code SDK**: Terraform provider (developer SDK) for Oracle Autonomous Database; **$1.2M/month** projected savings.
+- **Security & Key Management**: OCI Security Vault, automated key rotation across control plane services.
+- TechStack: **Java, Go, Terraform, OCI, Autonomous Database**
 
-### Software Development Engineer II | **Amazon** — Seattle, WA & Hyderabad, India | Oct 2021 – Oct 2024
+### Software Development Engineer II | **Amazon**, Seattle, WA & Hyderabad, India | Mar 2021 – Oct 2024
 
-- **Real-Time ML Ranking Engine**: Architected an **ensemble model pipeline combining XGBoost and Deep Learning** for real-time ads & deal ranking across **FreeVee, Twitch, MiniTV, Prime Video, and Amazon Retail**, driving **5% CTR increase**, 30% higher deal impressions, and **$5.4M monthly revenue growth** — processing millions of events with **100ms latency**.
-- **SDK & Distributed Systems Design**: Designed a uniqueness constraint indexing solution and **SDK** for a multi-tenant NoSQL datastore using two-phase commit, achieving **serializable isolation** at 3K writes/second — a developer-facing library used across multiple publisher teams.
-- **Conversational AI (BERT)**: Developed a **BERT-based AI model** handling **5,000 QPS** at peak, reducing support ticket triage SLA from 7 days to 2 hours.
-- **CI/CD & Developer Productivity**: Led migration to React.js microfrontend architecture with automated CI/CD pipelines, reducing deployment cycles from **5 days to 30 minutes** — enabling full team autonomy and faster iteration.
-- **Big Data Pipelines**: Engineered **Apache Spark** jobs processing millions of daily events into Amazon Redshift for OLAP with automated dashboards.
-- Infra: **Python, C++, Java, Spark, Kafka, DynamoDB, Redshift, SageMaker, AWS, Docker**
+- **Real-Time ML Ranking Engine**: XGBoost + Deep Learning ensemble across **FreeVee, Twitch, MiniTV, Prime Video, Amazon Retail**; **5% CTR lift**, **$5.4M/month revenue**.
+- **BERT NLP Service**: **5,000 QPS** at peak; triage SLA **7 days → 2 hours**.
+- **Ads Publisher Platform (Event-Driven)**: event-driven systems delivering **programmatic guaranteed ad deals** via real-time **CDC** at **<50ms** latency (Kotlin, CSP).
+- **NoSQL SDK**: two-phase commit, **serializable isolation** at **3K writes/s**.
+- **Amazon WorkEvents Data Platform**: **1-petabyte** warehouse/lake with **AWS Glue (Spark)** for financial reporting & pay computation.
+- TechStack: **Kotlin, Java, Python, PyTorch, XGBoost, Spark, Kafka, DynamoDB, Redshift, AWS**
 
-### Software Development Engineer | **Razorpay** — Bengaluru, India | Aug 2020 – Feb 2021
+### SDE | **Razorpay**, Bengaluru, India | Aug 2020 – Feb 2021
 
-- Built UPI Payment Gateway Aggregator using **Golang** and Protobuf, processing **1M+ hourly transactions**.
-- Maintained **99.99% uptime** with **150ms P99 latency** under 50,000 TPM peak loads.
-- Infra: **Go, Kafka, Redis, PostgreSQL**
+- Go UPI gateway: **1M+ txns/hr**, **99.99% uptime**, **150ms P99** at **50K TPM**.
 
-### Software Engineer | **Mindfire Solutions** — Bhubaneswar, India | Aug 2018 – Feb 2020
+### Software Engineer | **Mindfire**, Bhubaneswar, India | Aug 2018 – Feb 2020
 
-- Developed full-stack workflow tools and **AR-based product search microservice**, serving 10,000+ daily queries.
-- Built administrative dashboards reducing data retrieval latency from 5 min to 1 min.
-- Infra: **Java, React, Python, MongoDB**
+- Java/Spring full-stack + AR search (**10K+ daily queries**); latency **5 min → 1 min**.
+
+---
+
+## PERSONAL PROJECTS
+
+**Driving-CivicSense: Edge AI Vision System (Rust)**
+
+- On-device perception in **Rust** on the **NVIDIA Jetson Orin Nano Super** (67 INT8 TOPS): **YOLOv8/v11 INT8 ONNX** (~12 ms) + Deep SORT/Kalman + proven kinematic engine; 100% on-device.
+- Research paper: **Deterministic Intersection Blockage Prediction** | [arpanpathak.github.io/driving-civicsense-vision-model/](https://arpanpathak.github.io/driving-civicsense-vision-model/) | Code: [github.com/arpanpathak/driving-civicsense-vision-model](https://github.com/arpanpathak/driving-civicsense-vision-model)
+- Books: **Seeing Machines** | [arpanpathak.github.io/seeing-machines-book](https://arpanpathak.github.io/seeing-machines-book/foreword.html) · **CUDA Kernels** (CUDA-Oxide / Rust-to-CUDA) | [arpanpathak.github.io/gpu-parallel-book](https://arpanpathak.github.io/gpu-parallel-book/)
 
 ---
 
 ## SKILLS
 
-**Languages**: Python, C++, Rust, Go, Java, Kotlin, TypeScript, C#, Shell Script
-
-**GPU & Graphics**: CUDA (exploring), CUDA-Oxide, GPU-Accelerated Computing, Real-Time Rendering, Computer Graphics
-
-**SDK & Developer Tools**: SDK Design, API Development, Developer-Facing Libraries, Terraform Providers, CI/CD, Automated Testing/Validation, Packaging, Containerization
-
-**Machine Learning & AI**: PyTorch, TensorFlow, Scikit-learn, XGBoost, Transformer Models (BERT), Recommendation Systems, Deep Learning, Neural Networks, MLOps, Computer Vision, Neural Reconstruction
-
-**Distributed Systems & Cloud**: AWS (EC2, ECS, Lambda, Kinesis, EMR, SageMaker), Azure (AKS, Bicep), Kubernetes (EKS, AKS), Docker, Terraform, Apache Kafka, Apache Spark, Apache Flink, Kubebuilder, Istio, Cilium
-
-**Distributed Data & Storage**: DynamoDB, PostgreSQL, Redis, MongoDB, Amazon Redshift, Amazon S3
-
-**Core CS**: Data Structures & Algorithms, Distributed Systems (consensus, replication, sharding), Concurrency, System Design, Networking (TCP/IP, UDP, TLS, DNS, HTTP 3), Performance Optimization
-
-**Systems Programming**: eBPF, Cilium, Lock-Free Data Structures, Memory Safety, Concurrency
+**Languages**: Rust, C++, Kotlin, Go, C, Java, Python, TypeScript, JavaScript, Shell Script  
+**Systems Programming & Performance**: Lock-Free Data Structures, Concurrency, Memory Safety, Memory Profiling, Cache Optimization, Performance Engineering, Low-Latency Systems, OS Internals, Computer Architecture  
+**Networking & Cloud Security**: TCP/IP, UDP, TLS, HTTP/2/3, QUIC, RDMA, InfiniBand, DPDK, eBPF, XDP, Cilium, VPC, NAT, VPN, Load Balancing  
+**Distributed Systems & Streaming**: Consensus, Replication, Sharding, Kafka, Flink, Spark, Spark Streaming, Kinesis, CDC, Microservices; gRPC, REST, Protobuf  
+**Cloud & Infra**: AWS (EC2, ECS, Lambda, Kinesis, EMR, SageMaker), Azure (AKS), Google Cloud, Kubernetes (EKS, AKS), Docker, Terraform, Kubebuilder, Istio  
+**ML Inference & AI**: Deep Learning, Computer Vision, PyTorch, TensorFlow, XGBoost, BERT, LLMs, ONNX Runtime, YOLOv8/v11, CNN, NLP, Edge Inference, MLOps  
+**GPU & Parallel Computing**: CUDA, CUDA-Oxide (Rust-to-CUDA), SIMT, GPU Kernel Programming  
+**Observability**: Prometheus, Grafana, Azure Monitor, AWS CloudWatch, Trace & Sampling Data  
+**Data & Storage**: DynamoDB, PostgreSQL, Redis, MongoDB, MySQL, Amazon Redshift, Amazon S3  
+**Core CS**: Data Structures & Algorithms, System Design, Operating Systems, Linux
 
 ---
 
 ## EDUCATION
 
-**Bachelor of Technology — Computer Science & Engineering**  
-RCC Institute of Information Technology — Kolkata, India | 2018
+**B.Tech, Computer Science & Engineering**, RCC Institute of Information Technology, Kolkata | 2018
