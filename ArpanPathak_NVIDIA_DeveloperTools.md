@@ -16,7 +16,7 @@ Senior Software Engineer, **8 years**: developer tools, observability platforms,
 ### Software Developer II | **Microsoft**, Redmond, WA | Jun 2025 – Aug 2026
 
 - **Zero-Trust Sovereign Cloud Networking**: eBPF + Cilium policies enforcing **data residency** & **SecNumCloud** compliance; Kubebuilder operators reconciling policy state across **AKS** clusters (France, Germany).
-- **C++/C# → Rust Migration**: migrated **unsafe C++/C#** to **Rust** (compile-time memory safety; eliminated use-after-free, buffer-overflow, null-safety bugs); **~40% lower P99**, **2x throughput**, **3x lower memory**, 6-figure savings.
+- **C++/C# → Rust Migration (Microsoft Security)**: migrated **Microsoft Information Protection** from unsafe C++/C# to Rust; killed use-after-free/buffer-overflow/null bugs, **~40% lower P99**, **2x throughput**, **3x lower memory**, 6-figure savings.
 - **AI Policy Engine**: auto-generates Cilium policies, scans misconfigurations; review **4 hours → near-real-time**, zero drift.
 - TechStack: **Rust, C++, eBPF, Cilium, Kubernetes (AKS), Kubebuilder, Prometheus, Linux**
 
@@ -29,11 +29,11 @@ Senior Software Engineer, **8 years**: developer tools, observability platforms,
 
 ### Software Development Engineer II | **Amazon**, Seattle, WA & Hyderabad, India | Mar 2021 – Oct 2024
 
-- **Real-Time ML Ranking**: XGBoost + Deep Learning ensemble for ads/deals across FreeVee, Twitch, MiniTV, Prime Video, Retail; **5% CTR lift**, **$5.4M/month revenue**.
+- **Real-Time ML Ranking Engine**: XGBoost + Deep Learning ensemble across **FreeVee, Twitch, MiniTV, Prime Video, Amazon Retail**; **5% CTR lift**, **$5.4M/month revenue**.
 - **BERT NLP Service**: **5,000 QPS** at peak; triage SLA **7 days → 2 hours**.
-- **Event Bus SDK (Kotlin, CSP)**: Kotlin structured concurrency + CSP; guaranteed ad deals at **<50ms** end-to-end.
+- **Ads Publisher Platform (Event-Driven)**: event-driven systems delivering **programmatic guaranteed ad deals** via real-time **CDC** at **<50ms** latency (Kotlin, CSP).
 - **NoSQL SDK**: two-phase commit, **serializable isolation** at **3K writes/s**.
-- **Big Data Platform**: **1-petabyte** warehouse/lake (AWS Glue, Spark) for financial reporting & BI.
+- **Amazon WorkEvents Data Platform**: **1-petabyte** warehouse/lake with **AWS Glue (Spark)** for financial reporting & pay computation.
 - TechStack: **Kotlin, Java, Python, PyTorch, XGBoost, Spark, Kafka, DynamoDB, Redshift, AWS**
 
 ### SDE | **Razorpay**, Bengaluru, India | Aug 2020 – Feb 2021
