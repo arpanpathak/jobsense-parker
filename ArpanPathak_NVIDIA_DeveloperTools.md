@@ -32,6 +32,7 @@ Senior Software Engineer, **8 years**: developer tools, observability platforms,
 - **Real-Time ML Ranking (Python/PyTorch)**: **XGBoost + deep-learning ensemble** at **100ms** across FreeVee, Twitch, Prime Video; **5% CTR lift**, **$5.4M/month revenue growth**.
 - **BERT NLP Service**: **5,000 QPS** at peak; cut support-ticket triage SLA from **7 days to 2 hours**.
 - **Full-Stack Developer Platforms**: **React.js microfrontend** migration (deploy **5 days → 30 min**); event-bus **SDK** (Kotlin, **<50ms**) used by publisher teams.
+- **Data Platform**: Built a **1-petabyte** warehouse/lake with **Spark (AWS Glue)** pipelines for financial reporting and BI.
 - Stack: **Kotlin, Java, Python, PyTorch, Spark, Kafka, DynamoDB, Redshift, AWS**
 
 ### SDE | **Razorpay**, Bengaluru, India | Aug 2020 – Feb 2021
@@ -56,10 +57,18 @@ Senior Software Engineer, **8 years**: developer tools, observability platforms,
 
 ## SKILLS
 
-**Languages**: Rust, C++, Kotlin, Go, Python, Java, JavaScript/TypeScript  
-**Systems & Infra**: Kubernetes, Kubebuilder, microservices, eBPF/Cilium, Linux, computer architecture  
-**Observability**: Prometheus, Grafana, Azure Monitor, CloudWatch, trace/sampling, profiling  
-**GPU & Performance**: CUDA, GPU kernels, P99/latency tuning | **Web & APIs**: REST, gRPC, Protobuf, React.js
+**Languages**: Rust, C++, Go, C, Kotlin, Java, Python, TypeScript, JavaScript, Shell Script  
+**Systems Programming & Performance**: Lock-Free Data Structures, Concurrency, Memory Safety, Memory Profiling, Cache Optimization, Performance Engineering, Low-Latency Systems, OS Internals, Computer Architecture  
+**Networking & Protocols**: TCP/IP, UDP, TLS, mTLS, DNS, HTTP/2, HTTP/3, QUIC, WebSockets, RDMA, InfiniBand, DPDK, Socket Programming, Packet Processing, Network Performance Optimization  
+**Network & Cloud Security**: eBPF, XDP, Cilium, Kernel-Level Networking, VPC, Subnets, Routing, NAT, VPN, Peering, Load Balancing, Security Groups / Firewalls  
+**Distributed Systems & Streaming**: Consensus, Replication, Sharding, Apache Kafka, Apache Flink, Apache Spark, Spark Streaming, AWS Kinesis, Change Data Capture (CDC), Microservices  
+**Cloud & Infra**: AWS (EC2, ECS, Lambda, Kinesis, EMR, SageMaker), Azure (AKS), Google Cloud, Kubernetes (EKS, AKS), Docker, Terraform, Kubebuilder, Istio  
+**Observability & Profiling**: Prometheus, Grafana, Azure Monitor, AWS CloudWatch, Trace & Sampling Data, Performance Profiling  
+**GPU & Parallel Computing**: CUDA, CUDA-Oxide (Rust-to-CUDA), PTX, SIMT, GPU Kernel Programming, GPU-Accelerated Computing  
+**ML Inference & AI**: PyTorch, TensorFlow, XGBoost, Transformer Models (BERT), LLMs, ONNX Runtime, Edge/On-Device Inference, Model Pruning & Quantization, Computer Vision (YOLOv8/v11), CNN, NLP, Recommendation Systems  
+**Data & Storage**: DynamoDB, PostgreSQL, Redis, MongoDB, MySQL, Amazon Redshift, Amazon S3  
+**APIs & Web**: gRPC, REST API Design, Protobuf, React.js  
+**Core CS**: Data Structures & Algorithms, System Design, Operating Systems, Linux
 
 ---
 
