@@ -1,6 +1,6 @@
 # Arpan Pathak
 
-**Seattle, Washington, USA** | Open to Relocation  
+Seattle, Washington, USA | Open to Relocation  
 Email: arpan.pathak47@gmail.com | Phone: +1 (206) 306-6059  
 LinkedIn: [linkedin.com/in/arpan-pathak-272341424](https://linkedin.com/in/arpan-pathak-272341424) | GitHub: [github.com/arpanpathak](https://github.com/arpanpathak)
 
@@ -18,30 +18,30 @@ Senior Software Engineer, **8 years**: developer tools, observability platforms,
 
 - **Cluster Observability**: **Prometheus + Azure Monitor**, blue-green deployments, automated validation across **AKS** clusters in France and Germany.
 - **Kubernetes Operators & eBPF/Cilium**: Authored **Kubebuilder operators** reconciling network-policy state at scale; eBPF/Cilium-based L7 filtering and network visibility.
-- **C++ → Rust Migration**: Rebuilt the Information Protection service from **legacy C++/C#** in **Rust**, moving memory safety to compile time; **~40% lower P99**, **2x throughput**, **3x lower memory/request**.
-- Stack: **Rust, C++, eBPF, Cilium, Kubernetes, Linux**
+- **C++ → Rust Migration**: Rebuilt Microsoft Information Protection from **legacy C++/C#** in **Rust**, moving memory safety to compile time; **~40% lower P99**, **2x throughput**, **3x lower memory/request**.
+- TechStack: **Rust, C++, eBPF, Cilium, Kubernetes, Linux**
 
 ### Senior Software Engineer | **Oracle Cloud Infrastructure**, Seattle, WA | Oct 2024 – Mar 2025
 
 - **Developer-Facing SDK (Go)**: Built the **Terraform provider** for Oracle Autonomous Database, replacing legacy control-plane tooling; **$1.2M/month projected savings**.
 - **Database Engine Internals**: Optimized **lock-free data structures** in a proprietary DB engine, achieving **+45,000 ops/s** in high-concurrency read-write paths.
-- Stack: **Java, Go, Terraform, OCI**
+- TechStack: **Java, Go, Terraform, OCI**
 
 ### Software Development Engineer II | **Amazon**, Seattle, WA & Hyderabad, India | Mar 2021 – Oct 2024
 
 - **Real-Time ML Ranking (Python/PyTorch)**: **XGBoost + deep-learning ensemble** at **100ms** across FreeVee, Twitch, Prime Video; **5% CTR lift**, **$5.4M/month revenue growth**.
 - **BERT NLP Service**: **5,000 QPS** at peak; cut support-ticket triage SLA from **7 days to 2 hours**.
 - **Full-Stack Developer Platforms**: **React.js microfrontend** migration (deploy **5 days → 30 min**); event-bus **SDK** (Kotlin, **<50ms**) used by publisher teams.
-- **Data Platform**: Built a **1-petabyte** warehouse/lake with **Spark (AWS Glue)** pipelines for financial reporting and BI.
-- Stack: **Kotlin, Java, Python, PyTorch, Spark, Kafka, DynamoDB, Redshift, AWS**
+- **Data Platform**: **1-petabyte** warehouse/lake with **Spark (AWS Glue)** pipelines for financial reporting and BI.
+- TechStack: **Kotlin, Java, Python, PyTorch, Spark, Kafka, DynamoDB, Redshift, AWS**
 
 ### SDE | **Razorpay**, Bengaluru, India | Aug 2020 – Feb 2021
 
-- Go UPI Payment Gateway Aggregator: **1M+ txns/hr**, **99.99% uptime**, **150ms P99** at **50K TPM**.
+- Go UPI Payment Gateway: **1M+ txns/hr**, **99.99% uptime**, **150ms P99** at **50K TPM**.
 
-### Software Engineer | **Mindfire Solutions**, Bhubaneswar, India | Aug 2018 – Feb 2020
+### Software Engineer | **Mindfire**, Bhubaneswar, India | Aug 2018 – Feb 2020
 
-- Java/Spring full-stack tools, AR product-search microservice (**10K+ daily queries**); latency cut **5 min → 1 min**.
+- Java/Spring full-stack tools, AR product-search microservice (**10K+ daily queries**); latency **5 min → 1 min**.
 
 ---
 
@@ -49,7 +49,7 @@ Senior Software Engineer, **8 years**: developer tools, observability platforms,
 
 **Driving-CivicSense: Edge AI Vision System (Rust)**
 
-- Real-time on-device perception pipeline in **Rust** on the **NVIDIA Jetson Orin Nano Super** (67 INT8 TOPS, 8 GB, 7–15 W): **YOLOv8/v11 INT8 ONNX** (~12 ms) + Deep SORT/Kalman tracking + formally-proven kinematic decision engine; 100% on-device, privacy-first.
+- Real-time on-device perception pipeline in **Rust** on the **NVIDIA Jetson Orin Nano Super** (67 INT8 TOPS, 8 GB, 7–15 W): **YOLOv8/v11 INT8 ONNX** (~12 ms) + Deep SORT/Kalman + formally-proven kinematic decision engine; 100% on-device, privacy-first.
 - Research paper: **Deterministic Intersection Blockage Prediction** | [arpanpathak.github.io/driving-civicsense-vision-model/](https://arpanpathak.github.io/driving-civicsense-vision-model/) | Code: [github.com/arpanpathak/driving-civicsense-vision-model](https://github.com/arpanpathak/driving-civicsense-vision-model)
 - Books: **Seeing Machines** | [arpanpathak.github.io/seeing-machines-book](https://arpanpathak.github.io/seeing-machines-book/foreword.html) · **CUDA Kernels** (CUDA-Oxide / Rust-to-CUDA) | [arpanpathak.github.io/gpu-parallel-book](https://arpanpathak.github.io/gpu-parallel-book/)
 
@@ -57,18 +57,13 @@ Senior Software Engineer, **8 years**: developer tools, observability platforms,
 
 ## SKILLS
 
-**Languages**: Rust, C++, Go, C, Kotlin, Java, Python, TypeScript, JavaScript, Shell Script  
-**Systems Programming & Performance**: Lock-Free Data Structures, Concurrency, Memory Safety, Memory Profiling, Cache Optimization, Performance Engineering, Low-Latency Systems, OS Internals, Computer Architecture  
-**Networking & Protocols**: TCP/IP, UDP, TLS, mTLS, DNS, HTTP/2, HTTP/3, QUIC, WebSockets, RDMA, InfiniBand, DPDK, Socket Programming, Packet Processing, Network Performance Optimization  
-**Network & Cloud Security**: eBPF, XDP, Cilium, Kernel-Level Networking, VPC, Subnets, Routing, NAT, VPN, Peering, Load Balancing, Security Groups / Firewalls  
-**Distributed Systems & Streaming**: Consensus, Replication, Sharding, Apache Kafka, Apache Flink, Apache Spark, Spark Streaming, AWS Kinesis, Change Data Capture (CDC), Microservices  
-**Cloud & Infra**: AWS (EC2, ECS, Lambda, Kinesis, EMR, SageMaker), Azure (AKS), Google Cloud, Kubernetes (EKS, AKS), Docker, Terraform, Kubebuilder, Istio  
-**Observability & Profiling**: Prometheus, Grafana, Azure Monitor, AWS CloudWatch, Trace & Sampling Data, Performance Profiling  
-**GPU & Parallel Computing**: CUDA, CUDA-Oxide (Rust-to-CUDA), PTX, SIMT, GPU Kernel Programming, GPU-Accelerated Computing  
-**ML Inference & AI**: PyTorch, TensorFlow, XGBoost, Transformer Models (BERT), LLMs, ONNX Runtime, Edge/On-Device Inference, Model Pruning & Quantization, Computer Vision (YOLOv8/v11), CNN, NLP, Recommendation Systems  
-**Data & Storage**: DynamoDB, PostgreSQL, Redis, MongoDB, MySQL, Amazon Redshift, Amazon S3  
-**APIs & Web**: gRPC, REST API Design, Protobuf, React.js  
-**Core CS**: Data Structures & Algorithms, System Design, Operating Systems, Linux
+**Languages**: Rust, C++, Kotlin, Go, C, Java, Python, TypeScript, JavaScript, Shell  
+**Systems Programming & Performance**: Lock-free data structures, concurrency, memory safety, OS internals, computer architecture, performance engineering  
+**Networking & Protocols**: TCP/IP, UDP, TLS, HTTP/2/3, QUIC, RDMA, InfiniBand, DPDK, eBPF, Cilium, VPC, NAT, VPN, load balancing  
+**Distributed Systems & Streaming**: Kafka, Flink, Spark, Spark Streaming, Kinesis, CDC, microservices, consensus/replication/sharding  
+**Cloud & Infra**: AWS (EC2, ECS, Lambda, Kinesis, EMR, SageMaker), Azure (AKS), GCP, Kubernetes (EKS/AKS), Docker, Terraform, Kubebuilder, Istio  
+**ML Inference & AI**: PyTorch, TensorFlow, XGBoost, BERT, LLMs, ONNX Runtime, YOLOv8/v11, CNN, edge inference; CUDA, CUDA-Oxide (Rust-to-CUDA), PTX, SIMT  
+**Observability**: Prometheus, Grafana, Azure Monitor, CloudWatch, trace/sampling, profiling; DynamoDB, PostgreSQL, Redis, MongoDB, Redshift, S3, gRPC, REST, Protobuf, React.js
 
 ---
 
