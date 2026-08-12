@@ -31,7 +31,7 @@ Senior Systems Software Engineer, **8 years**: concurrency, distributed systems,
 
 - **Real-Time ML Ranking Engine**: owned end-to-end (training, serving, latency tuning): XGBoost + Deep Learning ensemble across **FreeVee, Twitch, MiniTV, Prime Video, Amazon Retail**; **5% CTR lift**, **$5.4M/month revenue**.
 - **BERT Inference Service**: deployed and scaled **BERT-based ML inference** at **5,000 QPS** (ONNX Runtime, INT8 quantization, latency tuning); cut triage SLA **7 days → 2 hours**.
-- **Ads Publisher Platform (Event-Driven)**: designed and delivered event-driven systems for **programmatic guaranteed ad deals** via real-time **CDC** at **<50ms** (Kotlin, CSP).
+- **Ads Publisher Platform (Event-Driven)**: led a team of 3 developers building event-driven systems for **programmatic guaranteed ad deals** via real-time **CDC** at **<50ms** (Kotlin, CSP).
 - **NoSQL SDK**: designed a uniqueness-constraint indexing SDK (two-phase commit, **serializable isolation**, **3K writes/s**).
 - **Amazon WorkEvents Data Platform**: built the **1-petabyte** warehouse/lake (**AWS Glue**, Spark) for financial reporting & pay computation.
 - TechStack: **Kotlin, Java, Python, PyTorch, XGBoost, Spark, Kafka, DynamoDB, Redshift, AWS**
