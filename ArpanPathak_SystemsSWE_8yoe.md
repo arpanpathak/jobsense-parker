@@ -11,6 +11,16 @@ Senior Systems Software Engineer, **8 years**: concurrency, distributed systems,
 
 ---
 
+## PERSONAL PROJECTS
+
+**Driving-CivicSense: Edge AI Vision System (Rust)** | [github.com/arpanpathak/driving-civicsense-vision-model](https://github.com/arpanpathak/driving-civicsense-vision-model)
+
+- On-device perception in **Rust** on the **NVIDIA Jetson Orin Nano Super** (67 INT8 TOPS): **YOLOv8/v11 INT8 ONNX** (~12 ms) + Deep SORT/Kalman + proven kinematic engine; 100% on-device.
+- Research paper: **Deterministic Intersection Blockage Prediction** | [arpanpathak.github.io/driving-civicsense-vision-model/](https://arpanpathak.github.io/driving-civicsense-vision-model/)
+- Books: **Seeing Machines** | [arpanpathak.github.io/seeing-machines-book](https://arpanpathak.github.io/seeing-machines-book/foreword.html) · **CUDA Kernels** (CUDA-Oxide / Rust-to-CUDA) | [arpanpathak.github.io/gpu-parallel-book](https://arpanpathak.github.io/gpu-parallel-book/)
+
+---
+
 ## EXPERIENCE
 
 ### Software Developer II | **Microsoft**, Redmond, WA | Jun 2025 – Aug 2026
@@ -43,16 +53,6 @@ Senior Systems Software Engineer, **8 years**: concurrency, distributed systems,
 ### Software Engineer | **Mindfire**, Bhubaneswar, India | Aug 2018 – Feb 2020
 
 - Java/Spring full-stack tools; AR product-search microservice (**10K+ daily queries**).
-
----
-
-## PERSONAL PROJECTS
-
-**Driving-CivicSense: Edge AI Vision System (Rust)** | [github.com/arpanpathak/driving-civicsense-vision-model](https://github.com/arpanpathak/driving-civicsense-vision-model)
-
-- On-device perception in **Rust** on the **NVIDIA Jetson Orin Nano Super** (67 INT8 TOPS): **YOLOv8/v11 INT8 ONNX** (~12 ms) + Deep SORT/Kalman + proven kinematic engine; 100% on-device.
-- Research paper: **Deterministic Intersection Blockage Prediction** | [arpanpathak.github.io/driving-civicsense-vision-model/](https://arpanpathak.github.io/driving-civicsense-vision-model/)
-- Books: **Seeing Machines** | [arpanpathak.github.io/seeing-machines-book](https://arpanpathak.github.io/seeing-machines-book/foreword.html) · **CUDA Kernels** (CUDA-Oxide / Rust-to-CUDA) | [arpanpathak.github.io/gpu-parallel-book](https://arpanpathak.github.io/gpu-parallel-book/)
 
 ---
 
