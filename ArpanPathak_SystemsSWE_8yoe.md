@@ -8,7 +8,7 @@ YouTube: [youtube.com/@ArpanPathak](https://www.youtube.com/@ArpanPathak) | Open
 
 ## SUMMARY
 
-Senior Systems Software Engineer, **8 years**: concurrency, distributed systems, parallel computing, high-performance computing (HPC), and performance engineering, spanning kernel (eBPF/Cilium) to GPU (CUDA) to production ML inference (XGBoost, BERT) at **Amazon, Microsoft, Oracle**. Full-stack **Rust, C++, Kotlin, Go, Java, Python, JavaScript**; shipped zero-trust networking, lock-free DB internals, real-time ML ranking.
+Senior Systems Software Engineer, **8 years**: concurrency, distributed systems, parallel computing, high-performance computing (HPC), and performance engineering, spanning kernel (eBPF/Cilium) to GPU (CUDA) to production ML inference (XGBoost, BERT) at **Amazon, Microsoft, Oracle**. Full-stack **Rust, C++, Kotlin, Java, Go, Python, JavaScript**; shipped zero-trust networking, lock-free DB internals, real-time ML ranking.
 
 ---
 
@@ -59,7 +59,7 @@ Senior Systems Software Engineer, **8 years**: concurrency, distributed systems,
 
 ## SKILLS
 
-**Languages**: Rust, C++, Kotlin, Go, C, Java, Python, TypeScript, JavaScript, Shell Script  
+**Languages**: Rust, C++, Kotlin, Java, Go, C, Python, TypeScript, JavaScript, Shell Script  
 **Systems Programming & Performance**: Lock-Free Data Structures, Concurrency, Memory Safety, Memory Profiling, Cache Optimization, Performance Engineering, Low-Latency Systems, OS Internals, Computer Architecture  
 **Networking & Cloud Security**: TCP/IP, UDP, TLS, HTTP/2/3, QUIC, RDMA, InfiniBand, DPDK, eBPF, XDP, Cilium, VPC, NAT, VPN, Load Balancing  
 **Distributed Systems & Streaming**: Consensus, Replication, Sharding, Kafka, Flink, Spark, Spark Streaming, Kinesis, CDC, Microservices; gRPC, REST, Protobuf  

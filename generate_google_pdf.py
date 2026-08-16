@@ -176,7 +176,10 @@ def convert(md_text, icon_color="#0f766e", project_color="#0f766e", muted_color=
                     ico = "youtube"
                 elif line.startswith("**Visa"):
                     ico = "shield"
-                html.append(f'<div class="contact-item"><span class="contact-ico">{svg_icon(ico, muted_color, 11) if show_icons else ""}</span><span class="contact-txt">{line}</span></div>')
+                txt = line
+                if show_icons and "GitHub:" in line and ico != "github":
+                    txt = txt.replace("GitHub:", svg_icon("github", muted_color, 10) + "GitHub:", 1)
+                html.append(f'<div class="contact-item"><span class="contact-ico">{svg_icon(ico, muted_color, 11) if show_icons else ""}</span><span class="contact-txt">{txt}</span></div>')
             else:
                 if line.startswith("**") and "**: " in line:
                     label = line.split(":", 1)[0].strip("*")
