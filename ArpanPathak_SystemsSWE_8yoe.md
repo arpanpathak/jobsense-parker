@@ -8,7 +8,7 @@ YouTube: [youtube.com/@ArpanPathak](https://www.youtube.com/@ArpanPathak) | Open
 
 ## SUMMARY
 
-Senior Systems Software Engineer, **8 years**: concurrency, distributed systems, parallel computing, high-performance computing (HPC), and performance engineering, spanning kernel (eBPF/Cilium) to GPU (CUDA) to production ML inference (XGBoost, BERT) at **Amazon, Microsoft, Oracle**. Full-stack **Rust, C++, Kotlin, Java, Go, Python, TypeScript**; shipped zero-trust networking, lock-free DB internals, real-time ML ranking.
+Senior Systems Software Engineer, **8 years**: concurrency, distributed systems, parallel computing, high-performance computing (HPC), and performance engineering, spanning kernel (eBPF/Cilium) to GPU (CUDA) to production ML inference (XGBoost, BERT) at **Amazon, Microsoft, Oracle**. Full-stack **Rust, C++, Kotlin, Java, Go, Python, TypeScript**; shipped zero-trust, **privacy-preserving** networking, lock-free DB internals, and real-time **ML ranking for ad-supported platforms**.
 
 ---
 
@@ -40,16 +40,16 @@ Senior Systems Software Engineer, **8 years**: concurrency, distributed systems,
 
 ### Software Development Engineer II | **Amazon**, Seattle, WA & Hyderabad, India | Mar 2021 – Oct 2024
 
-- **Real-Time ML Ranking Engine**: owned end-to-end (training, serving, latency tuning): XGBoost + Deep Learning ensemble across **FreeVee, Twitch, MiniTV, Prime Video, Amazon Retail**; **5% CTR lift**, **$5.4M/month revenue**.
-- **BERT Inference Service**: deployed and scaled **BERT-based ML inference** at **5,000 QPS** (ONNX Runtime, INT8 quantization, latency tuning); cut triage SLA **7 days → 2 hours**.
-- **Ads Publisher Platform (Event-Driven)**: led a team of 3 developers building event-driven systems for **programmatic guaranteed ad deals** via real-time **CDC** at **<50ms** (Kotlin, CSP).
+- **Real-Time ML Ranking Engine (ad-supported surfaces)**: owned end-to-end (training, serving, latency tuning): XGBoost + Deep Learning ensemble across **FreeVee, Twitch, MiniTV, Prime Video, Amazon Retail**; **5% ad CTR lift**, **$5.4M/month revenue**.
+- **BERT Inference Service**: deployed and scaled **low-latency BERT-based ML inference** at **5,000 QPS** (ONNX Runtime, INT8 quantization, latency tuning); cut triage SLA **7 days → 2 hours**.
+- **Ads Publisher Platform (Event-Driven)**: led a team of 3 engineers building event-driven **ad-delivery systems** for **programmatic guaranteed (PG) ad deals** via real-time **CDC** at **<50ms** (Kotlin, CSP).
 - **NoSQL SDK**: designed a uniqueness-constraint indexing SDK (two-phase commit, **serializable isolation**, **3K writes/s**).
 - **Amazon WorkEvents Data Platform**: built the **1-petabyte** warehouse/lake (**AWS Glue**, Spark) for financial reporting & pay computation.
 - TechStack: **Kotlin, Java, Python, PyTorch, XGBoost, Spark, Kafka, DynamoDB, Redshift, AWS**
 
 ### SDE | **Razorpay**, Bengaluru, India | Aug 2020 – Feb 2021
 
-- Built microservices for **P2P Unified Payments Gateway** (Go, Protobuf): **3M+ transactions/hour** at peak, **99.99% uptime**, **150ms P99**; customers: **Zomato, Swiggy, Zerodha, Groww** (AWS, GCP).
+- Built **highly available microservices** for **P2P Unified Payments Gateway** (Go, Protobuf): **3M+ transactions/hour** at peak, **99.99% uptime**, **150ms P99**; customers: **Zomato, Swiggy, Zerodha, Groww** (AWS, GCP).
 
 ### Software Engineer | **Mindfire**, Bhubaneswar, India | Aug 2018 – Feb 2020
 
