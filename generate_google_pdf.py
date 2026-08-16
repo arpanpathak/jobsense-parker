@@ -8,6 +8,7 @@ import weasyprint
 MD_FILE = sys.argv[1] if len(sys.argv) > 1 else "/Users/arpanpathak/Projects/rust/jobsense-parker/ArpanPathak_Google_Android.md"
 THEME_NAME = sys.argv[2] if len(sys.argv) > 2 else "google"
 NO_ICONS = "--no-icons" in sys.argv
+COMPACT = "--compact" in sys.argv
 PDF_FILE = MD_FILE.replace(".md", ".pdf")
 
 with open(MD_FILE, "r") as f:
@@ -42,6 +43,7 @@ def svg_icon(name, color, size=11):
         "pin": '<path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/>',
         "linkedin": '<path d="M16 8a6 6 0 0 1 6 6v7h-4v-7a2 2 0 0 0-2-2 2 2 0 0 0-2 2v7h-4V8h4v1.5A5.98 5.98 0 0 1 16 8z"/><rect x="2" y="9" width="4" height="12"/><circle cx="4" cy="4" r="2"/>',
         "github": '<path d="M9 19c-5 1.5-5-2.5-7-3m14 6v-3.87a3.37 3.37 0 0 0-.94-2.61c3.14-.35 6.44-1.54 6.44-7A5.44 5.44 0 0 0 20 4.77 5.07 5.07 0 0 0 19.91 1S18.73.65 16 2.48a13.38 13.38 0 0 0-7 0C6.27.65 5.09 1 5.09 1A5.07 5.07 0 0 0 5 4.77a5.44 5.44 0 0 0-1.5 3.78c0 5.42 3.3 6.61 6.44 7A3.37 3.37 0 0 0 9 18.13V22"/>',
+        "youtube": '<path d="M22.54 6.42a2.78 2.78 0 0 0-1.94-2C18.88 4 12 4 12 4s-6.88 0-8.6.46a2.78 2.78 0 0 0-1.94 2A29 29 0 0 0 1 11.75a29 29 0 0 0 .46 5.33A2.78 2.78 0 0 0 3.4 19c1.72.46 8.6.46 8.6.46s6.88 0 8.6-.46a2.78 2.78 0 0 0 1.94-1.92 29 29 0 0 0 .46-5.33 29 29 0 0 0-.46-5.33z"/><polygon points="9.75 15.02 15.5 11.75 9.75 8.48 9.75 15.02"/>',
         "code": '<polyline points="16 18 22 12 16 6"/><polyline points="8 6 2 12 8 18"/>',
         "shield": '<path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>',
         "cpu": '<rect x="4" y="4" width="16" height="16" rx="2"/><rect x="9" y="9" width="6" height="6"/><line x1="9" y1="1" x2="9" y2="4"/><line x1="15" y1="1" x2="15" y2="4"/><line x1="9" y1="20" x2="9" y2="23"/><line x1="15" y1="20" x2="15" y2="23"/><line x1="20" y1="9" x2="23" y2="9"/><line x1="20" y1="14" x2="23" y2="14"/><line x1="1" y1="9" x2="4" y2="9"/><line x1="1" y1="14" x2="4" y2="14"/>',
@@ -170,6 +172,8 @@ def convert(md_text, icon_color="#0f766e", project_color="#0f766e", muted_color=
                     ico = "linkedin"
                 elif "GitHub:" in line:
                     ico = "github"
+                elif "YouTube:" in line:
+                    ico = "youtube"
                 elif line.startswith("**Visa"):
                     ico = "shield"
                 html.append(f'<div class="contact-item"><span class="contact-ico">{svg_icon(ico, muted_color, 11) if show_icons else ""}</span><span class="contact-txt">{line}</span></div>')
@@ -205,6 +209,252 @@ def convert(md_text, icon_color="#0f766e", project_color="#0f766e", muted_color=
 
     return result
 
+
+COMPACT_CSS = """
+@page {
+    size: letter;
+    margin: 0.06in 0.583in;
+    background: __BG__;
+}
+body {
+    font-family: 'Avenir Next', 'Avenir', 'Helvetica Neue', Helvetica, Arial, sans-serif;
+    font-size: 9pt;
+    line-height: 1.02;
+    color: __TEXT__;
+    background: __BG__;
+    margin: 0;
+}
+
+.name {
+    font-size: 17pt;
+    font-weight: 600;
+    color: __NAME__;
+    margin-bottom: 0;
+    letter-spacing: 0.5px;
+    line-height: 1.15;
+}
+
+.contact {
+    margin: 1px 0 2px 0;
+}
+.contact-item {
+    display: flex;
+    align-items: center;
+    margin: 0;
+    font-size: 9pt;
+    line-height: 1.24;
+}
+.contact-ico {
+    flex: 0 0 16px;
+    text-align: center;
+    margin-right: 5px;
+}
+.no-icons .contact-ico {
+    display: none;
+}
+.contact-ico svg {
+    vertical-align: middle;
+}
+.contact-txt {
+    flex: 1;
+}
+
+.project-box {
+    float: right;
+    width: 48%;
+    margin-left: 14px;
+    margin-bottom: 10px;
+    border: 1.5px solid __PROJECT__;
+    border-radius: 8px;
+    padding: 9px 12px;
+    background: __BOX_BG__;
+    box-shadow: __SHADOW__;
+}
+.project-box p:first-child {
+    font-size: 8.5pt;
+    font-weight: 700;
+    color: __PROJECT__;
+    text-transform: uppercase;
+    letter-spacing: 1.2px;
+    margin: 0 0 4px 0;
+}
+p.project-text {
+    font-size: 8pt;
+    line-height: 1.3;
+    margin: 3px 0;
+    color: __MUTED__;
+}
+p.project-text strong {
+    font-size: 8.5pt;
+    color: __PROJECT__;
+}
+p.book-line {
+    margin: 6px 0 6px 2px;
+    padding: 5px 10px;
+    border: 1px solid __CHIP_BORDER__;
+    border-left: 4px solid __PROJECT__;
+    border-radius: 8px;
+    background: __CHIP_BG__;
+    font-size: 7.5pt;
+    line-height: 1.34;
+}
+p.book-line svg {
+    vertical-align: -2px;
+    margin-right: 4px;
+}
+p.book-line strong {
+    font-size: 8pt;
+    color: __PROJECT__;
+}
+p.bullet-sm {
+    margin: 1.5px 0 1.5px 12px;
+    font-size: 8pt;
+    line-height: 1.3;
+    text-indent: -7px;
+    color: __MUTED__;
+}
+p.bullet-sm strong {
+    font-size: 8pt;
+    color: __PROJECT__;
+}
+.project-box a {
+    color: __LINK__;
+    font-size: 8pt;
+}
+
+.section-heading {
+    font-size: 11pt;
+    font-weight: 600;
+    color: __NAME__;
+    text-transform: uppercase;
+    letter-spacing: 0.8px;
+    border-bottom: 2px solid __ACCENT__;
+    padding: 3px 10px;
+    margin-top: 8px;
+    margin-bottom: 4px;
+    border-radius: 4px;
+    box-shadow: __HEADER_SHADOW__;
+    background: linear-gradient(90deg, __HEADING_BG__ 55%, transparent);
+}
+
+.job-header {
+    display: flex;
+    align-items: baseline;
+    column-gap: 6px;
+    font-size: 10pt;
+    margin: 4px 0 1px 0;
+    line-height: 1.05;
+    padding: 2px 8px;
+    border-radius: 6px;
+    border-left: 3px solid __ACCENT__;
+    background: __HEADER_BG__;
+    box-shadow: __HEADER_SHADOW__;
+}
+.job-title {
+    font-style: italic;
+    font-weight: 600;
+    color: __STRONG__;
+}
+.job-company {
+    font-weight: 600;
+    color: __ACCENT__;
+    font-size: 10pt;
+}
+.job-date {
+    font-weight: 400;
+    color: __DATE__;
+    font-size: 9.5pt;
+    margin-left: auto;
+    white-space: nowrap;
+}
+
+p {
+    margin: 1px 0;
+    font-size: 9pt;
+    line-height: 1.02;
+}
+
+p.skill-group {
+    margin: 0 0 2px 0;
+}
+
+p.skill-group strong {
+    color: __SKILL__;
+}
+
+p.bullet {
+    margin: 0 0 1px 16px;
+    font-size: 9pt;
+    line-height: 1.0;
+    text-indent: -8px;
+}
+
+p.techstack-box {
+    margin: 1px 0 5px 16px;
+    line-height: 1.1;
+}
+span.techstack-label {
+    font-style: italic;
+    font-weight: 600;
+    color: __TECH_LABEL__;
+}
+p.techstack-box strong {
+    color: __TECH__;
+    font-weight: 600;
+}
+
+strong {
+    font-style: italic;
+    font-weight: 600;
+    color: __STRONG__;
+}
+
+a {
+    color: __LINK__;
+    text-decoration: underline;
+}
+
+span.metric {
+    color: __METRIC__;
+    font-weight: 700;
+    background: __METRIC_BG__;
+    padding: 0 3px;
+    border-radius: 3px;
+}
+
+span.metric-pct {
+    color: __METRIC_PCT__;
+    font-weight: 700;
+    background: __METRIC_PCT_BG__;
+    padding: 0 3px;
+    border-radius: 3px;
+}
+
+/* ATS single-column mode */
+.no-icons p {
+    font-size: 8.5pt;
+    line-height: 1.15;
+}
+.no-icons p.bullet {
+    font-size: 8.5pt;
+    line-height: 1.13;
+}
+.no-icons .job-header {
+    font-size: 9.5pt;
+    margin: 4px 0 2px 0;
+}
+.no-icons .section-heading {
+    margin-top: 8px;
+    padding: 3px 10px;
+    margin-bottom: 5px;
+}
+.no-icons .contact-item {
+    font-size: 8.5pt;
+}
+.no-icons .skill-group {
+    margin: 3px 0 2px 0;
+}
+"""
 
 CSS = """
 @page {
@@ -498,6 +748,8 @@ THEMES = {
 }
 
 theme = THEMES.get(THEME_NAME, THEMES["google"])
+if COMPACT:
+    CSS = COMPACT_CSS
 for token, value in theme.items():
     CSS = CSS.replace("__" + token + "__", value)
 

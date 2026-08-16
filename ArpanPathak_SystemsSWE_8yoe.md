@@ -1,13 +1,14 @@
 # Arpan Pathak
 
 Seattle, WA | Email: arpan.pathak47@gmail.com | Phone: +1 (206) 306-6059  
-LinkedIn: [linkedin.com/in/arpan-pathak-272341424](https://linkedin.com/in/arpan-pathak-272341424) | GitHub: [github.com/arpanpathak](https://github.com/arpanpathak) | Open to Relocation
+LinkedIn: [linkedin.com/in/arpan-pathak-272341424](https://linkedin.com/in/arpan-pathak-272341424) | GitHub: [github.com/arpanpathak](https://github.com/arpanpathak)  
+YouTube: [youtube.com/@ArpanPathak](https://www.youtube.com/@ArpanPathak) | Open to Relocation
 
 ---
 
 ## SUMMARY
 
-Senior Systems Software Engineer, **8 years**: concurrency, distributed systems, parallel computing, high-performance computing (HPC), and performance engineering, spanning kernel (eBPF/Cilium) to GPU (CUDA) to production ML inference (XGBoost, BERT) at **Amazon, Microsoft, Oracle**. Full-stack **Rust, C++, Kotlin, Go, Python, JavaScript**; shipped zero-trust networking, lock-free DB internals, real-time ML ranking.
+Senior Systems Software Engineer, **8 years**: concurrency, distributed systems, parallel computing, high-performance computing (HPC), and performance engineering, spanning kernel (eBPF/Cilium) to GPU (CUDA) to production ML inference (XGBoost, BERT) at **Amazon, Microsoft, Oracle**. Full-stack **Rust, C++, Kotlin, Go, Java, Python, JavaScript**; shipped zero-trust networking, lock-free DB internals, real-time ML ranking.
 
 ---
 
@@ -15,7 +16,7 @@ Senior Systems Software Engineer, **8 years**: concurrency, distributed systems,
 
 **Driving-CivicSense: Edge AI Vision System (Rust)** | [github.com/arpanpathak/driving-civicsense-vision-model](https://github.com/arpanpathak/driving-civicsense-vision-model)
 
-- On-device perception in **Rust** on the **NVIDIA Jetson Orin Nano Super** (67 INT8 TOPS): **YOLOv8/v11 INT8 ONNX** (~12 ms) + Deep SORT/Kalman + proven kinematic engine; 100% on-device.
+- On-device **edge** perception in **Rust** on the **NVIDIA Jetson Orin Nano Super** (67 INT8 TOPS): **YOLOv8/v11 INT8 ONNX** (~12 ms) + Deep SORT/Kalman + proven kinematic engine; **privacy-first**, 100% on-device.
 - Research paper: **Deterministic Intersection Blockage Prediction** | [arpanpathak.github.io/driving-civicsense-vision-model/](https://arpanpathak.github.io/driving-civicsense-vision-model/)
 - Books: **Seeing Machines** | [arpanpathak.github.io/seeing-machines-book](https://arpanpathak.github.io/seeing-machines-book/foreword.html) · **CUDA Kernels** (CUDA-Oxide / Rust-to-CUDA) | [arpanpathak.github.io/gpu-parallel-book](https://arpanpathak.github.io/gpu-parallel-book/)
 
