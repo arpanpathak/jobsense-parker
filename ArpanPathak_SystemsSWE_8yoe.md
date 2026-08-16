@@ -8,7 +8,7 @@ YouTube: [youtube.com/@ArpanPathak](https://www.youtube.com/@ArpanPathak) | Open
 
 ## SUMMARY
 
-Senior Systems Software Engineer, **8 years**: concurrency, distributed systems, parallel computing, high-performance computing (HPC), and performance engineering, spanning kernel (eBPF/Cilium) to GPU (CUDA) to production ML inference (XGBoost, BERT) at **Amazon, Microsoft, Oracle**. Full-stack **Rust, C++, Kotlin, Java, Go, Python, JavaScript**; shipped zero-trust networking, lock-free DB internals, real-time ML ranking.
+Senior Systems Software Engineer, **8 years**: concurrency, distributed systems, parallel computing, high-performance computing (HPC), and performance engineering, spanning kernel (eBPF/Cilium) to GPU (CUDA) to production ML inference (XGBoost, BERT) at **Amazon, Microsoft, Oracle**. Full-stack **Rust, C++, Kotlin, Java, Go, Python, TypeScript**; shipped zero-trust networking, lock-free DB internals, real-time ML ranking.
 
 ---
 
