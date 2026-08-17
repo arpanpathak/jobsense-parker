@@ -786,26 +786,26 @@ if COMPACT:
 for token, value in theme.items():
     CSS = CSS.replace("__" + token + "__", value)
 
-# Modern material section headings (indigo & nvidia themes; token colors, compact-friendly height)
+# Modern clean section headings (nvidia & indigo themes; light bg, dark text, brand accent)
 MODERN_HEADING_CSS = """
 .section-heading {
     font-size: 10pt;
     font-weight: 800;
-    color: #ffffff;
+    color: __NAME__;
     text-transform: uppercase;
-    letter-spacing: 1.5px;
-    background: linear-gradient(90deg, __HEADING_DARK__ 0%, __HEADING_LIGHT__ 100%);
+    letter-spacing: 1.2px;
+    background: linear-gradient(90deg, __HEADING_BG__ 0%, #ffffff 100%);
     border: none;
-    border-bottom: 2px solid __ACCENT__;
+    border-bottom: 3px solid __ACCENT__;
     padding: 3px 12px;
-    margin-top: 6px;
-    margin-bottom: 3px;
-    border-radius: 9px;
-    box-shadow: 0 2px 8px rgba(15, 23, 42, 0.25);
+    margin-top: 5px;
+    margin-bottom: 2px;
+    border-radius: 8px;
+    box-shadow: 0 1px 4px rgba(0, 0, 0, 0.08);
 }
 .section-heading svg {
-    stroke: __ACCENT__;
-    background: #ffffff;
+    stroke: #ffffff;
+    background: __ACCENT__;
     border-radius: 50%;
     padding: 2px;
     width: 13px;

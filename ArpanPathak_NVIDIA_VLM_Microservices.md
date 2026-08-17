@@ -9,13 +9,13 @@ YouTube: [youtube.com/@ArpanPathak](https://www.youtube.com/@ArpanPathak) | Seat
 
 ## SUMMARY
 
-Senior Software Engineer, **8 years**: **AI inference serving**, distributed **backend microservices**, and cloud-native infrastructure at **Amazon, Microsoft, Oracle, Razorpay**. Strong **Python, C++, Rust, CUDA**; **BERT inference at 5,000 QPS** (ONNX, INT8) on **Docker/Kubernetes** with CI/CD; passionate about **CV & deep learning for road safety** on **NVIDIA Jetson Orin** (TensorRT).
+Senior Software Engineer, **8 years**: **AI inference serving**, **backend microservices**, cloud-native infrastructure at **Amazon, Microsoft, Oracle, Razorpay**. Strong **Python, C++, Rust, CUDA**; **BERT inference at 5,000 QPS** (ONNX, INT8) on **Docker/Kubernetes** with CI/CD; passionate about **CV/DL for road safety** on **NVIDIA Jetson Orin** (TensorRT).
 
 ---
 
 ## PERSONAL PROJECTS
 
-**Driving-CivicSense: Full-Stack Edge AI (Rust, CUDA), NVIDIA Jetson Orin Nano Super NX** | [github.com/arpanpathak/driving-civicsense-vision-model](https://github.com/arpanpathak/driving-civicsense-vision-model)
+**Driving-CivicSense: Full-Stack Edge AI (Rust, CUDA), NVIDIA Jetson Orin Nano Super NX** | [github](https://github.com/arpanpathak/driving-civicsense-vision-model)
 
 - **Full-stack data collection**: **50,000 miles** of driving footage across all weather and terrain via vehicle camera sensors and **LiDAR**; simulation-driven synthetic data; privacy-first, on-device processing on edge neural chips.
 - **Multi-chip edge system**: **YOLOv8/v11 INT8 → TensorRT** at **~12 ms** on **Jetson Orin Nano Super NX**; sensor data streamed to a **Raspberry Pi Zero 2 W UDP server**; validated on **Raspberry Pi 5** and **Orange Pi Zero**.
@@ -64,12 +64,12 @@ Senior Software Engineer, **8 years**: **AI inference serving**, distributed **b
 ## SKILLS
 
 **Languages**: Python, C++, Rust, Go, Java, Kotlin, C, Shell/Bash  
-**AI/ML Inference**: Computer Vision, PyTorch, LLMs, ONNX Runtime, TensorRT (INT8), vLLM, SGLang, TensorRT-LLM, YOLOv8/v11, MLOps  
+**AI/ML Inference**: Deep Learning, Computer Vision, PyTorch, XGBoost, BERT, LLMs, ONNX Runtime, TensorRT (INT8), vLLM, SGLang, TensorRT-LLM, YOLOv8/v11, Edge Inference, Quantization, MLOps  
 **GPU & Parallel Computing**: CUDA, CUDA-Oxide (Rust-to-CUDA), SIMT, GPU Kernel Programming, NVIDIA Jetson Orin, HPC  
-**Systems Programming & Performance**: Lock-Free Data Structures, Concurrency, Memory Safety, Performance Engineering, Low-Latency Systems  
+**Systems Programming & Performance**: Lock-Free Data Structures, Concurrency, Memory Safety, Performance Engineering, Low-Latency Systems, Computer Architecture  
 **Networking**: TCP/IP, mTLS, HTTP/2/3, QUIC, eBPF, XDP, Cilium, Load Balancing  
-**Distributed Systems & Streaming**: Kafka, Spark, CDC, Microservices, gRPC, REST, Protobuf  
-**Cloud & Infra**: AWS (EC2, ECS, EKS, Lambda, CDK), Azure Kubernetes Service (AKS), Google Kubernetes Engine (GKE), Kubernetes, Docker, Helm, Terraform, CI/CD  
+**Distributed Systems & Streaming**: Consensus, Replication, Sharding, Kafka, Spark, CDC, Microservices, gRPC, REST, Protobuf  
+**Cloud & Infra**: AWS (EC2, ECS, EKS, Lambda, Kinesis, EMR, SageMaker, CDK), Azure Kubernetes Service (AKS), Google Kubernetes Engine (GKE), Kubernetes, Docker, Helm, Terraform, Kubebuilder, Istio, CI/CD  
 **Observability**: Prometheus, Grafana, AWS CloudWatch  
 **Data & Storage**: DynamoDB, PostgreSQL, Redis, Amazon Redshift, Amazon S3
 
