@@ -9,16 +9,17 @@ YouTube: [youtube.com/@ArpanPathak](https://www.youtube.com/@ArpanPathak) | Seat
 
 ## SUMMARY
 
-Senior Software Engineer, **8 years**: production-grade **AI inference serving**, distributed **backend microservices**, high-performance systems, and cloud-native infrastructure at **Amazon, Microsoft, Oracle, Razorpay**. Strong **Python, C++, Rust, CUDA**; shipped **BERT inference at 5,000 QPS** (ONNX, INT8) and microservices on **Docker/Kubernetes** with CI/CD. **Passionate about CV & deep learning for road safety**: edge-AI perception on **NVIDIA Jetson Orin** (TensorRT).
+Senior Software Engineer, **8 years**: production-grade **AI inference serving**, distributed **backend microservices**, and cloud-native infrastructure at **Amazon, Microsoft, Oracle, Razorpay**. Strong **Python, C++, Rust, CUDA**; shipped **BERT inference at 5,000 QPS** (ONNX, INT8) and microservices on **Docker/Kubernetes** with CI/CD. **Passionate about CV & deep learning for road safety**: edge-AI perception on **NVIDIA Jetson Orin** (TensorRT).
 
 ---
 
 ## PERSONAL PROJECTS
 
-**Driving-CivicSense: Edge GPU Platform (Rust, CUDA), NVIDIA Jetson Orin Nano** | [github.com/arpanpathak/driving-civicsense-vision-model](https://github.com/arpanpathak/driving-civicsense-vision-model)
+**Driving-CivicSense: Full-Stack Edge AI (Rust, CUDA), NVIDIA Jetson Orin Nano** | [github.com/arpanpathak/driving-civicsense-vision-model](https://github.com/arpanpathak/driving-civicsense-vision-model)
 
-- **YOLOv8/v11 INT8 → TensorRT** engines at **~12 ms** + Deep SORT/Kalman on **NVIDIA Jetson Orin Nano**; real-world 3D scenes, 100% on-device; quantization and latency tuning on NVIDIA silicon.
-- Research paper: **Deterministic Intersection Blockage Prediction** (spatiotemporal) | [paper](https://arpanpathak.github.io/driving-civicsense-vision-model/)
+- **Full-stack data collection**: **50,000 miles** of driving footage across all weather and terrain via vehicle camera sensors; privacy-first, on-device processing on an **NVIDIA Jetson** edge AI platform.
+- **Edge perception**: **YOLOv8/v11 INT8 → TensorRT** at **~12 ms** + Deep SORT/Kalman tracking on NVIDIA silicon.
+- **Research & safety standards**: paper on **Intersection Blockage Prediction** | [paper](https://arpanpathak.github.io/driving-civicsense-vision-model/); studying ISO 26262.
 - Books: **Seeing Machines** · **CUDA Kernels** (Rust-to-CUDA) | [arpanpathak.github.io](https://arpanpathak.github.io/)
 
 ---
@@ -66,7 +67,7 @@ Senior Software Engineer, **8 years**: production-grade **AI inference serving**
 **GPU & Parallel Computing**: CUDA, CUDA-Oxide (Rust-to-CUDA), SIMT, GPU Kernel Programming, NVIDIA Jetson Orin, HPC  
 **Systems Programming & Performance**: Lock-Free Data Structures, Concurrency, Memory Safety, Performance Engineering, Low-Latency Systems, OS Internals, Computer Architecture  
 **Networking**: TCP/IP, TLS, HTTP/2/3, QUIC, eBPF, XDP, Cilium, Load Balancing  
-**Distributed Systems & Streaming**: Consensus, Replication, Sharding, Kafka, Flink, Spark, Spark Streaming, Kinesis, CDC, Microservices, gRPC, REST, Protobuf  
+**Distributed Systems & Streaming**: Consensus, Replication, Sharding, Kafka, Spark, CDC, Microservices, gRPC, REST, Protobuf  
 **Cloud & Infra**: AWS (EC2, ECS, Lambda, Kinesis, EMR, SageMaker), Azure (AKS), Google Cloud, Kubernetes (EKS, AKS), Docker, Terraform, Kubebuilder, Istio, CI/CD  
 **Observability**: Prometheus, Grafana, Azure Monitor, AWS CloudWatch, Trace & Sampling Data  
 **Data & Storage**: DynamoDB, PostgreSQL, Redis, Amazon Redshift, Amazon S3  

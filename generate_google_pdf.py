@@ -773,31 +773,31 @@ if COMPACT:
 for token, value in theme.items():
     CSS = CSS.replace("__" + token + "__", value)
 
-# Modern deep-green material section headings (NVIDIA theme; compact-friendly height)
+# Modern dark-slate + neon-lime section headings (NVIDIA theme; compact-friendly height)
 NVIDIA_HEADING_CSS = """
 .section-heading {
     font-size: 10pt;
-    font-weight: 700;
+    font-weight: 800;
     color: #ffffff;
     text-transform: uppercase;
-    letter-spacing: 1.2px;
-    background: linear-gradient(90deg, #2E5D00 0%, #76B900 100%);
+    letter-spacing: 1.5px;
+    background: linear-gradient(90deg, #0F172A 0%, #1E293B 100%);
     border: none;
-    border-bottom: 2px solid #1E3D00;
+    border-bottom: 2px solid #76B900;
     padding: 3px 12px;
-    margin-top: 8px;
-    margin-bottom: 5px;
-    border-radius: 8px;
-    box-shadow: 0 2px 5px rgba(46, 93, 0, 0.30);
+    margin-top: 6px;
+    margin-bottom: 3px;
+    border-radius: 9px;
+    box-shadow: 0 2px 8px rgba(15, 23, 42, 0.28);
 }
 .section-heading svg {
-    stroke: #ffffff;
-    background: rgba(255, 255, 255, 0.22);
+    stroke: #76B900;
+    background: #ffffff;
     border-radius: 50%;
-    padding: 1.5px;
+    padding: 2px;
     width: 13px;
     height: 13px;
-    margin-right: 6px;
+    margin-right: 8px;
     vertical-align: -2px;
 }
 """
