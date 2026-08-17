@@ -764,6 +764,19 @@ THEMES = {
         "HEADER_SHADOW": "0 1px 3px rgba(0, 0, 0, 0.12)",
         "HEADING_BG": "#f4f9e8", "HEADER_BG": "#f4f9e8",
         "CHIP_BG": "#e8f2d0", "CHIP_BORDER": "#cfe3a0",
+        "HEADING_DARK": "#0F172A", "HEADING_LIGHT": "#1E293B",
+    },
+    "indigo": {
+        "BG": "#ffffff", "TEXT": "#1f2937", "NAME": "#111827", "STRONG": "#111827",
+        "ACCENT": "#4F46E5", "LINK": "#4F46E5", "BOX_BG": "#eef2ff",
+        "DATE": "#6b7280", "METRIC": "#B45309", "METRIC_PCT": "#B91C1C", "METRIC_BG": "#FEF3C7", "METRIC_PCT_BG": "#FEE2E2", "MUTED": "#374151",
+        "TECH": "#4F46E5", "PROJECT": "#4F46E5", "TECH_LABEL": "#6b7280",
+        "SKILL": "#4F46E5",
+        "SHADOW": "0 2px 8px rgba(79, 70, 229, 0.22)",
+        "HEADER_SHADOW": "0 1px 3px rgba(0, 0, 0, 0.10)",
+        "HEADING_BG": "#eef2ff", "HEADER_BG": "#eef2ff",
+        "CHIP_BG": "#e0e7ff", "CHIP_BORDER": "#c7d2fe",
+        "HEADING_DARK": "#312E81", "HEADING_LIGHT": "#6366F1",
     },
 }
 
@@ -773,25 +786,25 @@ if COMPACT:
 for token, value in theme.items():
     CSS = CSS.replace("__" + token + "__", value)
 
-# Modern dark-slate + neon-lime section headings (NVIDIA theme; compact-friendly height)
-NVIDIA_HEADING_CSS = """
+# Modern material section headings (indigo & nvidia themes; token colors, compact-friendly height)
+MODERN_HEADING_CSS = """
 .section-heading {
     font-size: 10pt;
     font-weight: 800;
     color: #ffffff;
     text-transform: uppercase;
     letter-spacing: 1.5px;
-    background: linear-gradient(90deg, #0F172A 0%, #1E293B 100%);
+    background: linear-gradient(90deg, __HEADING_DARK__ 0%, __HEADING_LIGHT__ 100%);
     border: none;
-    border-bottom: 2px solid #76B900;
+    border-bottom: 2px solid __ACCENT__;
     padding: 3px 12px;
     margin-top: 6px;
     margin-bottom: 3px;
     border-radius: 9px;
-    box-shadow: 0 2px 8px rgba(15, 23, 42, 0.28);
+    box-shadow: 0 2px 8px rgba(15, 23, 42, 0.25);
 }
 .section-heading svg {
-    stroke: #76B900;
+    stroke: __ACCENT__;
     background: #ffffff;
     border-radius: 50%;
     padding: 2px;
@@ -802,8 +815,10 @@ NVIDIA_HEADING_CSS = """
 }
 """
 
-if THEME_NAME == "nvidia":
-    CSS += NVIDIA_HEADING_CSS
+if THEME_NAME in ("nvidia", "indigo"):
+    CSS += MODERN_HEADING_CSS
+    for token, value in theme.items():
+        CSS = CSS.replace("__" + token + "__", value)
 
 body_html = convert(md, icon_color=theme["ACCENT"], project_color=theme["PROJECT"],
                     muted_color=theme["MUTED"], tech_color=theme["TECH"], skill_color=theme["SKILL"],

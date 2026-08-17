@@ -18,7 +18,7 @@ Senior Software Engineer, **8 years**: production-grade **AI inference serving**
 **Driving-CivicSense: Full-Stack Edge AI (Rust, CUDA), NVIDIA Jetson Orin Nano Super NX** | [github.com/arpanpathak/driving-civicsense-vision-model](https://github.com/arpanpathak/driving-civicsense-vision-model)
 
 - **Full-stack data collection**: **50,000 miles** of driving footage across all weather and terrain via vehicle camera sensors and **LiDAR**; simulation-driven synthetic data; privacy-first, on-device processing on edge neural chips.
-- **Multi-chip edge deployment**: **YOLOv8/v11 INT8 → TensorRT** at **~12 ms** + Deep SORT/Kalman, tested across **Jetson Orin Nano Super NX**, **Raspberry Pi 5**, **Pi Zero 2 W**, **Orange Pi Zero**.
+- **Multi-chip edge system**: **YOLOv8/v11 INT8 → TensorRT** at **~12 ms** on **Jetson Orin Nano Super NX**; vehicle sensor data streamed to a **Raspberry Pi Zero 2 W UDP server**; also validated on **Raspberry Pi 5** and **Orange Pi Zero**.
 - **Research & safety standards**: paper on **Intersection Blockage Prediction** | [paper](https://arpanpathak.github.io/driving-civicsense-vision-model/); studying ISO 26262.
 - Books: **Seeing Machines** · **CUDA Kernels** (Rust-to-CUDA) | [arpanpathak.github.io](https://arpanpathak.github.io/)
 
