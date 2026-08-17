@@ -1,19 +1,25 @@
 # Arpan Pathak
 
 Seattle, WA | Email: arpan.pathak47@gmail.com | Phone: +1 (206) 306-6059  
-LinkedIn: [linkedin.com/in/arpan-pathak-272341424](https://linkedin.com/in/arpan-pathak-272341424) | GitHub: [github.com/arpanpathak](https://github.com/arpanpathak) | YouTube: [youtube.com/@ArpanPathak](https://www.youtube.com/@ArpanPathak)  
-Seattle-based | Local to NVIDIA Redmond (onsite) | Visa: Requires H1B Transfer sponsorship
+LinkedIn: [linkedin.com/in/arpan-pathak-272341424](https://linkedin.com/in/arpan-pathak-272341424) | GitHub: [github.com/arpanpathak](https://github.com/arpanpathak)  
+YouTube: [youtube.com/@ArpanPathak](https://www.youtube.com/@ArpanPathak) | Seattle-based · Local to NVIDIA Redmond (onsite)  
+**Visa**: Requires H1B Transfer sponsorship
 
-::: project-box
-NVIDIA GPU HOMELAB
-**YOLOv8/v11 INT8 → TensorRT** at **~12 ms** on **NVIDIA Jetson Orin Nano** (Rust, CUDA); real-world 3D scenes, 100% on-device.
-- **Deep SORT/Kalman tracking** · Paper: **Intersection Blockage Prediction** | [paper](https://arpanpathak.github.io/driving-civicsense-vision-model/)
-- Open-source: **Seeing Machines** · **CUDA Kernels** (Rust-to-CUDA) | [github](https://github.com/arpanpathak)
-:::
+---
 
 ## SUMMARY
 
 Senior Software Engineer, **8 years**: production-grade **AI inference serving**, distributed **backend microservices**, and cloud-native infrastructure at **Amazon, Microsoft, Oracle**. Strong **Python, C++, Rust, CUDA**; **BERT inference at 5,000 QPS** (ONNX, INT8) on **Docker/Kubernetes** with CI/CD. **Passionate about CV & deep learning for road safety** — edge-AI perception on **NVIDIA Jetson Orin** (TensorRT).
+
+---
+
+## PERSONAL PROJECTS
+
+**Driving-CivicSense: Edge GPU Platform (Rust, CUDA) — NVIDIA Jetson Orin Nano** | [github.com/arpanpathak/driving-civicsense-vision-model](https://github.com/arpanpathak/driving-civicsense-vision-model)
+
+- **YOLOv8/v11 INT8 → TensorRT** engines at **~12 ms** + Deep SORT/Kalman on **NVIDIA Jetson Orin Nano**; real-world 3D scenes, 100% on-device — quantization and latency tuning on NVIDIA silicon.
+- Research paper: **Deterministic Intersection Blockage Prediction** (spatiotemporal) | [paper](https://arpanpathak.github.io/driving-civicsense-vision-model/)
+- Books: **Seeing Machines** · **CUDA Kernels** (Rust-to-CUDA) | [arpanpathak.github.io](https://arpanpathak.github.io/)
 
 ---
 

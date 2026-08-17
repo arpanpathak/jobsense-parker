@@ -87,6 +87,10 @@ def convert(md_text, icon_color="#0f766e", project_color="#0f766e", muted_color=
         "Observability": "activity",
         "Data & Storage": "database",
         "Core CS": "layers",
+        "AI/ML Inference": "zap",
+        "Backend & Microservices": "plug",
+        "Containerization & Cloud": "cloud",
+        "GPU & CV": "cpu",
     }
 
     for line in lines:
