@@ -9,7 +9,7 @@ YouTube: [youtube.com/@ArpanPathak](https://www.youtube.com/@ArpanPathak) | Seat
 
 ## SUMMARY
 
-Senior Software Engineer, **8 years**: production-grade **AI inference serving**, distributed **backend microservices**, and cloud-native infrastructure at **Amazon, Microsoft, Oracle, Razorpay**. Strong **Python, C++, Rust, CUDA**; shipped **BERT inference at 5,000 QPS** (ONNX, INT8) and microservices on **Docker/Kubernetes** with CI/CD. **Passionate about CV & deep learning for road safety**: edge-AI perception on **NVIDIA Jetson Orin** (TensorRT).
+Senior Software Engineer, **8 years**: **AI inference serving**, distributed **backend microservices**, and cloud-native infrastructure at **Amazon, Microsoft, Oracle, Razorpay**. Strong **Python, C++, Rust, CUDA**; **BERT inference at 5,000 QPS** (ONNX, INT8) on **Docker/Kubernetes** with CI/CD; passionate about **CV & deep learning for road safety** on **NVIDIA Jetson Orin** (TensorRT).
 
 ---
 
@@ -18,10 +18,10 @@ Senior Software Engineer, **8 years**: production-grade **AI inference serving**
 **Driving-CivicSense: Full-Stack Edge AI (Rust, CUDA), NVIDIA Jetson Orin Nano Super NX** | [github.com/arpanpathak/driving-civicsense-vision-model](https://github.com/arpanpathak/driving-civicsense-vision-model)
 
 - **Full-stack data collection**: **50,000 miles** of driving footage across all weather and terrain via vehicle camera sensors and **LiDAR**; simulation-driven synthetic data; privacy-first, on-device processing on edge neural chips.
-- **Multi-chip edge system**: **YOLOv8/v11 INT8 → TensorRT** at **~12 ms** on **Jetson Orin Nano Super NX**; vehicle sensor data streamed to a **Raspberry Pi Zero 2 W UDP server**; also validated on **Raspberry Pi 5** and **Orange Pi Zero**.
+- **Multi-chip edge system**: **YOLOv8/v11 INT8 → TensorRT** at **~12 ms** on **Jetson Orin Nano Super NX**; sensor data streamed to a **Raspberry Pi Zero 2 W UDP server**; validated on **Raspberry Pi 5** and **Orange Pi Zero**.
 - **Containerized VLM inference**: building edge VLM serving with **vLLM** and **TensorRT-LLM** in Docker containers on the Jetson.
 - **CUDA-Oxide (Rust-to-CUDA)**: contributing GPU kernels and documentation fixes (unsafe intrinsics wrapped in explicit unsafe blocks); pushing Jetson limits with idiomatic, memory-safe, fearlessly concurrent kernels.
-- **Research & safety standards**: paper on **Intersection Blockage Prediction** | [paper](https://arpanpathak.github.io/driving-civicsense-vision-model/); studying ISO 26262. Books: **Seeing Machines** · **CUDA Kernels** | [arpanpathak.github.io](https://arpanpathak.github.io/)
+- **Research & safety standards**: paper on **Intersection Blockage Prediction** | [paper](https://arpanpathak.github.io/driving-civicsense-vision-model/); studying ISO 26262. Books: **Seeing Machines** · **CUDA Kernels** | [site](https://arpanpathak.github.io/)
 
 ---
 
@@ -64,13 +64,14 @@ Senior Software Engineer, **8 years**: production-grade **AI inference serving**
 ## SKILLS
 
 **Languages**: Python, C++, Rust, Go, Java, Kotlin, C, Shell/Bash  
-**AI/ML Inference**: Deep Learning, Computer Vision, PyTorch, XGBoost, BERT, LLMs, ONNX Runtime, TensorRT (INT8), vLLM, SGLang, TensorRT-LLM, YOLOv8/v11, Edge Inference, Quantization, MLOps  
+**AI/ML Inference**: Computer Vision, PyTorch, LLMs, ONNX Runtime, TensorRT (INT8), vLLM, SGLang, TensorRT-LLM, YOLOv8/v11, MLOps  
 **GPU & Parallel Computing**: CUDA, CUDA-Oxide (Rust-to-CUDA), SIMT, GPU Kernel Programming, NVIDIA Jetson Orin, HPC  
-**Systems Programming & Performance**: Lock-Free Data Structures, Concurrency, Memory Safety, Performance Engineering, Low-Latency Systems, Computer Architecture  
+**Systems Programming & Performance**: Lock-Free Data Structures, Concurrency, Memory Safety, Performance Engineering, Low-Latency Systems  
 **Networking**: TCP/IP, mTLS, HTTP/2/3, QUIC, eBPF, XDP, Cilium, Load Balancing  
-**Distributed Systems & Streaming**: Consensus, Replication, Sharding, Kafka, Spark, CDC, Microservices, gRPC, REST, Protobuf  
-**Cloud & Infra**: AWS (EC2, ECS, EKS, Lambda, Kinesis, EMR, SageMaker, CDK), Azure Kubernetes Service (AKS), Google Kubernetes Engine (GKE), Kubernetes, Docker, Helm, Terraform, Kubebuilder, Istio, CI/CD  
-**Observability**: Prometheus, Grafana, AWS CloudWatch
+**Distributed Systems & Streaming**: Kafka, Spark, CDC, Microservices, gRPC, REST, Protobuf  
+**Cloud & Infra**: AWS (EC2, ECS, EKS, Lambda, CDK), Azure Kubernetes Service (AKS), Google Kubernetes Engine (GKE), Kubernetes, Docker, Helm, Terraform, CI/CD  
+**Observability**: Prometheus, Grafana, AWS CloudWatch  
+**Data & Storage**: DynamoDB, PostgreSQL, Redis, Amazon Redshift, Amazon S3
 
 ---
 
