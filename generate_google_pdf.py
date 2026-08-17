@@ -339,8 +339,8 @@ p.bullet-sm strong {
     letter-spacing: 0.8px;
     border-bottom: 2px solid __ACCENT__;
     padding: 3px 10px;
-    margin-top: 6px;
-    margin-bottom: 3px;
+    margin-top: 10px;
+    margin-bottom: 4px;
     border-radius: 4px;
     box-shadow: __HEADER_SHADOW__;
     background: linear-gradient(90deg, __HEADING_BG__ 55%, transparent);
@@ -351,7 +351,7 @@ p.bullet-sm strong {
     align-items: baseline;
     column-gap: 6px;
     font-size: 10pt;
-    margin: 3px 0 1px 0;
+    margin: 2px 0 1px 0;
     line-height: 1.05;
     padding: 2px 8px;
     border-radius: 6px;
@@ -394,13 +394,13 @@ p.skill-group strong {
 p.bullet {
     margin: 0 0 1px 16px;
     font-size: 9pt;
-    line-height: 1.0;
+    line-height: 0.98;
     text-indent: -8px;
 }
 
 p.techstack-box {
-    margin: 1px 0 3px 16px;
-    line-height: 1.1;
+    margin: 1px 0 2px 16px;
+    line-height: 1.08;
 }
 span.techstack-label {
     font-style: italic;
