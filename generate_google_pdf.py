@@ -91,6 +91,7 @@ def convert(md_text, icon_color="#0f766e", project_color="#0f766e", muted_color=
         "Backend & Microservices": "plug",
         "Containerization & Cloud": "cloud",
         "GPU & CV": "cpu",
+        "Networking & Cloud Security": "lock",
     }
 
     for line in lines:
@@ -226,7 +227,7 @@ COMPACT_CSS = """
 body {
     font-family: 'Avenir Next', 'Avenir', 'Helvetica Neue', Helvetica, Arial, sans-serif;
     font-size: 9pt;
-    line-height: 1.02;
+    line-height: 1.0;
     color: __TEXT__;
     background: __BG__;
     margin: 0;
@@ -337,8 +338,8 @@ p.bullet-sm strong {
     letter-spacing: 0.8px;
     border-bottom: 2px solid __ACCENT__;
     padding: 3px 10px;
-    margin-top: 8px;
-    margin-bottom: 4px;
+    margin-top: 6px;
+    margin-bottom: 3px;
     border-radius: 4px;
     box-shadow: __HEADER_SHADOW__;
     background: linear-gradient(90deg, __HEADING_BG__ 55%, transparent);
@@ -349,7 +350,7 @@ p.bullet-sm strong {
     align-items: baseline;
     column-gap: 6px;
     font-size: 10pt;
-    margin: 4px 0 1px 0;
+    margin: 3px 0 1px 0;
     line-height: 1.05;
     padding: 2px 8px;
     border-radius: 6px;
@@ -378,7 +379,7 @@ p.bullet-sm strong {
 p {
     margin: 1px 0;
     font-size: 9pt;
-    line-height: 1.02;
+    line-height: 1.0;
 }
 
 p.skill-group {
@@ -397,7 +398,7 @@ p.bullet {
 }
 
 p.techstack-box {
-    margin: 1px 0 5px 16px;
+    margin: 1px 0 3px 16px;
     line-height: 1.1;
 }
 span.techstack-label {
