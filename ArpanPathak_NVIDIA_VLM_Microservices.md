@@ -69,7 +69,7 @@ Senior Software Engineer, **8 years**: production-grade **AI inference serving**
 **Networking**: TCP/IP, mTLS, HTTP/2/3, QUIC, eBPF, XDP, Cilium, Load Balancing  
 **Distributed Systems & Streaming**: Consensus, Replication, Sharding, Kafka, Spark, CDC, Microservices, gRPC, REST, Protobuf  
 **Cloud & Infra**: AWS (EC2, ECS, EKS, Lambda, Kinesis, EMR, SageMaker, CDK), Azure Kubernetes Service (AKS), Google Kubernetes Engine (GKE), Kubernetes, Docker, Helm, Terraform, Kubebuilder, Istio, CI/CD  
-**Observability**: Prometheus, Grafana, Azure Monitor, AWS CloudWatch, Trace & Sampling Data  
+**Observability**: Prometheus, Grafana, AWS CloudWatch
 **Data & Storage**: DynamoDB, PostgreSQL, Redis, Amazon Redshift, Amazon S3
 
 ---
