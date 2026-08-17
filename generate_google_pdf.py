@@ -752,6 +752,17 @@ THEMES = {
         "HEADING_BG": "#f1f5f9", "HEADER_BG": "#f1f5f9",
         "CHIP_BG": "#d9efea", "CHIP_BORDER": "#a9d8cd",
     },
+    "nvidia": {
+        "BG": "#ffffff", "TEXT": "#1a1a1a", "NAME": "#111111", "STRONG": "#111111",
+        "ACCENT": "#76B900", "LINK": "#76B900", "BOX_BG": "#f6faf0",
+        "DATE": "#5F6368", "METRIC": "#4d7c00", "METRIC_PCT": "#B91C1C", "METRIC_BG": "#eef6db", "METRIC_PCT_BG": "#FEE2E2", "MUTED": "#222222",
+        "TECH": "#4d7c00", "PROJECT": "#76B900", "TECH_LABEL": "#5F6368",
+        "SKILL": "#76B900",
+        "SHADOW": "4px 4px 14px rgba(118, 185, 0, 0.20), 1px 1px 4px rgba(0, 0, 0, 0.08)",
+        "HEADER_SHADOW": "0 1px 3px rgba(0, 0, 0, 0.12)",
+        "HEADING_BG": "#f4f9e8", "HEADER_BG": "#f4f9e8",
+        "CHIP_BG": "#e8f2d0", "CHIP_BORDER": "#cfe3a0",
+    },
 }
 
 theme = THEMES.get(THEME_NAME, THEMES["google"])
