@@ -19,8 +19,8 @@ Senior Software Engineer, **8 years**: production-grade **AI inference serving**
 
 - **Full-stack data collection**: **50,000 miles** of driving footage across all weather and terrain via vehicle camera sensors and **LiDAR**; simulation-driven synthetic data; privacy-first, on-device processing on edge neural chips.
 - **Multi-chip edge system**: **YOLOv8/v11 INT8 → TensorRT** at **~12 ms** on **Jetson Orin Nano Super NX**; vehicle sensor data streamed to a **Raspberry Pi Zero 2 W UDP server**; also validated on **Raspberry Pi 5** and **Orange Pi Zero**.
-- **Research & safety standards**: paper on **Intersection Blockage Prediction** | [paper](https://arpanpathak.github.io/driving-civicsense-vision-model/); studying ISO 26262.
-- Books: **Seeing Machines** · **CUDA Kernels** (Rust-to-CUDA) | [arpanpathak.github.io](https://arpanpathak.github.io/)
+- **Containerized VLM inference**: building edge VLM serving with **vLLM** and **TensorRT-LLM** in Docker containers on the Jetson.
+- **Research & safety standards**: paper on **Intersection Blockage Prediction** | [paper](https://arpanpathak.github.io/driving-civicsense-vision-model/); studying ISO 26262. Books: **Seeing Machines** · **CUDA Kernels** | [arpanpathak.github.io](https://arpanpathak.github.io/)
 
 ---
 
@@ -63,15 +63,14 @@ Senior Software Engineer, **8 years**: production-grade **AI inference serving**
 ## SKILLS
 
 **Languages**: Python, C++, Rust, Go, Java, Kotlin, C, Shell/Bash  
-**AI/ML Inference**: Deep Learning, Computer Vision, PyTorch, XGBoost, BERT, LLMs, ONNX Runtime, TensorRT (INT8), YOLOv8/v11, Edge Inference, Quantization, MLOps  
+**AI/ML Inference**: Deep Learning, Computer Vision, PyTorch, XGBoost, BERT, LLMs, ONNX Runtime, TensorRT (INT8), vLLM, SGLang, TensorRT-LLM, YOLOv8/v11, Edge Inference, Quantization, MLOps  
 **GPU & Parallel Computing**: CUDA, CUDA-Oxide (Rust-to-CUDA), SIMT, GPU Kernel Programming, NVIDIA Jetson Orin, HPC  
 **Systems Programming & Performance**: Lock-Free Data Structures, Concurrency, Memory Safety, Performance Engineering, Low-Latency Systems, Computer Architecture  
 **Networking**: TCP/IP, TLS, HTTP/2/3, QUIC, eBPF, XDP, Cilium, Load Balancing  
 **Distributed Systems & Streaming**: Consensus, Replication, Sharding, Kafka, Spark, CDC, Microservices, gRPC, REST, Protobuf  
-**Cloud & Infra**: AWS (EC2, ECS, Lambda, Kinesis, EMR, SageMaker), Azure (AKS), Google Cloud, Kubernetes (EKS, AKS), Docker, Terraform, Kubebuilder, Istio, CI/CD  
+**Cloud & Infra**: AWS (EC2, ECS, Lambda, Kinesis, EMR, SageMaker), Azure (AKS), Google Cloud, Kubernetes (EKS, AKS), Docker, Helm, Terraform, Kubebuilder, Istio, CI/CD  
 **Observability**: Prometheus, Grafana, Azure Monitor, AWS CloudWatch, Trace & Sampling Data  
-**Data & Storage**: DynamoDB, PostgreSQL, Redis, Amazon Redshift, Amazon S3  
-**Core CS**: System Design, Operating Systems, Linux
+**Data & Storage**: DynamoDB, PostgreSQL, Redis, Amazon Redshift, Amazon S3
 
 ---
 
