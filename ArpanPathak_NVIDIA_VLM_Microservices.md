@@ -20,7 +20,7 @@ Senior Software Engineer, **8 years**: production-grade **AI inference serving**
 - **Full-stack data collection**: **50,000 miles** of driving footage across all weather and terrain via vehicle camera sensors and **LiDAR**; simulation-driven synthetic data; privacy-first, on-device processing on edge neural chips.
 - **Multi-chip edge system**: **YOLOv8/v11 INT8 → TensorRT** at **~12 ms** on **Jetson Orin Nano Super NX**; vehicle sensor data streamed to a **Raspberry Pi Zero 2 W UDP server**; also validated on **Raspberry Pi 5** and **Orange Pi Zero**.
 - **Containerized VLM inference**: building edge VLM serving with **vLLM** and **TensorRT-LLM** in Docker containers on the Jetson.
-- **CUDA-Oxide (Rust-to-CUDA)**: contributing open-source GPU kernels; pushing Jetson limits with idiomatic, memory-safe, fearlessly concurrent kernels for scientific computing.
+- **CUDA-Oxide (Rust-to-CUDA)**: contributing GPU kernels and documentation fixes (unsafe intrinsics wrapped in explicit unsafe blocks); pushing Jetson limits with idiomatic, memory-safe, fearlessly concurrent kernels.
 - **Research & safety standards**: paper on **Intersection Blockage Prediction** | [paper](https://arpanpathak.github.io/driving-civicsense-vision-model/); studying ISO 26262. Books: **Seeing Machines** · **CUDA Kernels** | [arpanpathak.github.io](https://arpanpathak.github.io/)
 
 ---
