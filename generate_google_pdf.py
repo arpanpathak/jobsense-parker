@@ -92,6 +92,7 @@ def convert(md_text, icon_color="#0f766e", project_color="#0f766e", muted_color=
         "Containerization & Cloud": "cloud",
         "GPU & CV": "cpu",
         "Networking & Cloud Security": "lock",
+        "Networking": "globe",
     }
 
     for line in lines:
@@ -771,6 +772,38 @@ if COMPACT:
     CSS = COMPACT_CSS
 for token, value in theme.items():
     CSS = CSS.replace("__" + token + "__", value)
+
+# Modern deep-green material section headings (NVIDIA theme; compact-friendly height)
+NVIDIA_HEADING_CSS = """
+.section-heading {
+    font-size: 10pt;
+    font-weight: 700;
+    color: #ffffff;
+    text-transform: uppercase;
+    letter-spacing: 1.2px;
+    background: linear-gradient(90deg, #2E5D00 0%, #76B900 100%);
+    border: none;
+    border-bottom: 2px solid #1E3D00;
+    padding: 3px 12px;
+    margin-top: 8px;
+    margin-bottom: 5px;
+    border-radius: 8px;
+    box-shadow: 0 2px 5px rgba(46, 93, 0, 0.30);
+}
+.section-heading svg {
+    stroke: #ffffff;
+    background: rgba(255, 255, 255, 0.22);
+    border-radius: 50%;
+    padding: 1.5px;
+    width: 13px;
+    height: 13px;
+    margin-right: 6px;
+    vertical-align: -2px;
+}
+"""
+
+if THEME_NAME == "nvidia":
+    CSS += NVIDIA_HEADING_CSS
 
 body_html = convert(md, icon_color=theme["ACCENT"], project_color=theme["PROJECT"],
                     muted_color=theme["MUTED"], tech_color=theme["TECH"], skill_color=theme["SKILL"],
