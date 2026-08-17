@@ -66,9 +66,9 @@ Senior Software Engineer, **8 years**: production-grade **AI inference serving**
 **AI/ML Inference**: Deep Learning, Computer Vision, PyTorch, XGBoost, BERT, LLMs, ONNX Runtime, TensorRT (INT8), vLLM, SGLang, TensorRT-LLM, YOLOv8/v11, Edge Inference, Quantization, MLOps  
 **GPU & Parallel Computing**: CUDA, CUDA-Oxide (Rust-to-CUDA), SIMT, GPU Kernel Programming, NVIDIA Jetson Orin, HPC  
 **Systems Programming & Performance**: Lock-Free Data Structures, Concurrency, Memory Safety, Performance Engineering, Low-Latency Systems, Computer Architecture  
-**Networking**: TCP/IP, TLS, HTTP/2/3, QUIC, eBPF, XDP, Cilium, Load Balancing  
+**Networking**: TCP/IP, mTLS, HTTP/2/3, QUIC, eBPF, XDP, Cilium, Load Balancing  
 **Distributed Systems & Streaming**: Consensus, Replication, Sharding, Kafka, Spark, CDC, Microservices, gRPC, REST, Protobuf  
-**Cloud & Infra**: AWS (EC2, ECS, Lambda, Kinesis, EMR, SageMaker), Azure (AKS), Google Cloud, Kubernetes (EKS, AKS), Docker, Helm, Terraform, Kubebuilder, Istio, CI/CD  
+**Cloud & Infra**: AWS (EC2, ECS, EKS, Lambda, Kinesis, EMR, SageMaker, CDK), Azure Kubernetes Service (AKS), Google Kubernetes Engine (GKE), Kubernetes, Docker, Helm, Terraform, Kubebuilder, Istio, CI/CD  
 **Observability**: Prometheus, Grafana, Azure Monitor, AWS CloudWatch, Trace & Sampling Data  
 **Data & Storage**: DynamoDB, PostgreSQL, Redis, Amazon Redshift, Amazon S3
 
