@@ -9,7 +9,7 @@ YouTube: [youtube.com/@ArpanPathak](https://www.youtube.com/@ArpanPathak) | Seat
 
 ## SUMMARY
 
-Senior Software Engineer, **8 years**: **AI inference serving**, **backend microservices**, cloud-native infrastructure at **Amazon, Microsoft, Oracle, Razorpay**. Strong **Python, C++, Rust, CUDA**; **BERT inference at 5,000 QPS** (ONNX, INT8) on **Docker/Kubernetes** with CI/CD; passionate about **CV/DL for road safety** on **NVIDIA Jetson Orin** (TensorRT).
+Senior Software Engineer, **8 years**: **AI inference serving**, **backend microservices**, cloud-native infrastructure at **Amazon, Microsoft, Oracle, Razorpay**. Strong **Python**, **modern memory-safe C++**, **Rust**, **CUDA**; **BERT inference at 5,000 QPS** (ONNX, INT8) on **Docker/Kubernetes** with CI/CD; passionate about **CV/DL for road safety** on **NVIDIA Jetson Orin** (TensorRT).
 
 ---
 
