@@ -15,10 +15,10 @@ Senior Software Engineer, **8 years**: production-grade **AI inference serving**
 
 ## PERSONAL PROJECTS
 
-**Driving-CivicSense: Full-Stack Edge AI (Rust, CUDA), NVIDIA Jetson Orin Nano** | [github.com/arpanpathak/driving-civicsense-vision-model](https://github.com/arpanpathak/driving-civicsense-vision-model)
+**Driving-CivicSense: Full-Stack Edge AI (Rust, CUDA), NVIDIA Jetson Orin Nano Super NX** | [github.com/arpanpathak/driving-civicsense-vision-model](https://github.com/arpanpathak/driving-civicsense-vision-model)
 
-- **Full-stack data collection**: **50,000 miles** of driving footage across all weather and terrain via vehicle camera sensors; privacy-first, on-device processing on an **NVIDIA Jetson** edge AI platform.
-- **Edge perception**: **YOLOv8/v11 INT8 → TensorRT** at **~12 ms** + Deep SORT/Kalman tracking on NVIDIA silicon.
+- **Full-stack data collection**: **50,000 miles** of driving footage across all weather and terrain via vehicle camera sensors and **LiDAR**; simulation-driven synthetic data; privacy-first, on-device processing on edge neural chips.
+- **Multi-chip edge deployment**: **YOLOv8/v11 INT8 → TensorRT** at **~12 ms** + Deep SORT/Kalman, tested across **Jetson Orin Nano Super NX**, **Raspberry Pi 5**, **Pi Zero 2 W**, **Orange Pi Zero**.
 - **Research & safety standards**: paper on **Intersection Blockage Prediction** | [paper](https://arpanpathak.github.io/driving-civicsense-vision-model/); studying ISO 26262.
 - Books: **Seeing Machines** · **CUDA Kernels** (Rust-to-CUDA) | [arpanpathak.github.io](https://arpanpathak.github.io/)
 
@@ -63,9 +63,9 @@ Senior Software Engineer, **8 years**: production-grade **AI inference serving**
 ## SKILLS
 
 **Languages**: Python, C++, Rust, Go, Java, Kotlin, C, Shell/Bash  
-**AI/ML Inference**: Deep Learning, Computer Vision, PyTorch, TensorFlow, XGBoost, BERT, LLMs, ONNX Runtime, TensorRT (INT8), YOLOv8/v11, CNN, NLP, Edge Inference, Quantization, MLOps  
+**AI/ML Inference**: Deep Learning, Computer Vision, PyTorch, XGBoost, BERT, LLMs, ONNX Runtime, TensorRT (INT8), YOLOv8/v11, Edge Inference, Quantization, MLOps  
 **GPU & Parallel Computing**: CUDA, CUDA-Oxide (Rust-to-CUDA), SIMT, GPU Kernel Programming, NVIDIA Jetson Orin, HPC  
-**Systems Programming & Performance**: Lock-Free Data Structures, Concurrency, Memory Safety, Performance Engineering, Low-Latency Systems, OS Internals, Computer Architecture  
+**Systems Programming & Performance**: Lock-Free Data Structures, Concurrency, Memory Safety, Performance Engineering, Low-Latency Systems, Computer Architecture  
 **Networking**: TCP/IP, TLS, HTTP/2/3, QUIC, eBPF, XDP, Cilium, Load Balancing  
 **Distributed Systems & Streaming**: Consensus, Replication, Sharding, Kafka, Spark, CDC, Microservices, gRPC, REST, Protobuf  
 **Cloud & Infra**: AWS (EC2, ECS, Lambda, Kinesis, EMR, SageMaker), Azure (AKS), Google Cloud, Kubernetes (EKS, AKS), Docker, Terraform, Kubebuilder, Istio, CI/CD  
