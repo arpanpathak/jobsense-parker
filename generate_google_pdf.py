@@ -9,6 +9,7 @@ MD_FILE = sys.argv[1] if len(sys.argv) > 1 else "/Users/arpanpathak/Projects/rus
 THEME_NAME = sys.argv[2] if len(sys.argv) > 2 else "google"
 NO_ICONS = "--no-icons" in sys.argv
 COMPACT = "--compact" in sys.argv
+PLAIN = "--plain" in sys.argv
 PDF_FILE = MD_FILE.replace(".md", ".pdf")
 
 with open(MD_FILE, "r") as f:
@@ -67,7 +68,7 @@ def svg_icon(name, color, size=11):
     )
 
 
-def convert(md_text, icon_color="#0f766e", project_color="#0f766e", muted_color="#475569", tech_color="#0f766e", skill_color="#b45309", show_icons=True, heading_icon_color=None):
+def convert(md_text, icon_color="#0f766e", project_color="#0f766e", muted_color="#475569", tech_color="#0f766e", skill_color="#b45309", show_icons=True, heading_icon_color=None, highlight=True):
     """Convert markdown to clean HTML with proper link rendering."""
     lines = md_text.split("\n")
     html = []
@@ -211,7 +212,7 @@ def convert(md_text, icon_color="#0f766e", project_color="#0f766e", muted_color=
 
     lines_out = []
     for line in result.split("\n"):
-        if not line.strip().startswith("<div class=") and "project" not in line:
+        if highlight and not line.strip().startswith("<div class=") and "project" not in line:
             line = highlight_metrics(line)
         lines_out.append(line)
     result = "\n".join(lines_out)
@@ -453,15 +454,15 @@ span.metric-pct {
     margin: 4px 0 2px 0;
 }
 .no-icons .section-heading {
-    margin-top: 8px;
+    margin-top: 6px;
     padding: 3px 10px;
-    margin-bottom: 5px;
+    margin-bottom: 4px;
 }
 .no-icons .contact-item {
     font-size: 8.5pt;
 }
 .no-icons .skill-group {
-    margin: 3px 0 2px 0;
+    margin: 2px 0 2px 0;
 }
 """
 
@@ -778,6 +779,17 @@ THEMES = {
         "CHIP_BG": "#e0e7ff", "CHIP_BORDER": "#c7d2fe",
         "HEADING_DARK": "#312E81", "HEADING_LIGHT": "#6366F1",
     },
+    "clean": {
+        "BG": "#ffffff", "TEXT": "#111111", "NAME": "#111111", "STRONG": "#111111",
+        "ACCENT": "#333333", "LINK": "#333333", "BOX_BG": "#ffffff",
+        "DATE": "#444444", "METRIC": "#111111", "METRIC_PCT": "#111111",
+        "METRIC_BG": "#ffffff", "METRIC_PCT_BG": "#ffffff", "MUTED": "#333333",
+        "TECH": "#111111", "PROJECT": "#111111", "TECH_LABEL": "#444444",
+        "SKILL": "#111111",
+        "SHADOW": "none", "HEADER_SHADOW": "none",
+        "HEADING_BG": "#f4f4f4", "HEADER_BG": "#fafafa",
+        "CHIP_BG": "#f5f5f5", "CHIP_BORDER": "#cccccc",
+    },
 }
 
 theme = THEMES.get(THEME_NAME, THEMES["google"])
@@ -823,7 +835,8 @@ if THEME_NAME in ("nvidia", "indigo"):
 body_html = convert(md, icon_color=theme["ACCENT"], project_color=theme["PROJECT"],
                     muted_color=theme["MUTED"], tech_color=theme["TECH"], skill_color=theme["SKILL"],
                     show_icons=not NO_ICONS,
-                    heading_icon_color="#ffffff" if THEME_NAME in ("nvidia", "indigo") else None)
+                    heading_icon_color="#ffffff" if THEME_NAME in ("nvidia", "indigo") else None,
+                    highlight=not PLAIN)
 
 body_class = " class=\"no-icons\"" if NO_ICONS else ""
 full_html = f"""<!DOCTYPE html>

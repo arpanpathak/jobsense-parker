@@ -2,7 +2,7 @@
 
 Seattle, WA | Email: arpan.pathak47@gmail.com | Phone: +1 (206) 306-6059  
 LinkedIn: [linkedin.com/in/arpan-pathak-272341424](https://linkedin.com/in/arpan-pathak-272341424) | GitHub: [github.com/arpanpathak](https://github.com/arpanpathak)  
-YouTube: [youtube.com/@ArpanPathak](https://www.youtube.com/@ArpanPathak) | Seattle-based · Local to NVIDIA Redmond (onsite)  
+YouTube: [youtube.com/@ArpanPathak](https://www.youtube.com/@ArpanPathak)  
 **Visa**: Requires H1B Transfer sponsorship
 
 ---
