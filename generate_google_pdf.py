@@ -351,9 +351,9 @@ p.bullet-sm strong {
     align-items: baseline;
     column-gap: 6px;
     font-size: 10pt;
-    margin: 1px 0 1px 0;
+    margin: 8px 0 1px 0;
     line-height: 1.05;
-    padding: 2px 8px;
+    padding: 1px 8px;
     border-radius: 6px;
     border-left: 3px solid __ACCENT__;
     background: __HEADER_BG__;
@@ -399,7 +399,7 @@ p.bullet {
 }
 
 p.techstack-box {
-    margin: 1px 0 2px 16px;
+    margin: 1px 0 1px 16px;
     line-height: 1.08;
 }
 span.techstack-label {
@@ -797,8 +797,8 @@ MODERN_HEADING_CSS = """
     background: linear-gradient(90deg, __HEADING_BG__ 0%, #ffffff 100%);
     border: none;
     border-bottom: 3px solid __ACCENT__;
-    padding: 2px 12px;
-    margin-top: 8px;
+    padding: 1px 12px;
+    margin-top: 7px;
     margin-bottom: 4px;
     border-radius: 8px;
     box-shadow: 0 1px 4px rgba(0, 0, 0, 0.08);
