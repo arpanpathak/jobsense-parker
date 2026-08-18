@@ -29,10 +29,10 @@ Senior Software Engineer with **8 years** building **AI inference serving**, **b
 
 ### Software Developer II | **Microsoft**, Redmond, WA | Jun 2025 – Aug 2026
 
+- Built zero-trust sovereign-cloud networking with eBPF + Cilium enforcing **data residency** and SecNumCloud compliance, and wrote Kubebuilder operators that reconcile state across AKS clusters in France and Germany.
 - Built and maintained **data loss prevention (DLP)** and **data lifecycle management** services with a **C#/.NET** backend.
 - Refactored a **legacy C++ codebase** with **modern C++** memory practices such as **smart pointers** and **RAII**, fixing **use-after-free** and **buffer-overflow** vulnerabilities to harden memory safety.
-- Wrote **Python** scripts to automate internal workflows and cut manual effort.
-- TechStack: **C++, C#, .NET, Python, Kubernetes, Docker, CI/CD, Linux**
+- TechStack: **C++, C#, .NET, Python, Kubernetes, Cilium, eBPF, Docker, CI/CD, Linux**
 
 ### Senior Software Engineer | **Oracle Cloud Infrastructure**, Seattle, WA | Oct 2024 – Mar 2025
 
