@@ -55,7 +55,7 @@ Senior Software Engineer, **8 years**: **AI inference serving**, **backend micro
 
 - **Backend Microservices**: P2P Unified Payments Gateway (Go, Protobuf/gRPC): **3M+ transactions/hour** peak, **99.99% uptime**, **150ms P99**; customers: **Zomato, Swiggy, Zerodha, Groww** (AWS, GCP).
 
-### Software Engineer | **Mindfire**, Bhubaneswar, India | Aug 2018 – Feb 2020
+### Software Engineer | **Mindfire Solutions**, Bhubaneswar, India | Aug 2018 – Feb 2020
 
 - Java/Spring full-stack tools; AR product-search microservice (**10K+ daily queries**).
 

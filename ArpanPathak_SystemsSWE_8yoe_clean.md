@@ -55,7 +55,7 @@ Senior Software Engineer with **8 years** building **AI inference serving**, **b
 
 - Built the P2P Unified Payments Gateway in Go with Protobuf/gRPC, sustaining **3M+ transactions/hour** at peak with **99.99% uptime** and **150ms P99** for customers like **Zomato, Swiggy, Zerodha, and Groww** on AWS and GCP.
 
-### Software Engineer | **Mindfire**, Bhubaneswar, India | Aug 2018 – Feb 2020
+### Software Engineer | **Mindfire Solutions**, Bhubaneswar, India | Aug 2018 – Feb 2020
 
 - Built Java/Spring full-stack tools and an AR product-search microservice handling **10K+ daily queries**.
 
