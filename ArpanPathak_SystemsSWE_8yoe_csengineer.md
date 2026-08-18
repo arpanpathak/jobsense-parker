@@ -29,15 +29,15 @@ Senior Software Engineer, **8 years**: **AI inference serving**, **backend micro
 
 ### Software Developer II | **Microsoft**, Redmond, WA | Jun 2025 – Aug 2026
 
-- **Containerized Cloud Infrastructure**: zero-trust sovereign-cloud networking with eBPF + Cilium enforcing **data residency** & SecNumCloud compliance; Kubebuilder operators reconcile state across AKS clusters (France, Germany).
-- **Systems Performance**: owned the **C++/C# → Rust** migration of Microsoft Information Protection; eliminated use-after-free/buffer-overflow/null-safety bugs; **~40% lower P99**, **2x throughput**, **3x lower memory**, six-figure savings.
-- **Automation**: AI engine auto-generating Cilium policies and scanning misconfigurations; review **4 hours → near-real-time**, zero drift.
-- TechStack: **Rust, C++, Python, eBPF, XDP, Cilium, Kubernetes (AKS), Docker, CI/CD, Linux**
+- **Data Protection Services**: built and maintained **data loss prevention (DLP)** and **data lifecycle management** services with a **C#/.NET** backend.
+- **Memory Safety (C++)**: refactored a **legacy C++ codebase** with **modern C++** practices (**smart pointers**, **RAII**), fixing **use-after-free** and **buffer-overflow** vulnerabilities.
+- **Automation**: wrote **Python** scripts to automate internal workflows and cut manual effort.
+- TechStack: **C++, C#, .NET, Python, Kubernetes, Docker, CI/CD, Linux**
 
 ### Senior Software Engineer | **Oracle Cloud Infrastructure**, Seattle, WA | Oct 2024 – Mar 2025
 
 - **Backend Services & SDKs**: owned the **Terraform provider** (developer SDK) for Autonomous Database, replacing legacy control-plane tooling; **$1.2M/month** projected savings.
-- **High-Performance Systems**: lock-free data structures cutting contention in high-concurrency read-write paths; **+45,000 ops/s**.
+- **High-Performance Systems**: lock-free data structures reducing contention and latency in high-concurrency read-write paths.
 - **Security & Key Management**: integrated OCI Security Vault with automated key rotation across control-plane services.
 - TechStack: **Java, Go, REST/gRPC, Terraform, OCI**
 

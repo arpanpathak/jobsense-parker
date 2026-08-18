@@ -29,15 +29,15 @@ Senior Software Engineer with **8 years** building **AI inference serving**, **b
 
 ### Software Developer II | **Microsoft**, Redmond, WA | Jun 2025 – Aug 2026
 
-- Built zero-trust sovereign-cloud networking with eBPF + Cilium that enforces **data residency** and SecNumCloud compliance, and wrote Kubebuilder operators that reconcile state across AKS clusters in France and Germany.
-- Owned the **C++/C# → Rust** migration of Microsoft Information Protection, eliminated use-after-free, buffer-overflow, and null-safety bugs, and delivered **~40% lower P99**, **2x throughput**, **3x lower memory**, and six-figure savings.
-- Built an AI engine that auto-generates Cilium policies and scans misconfigurations, cutting policy review from **4 hours to near-real-time** with zero drift.
-- TechStack: **Rust, C++, Python, eBPF, XDP, Cilium, Kubernetes (AKS), Docker, CI/CD, Linux**
+- Built and maintained **data loss prevention (DLP)** and **data lifecycle management** services with a **C#/.NET** backend.
+- Refactored a **legacy C++ codebase** with **modern C++** memory practices such as **smart pointers** and **RAII**, fixing **use-after-free** and **buffer-overflow** vulnerabilities to harden memory safety.
+- Wrote **Python** scripts to automate internal workflows and cut manual effort.
+- TechStack: **C++, C#, .NET, Python, Kubernetes, Docker, CI/CD, Linux**
 
 ### Senior Software Engineer | **Oracle Cloud Infrastructure**, Seattle, WA | Oct 2024 – Mar 2025
 
 - Owned the **Terraform provider** (developer SDK) for Autonomous Database, replacing legacy control-plane tooling and projecting **$1.2M/month** in savings.
-- Built lock-free data structures that cut contention in high-concurrency read-write paths, adding **+45,000 ops/s**.
+- Built lock-free data structures that reduced contention and latency in high-concurrency read-write paths.
 - Integrated OCI Security Vault with automated key rotation across control-plane services.
 - TechStack: **Java, Go, REST/gRPC, Terraform, OCI**
 
