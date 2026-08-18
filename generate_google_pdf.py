@@ -67,7 +67,7 @@ def svg_icon(name, color, size=11):
     )
 
 
-def convert(md_text, icon_color="#0f766e", project_color="#0f766e", muted_color="#475569", tech_color="#0f766e", skill_color="#b45309", show_icons=True):
+def convert(md_text, icon_color="#0f766e", project_color="#0f766e", muted_color="#475569", tech_color="#0f766e", skill_color="#b45309", show_icons=True, heading_icon_color=None):
     """Convert markdown to clean HTML with proper link rendering."""
     lines = md_text.split("\n")
     html = []
@@ -116,7 +116,7 @@ def convert(md_text, icon_color="#0f766e", project_color="#0f766e", muted_color=
         elif line.startswith("## "):
             title = line[3:]
             ic = heading_icons.get(title.upper(), "target")
-            icon = svg_icon(ic, icon_color, 12) if show_icons else ""
+            icon = svg_icon(ic, heading_icon_color or icon_color, 12) if show_icons else ""
             html.append(f'<div class="section-heading">{icon}{title}</div>')
 
         elif line.startswith("### "):
@@ -240,18 +240,18 @@ body {
     color: __NAME__;
     margin-bottom: 0;
     letter-spacing: 0.5px;
-    line-height: 1.15;
+    line-height: 1.08;
 }
 
 .contact {
-    margin: 1px 0 2px 0;
+    margin: 1px 0 1px 0;
 }
 .contact-item {
     display: flex;
     align-items: center;
     margin: 0;
     font-size: 9pt;
-    line-height: 1.24;
+    line-height: 1.15;
 }
 .contact-ico {
     flex: 0 0 16px;
@@ -351,7 +351,7 @@ p.bullet-sm strong {
     align-items: baseline;
     column-gap: 6px;
     font-size: 10pt;
-    margin: 2px 0 1px 0;
+    margin: 1px 0 1px 0;
     line-height: 1.05;
     padding: 2px 8px;
     border-radius: 6px;
@@ -797,9 +797,9 @@ MODERN_HEADING_CSS = """
     background: linear-gradient(90deg, __HEADING_BG__ 0%, #ffffff 100%);
     border: none;
     border-bottom: 3px solid __ACCENT__;
-    padding: 3px 12px;
-    margin-top: 5px;
-    margin-bottom: 2px;
+    padding: 2px 12px;
+    margin-top: 8px;
+    margin-bottom: 4px;
     border-radius: 8px;
     box-shadow: 0 1px 4px rgba(0, 0, 0, 0.08);
 }
@@ -822,7 +822,8 @@ if THEME_NAME in ("nvidia", "indigo"):
 
 body_html = convert(md, icon_color=theme["ACCENT"], project_color=theme["PROJECT"],
                     muted_color=theme["MUTED"], tech_color=theme["TECH"], skill_color=theme["SKILL"],
-                    show_icons=not NO_ICONS)
+                    show_icons=not NO_ICONS,
+                    heading_icon_color="#ffffff" if THEME_NAME in ("nvidia", "indigo") else None)
 
 body_class = " class=\"no-icons\"" if NO_ICONS else ""
 full_html = f"""<!DOCTYPE html>
