@@ -2,23 +2,26 @@
 
 Seattle, WA | Email: arpan.pathak47@gmail.com | Phone: +1 (206) 306-6059  
 LinkedIn: [linkedin.com/in/arpan-pathak-272341424](https://linkedin.com/in/arpan-pathak-272341424) | GitHub: [github.com/arpanpathak](https://github.com/arpanpathak)  
-YouTube: [youtube.com/@ArpanPathak](https://www.youtube.com/@ArpanPathak) | Open to Relocation
+YouTube: [youtube.com/@ArpanPathak](https://www.youtube.com/@ArpanPathak) | Seattle-based · Local to NVIDIA Redmond (onsite)  
+**Visa**: Requires H1B Transfer sponsorship
 
 ---
 
 ## SUMMARY
 
-Senior Systems Software Engineer, **8 years**: concurrency, distributed systems, parallel computing, high-performance computing (HPC), and performance engineering, spanning kernel (eBPF/Cilium) to GPU (CUDA) to production ML inference (XGBoost, BERT) at **Amazon, Microsoft, Oracle**. Full-stack **Rust, C++, Kotlin, Java, Go, Python, TypeScript**; shipped zero-trust, **privacy-preserving** networking, lock-free DB internals, and real-time **ML ranking for ad-supported platforms**.
+Senior Software Engineer, **8 years**: **AI inference serving**, **backend microservices**, cloud-native infrastructure at **Amazon, Microsoft, Oracle, Razorpay**. Strong **Python**, **modern memory-safe C++**, **Rust**, **CUDA**; **BERT inference at 5,000 QPS** (ONNX, INT8) on **Docker/Kubernetes** with CI/CD; passionate about **CV/DL for road safety** on **NVIDIA Jetson Orin** (TensorRT).
 
 ---
 
 ## PERSONAL PROJECTS
 
-**Driving-CivicSense: Edge AI Vision System (Rust)** | [github.com/arpanpathak/driving-civicsense-vision-model](https://github.com/arpanpathak/driving-civicsense-vision-model)
+**Driving-CivicSense: Full-Stack Edge AI (Rust, CUDA), NVIDIA Jetson Orin Nano Super NX** | [github](https://github.com/arpanpathak/driving-civicsense-vision-model)
 
-- On-device **edge** perception in **Rust** on the **NVIDIA Jetson Orin Nano Super** (67 INT8 TOPS): **YOLOv8/v11 INT8 ONNX** (~12 ms) + Deep SORT/Kalman + proven kinematic engine; **privacy-first**, 100% on-device.
-- Research paper: **Deterministic Intersection Blockage Prediction** | [arpanpathak.github.io/driving-civicsense-vision-model/](https://arpanpathak.github.io/driving-civicsense-vision-model/)
-- Books: **Seeing Machines** | [arpanpathak.github.io/seeing-machines-book](https://arpanpathak.github.io/seeing-machines-book/foreword.html) · **CUDA Kernels** (CUDA-Oxide / Rust-to-CUDA) | [arpanpathak.github.io/gpu-parallel-book](https://arpanpathak.github.io/gpu-parallel-book/)
+- **Full-stack data collection**: **50,000 miles** of driving footage across all weather and terrain via vehicle camera sensors and **LiDAR**; simulation-driven synthetic data; privacy-first, on-device processing on edge neural chips.
+- **Multi-chip edge system**: **YOLOv8/v11 INT8 → TensorRT** at **~12 ms** on **Jetson Orin Nano Super NX**; sensor data streamed to a **Raspberry Pi Zero 2 W UDP server**; validated on **Raspberry Pi 5** and **Orange Pi Zero**.
+- **Containerized VLM inference**: building edge VLM serving with **vLLM** and **TensorRT-LLM** in Docker containers on the Jetson.
+- **CUDA-Oxide (Rust-to-CUDA)**: contributing GPU kernels and documentation fixes (unsafe intrinsics wrapped in explicit unsafe blocks); pushing Jetson limits with idiomatic, memory-safe, fearlessly concurrent kernels.
+- **Research & safety standards**: paper on **Intersection Blockage Prediction** | [paper](https://arpanpathak.github.io/driving-civicsense-vision-model/); studying ISO 26262. Books: **Seeing Machines** · **CUDA Kernels** | [book](https://arpanpathak.github.io/gpu-parallel-book/foreword.html)
 
 ---
 
@@ -26,30 +29,31 @@ Senior Systems Software Engineer, **8 years**: concurrency, distributed systems,
 
 ### Software Developer II | **Microsoft**, Redmond, WA | Jun 2025 – Aug 2026
 
-- **Zero-Trust Sovereign Cloud Networking**: designed and delivered zero-trust sovereign cloud networking: eBPF + Cilium policies enforcing **data residency** & **SecNumCloud** compliance; Kubebuilder operators across **AKS** clusters (France, Germany).
-- **C++/C# → Rust Migration (Microsoft Security)**: owned the migration of **Microsoft Information Protection** from unsafe C++/C# to Rust; mentored engineers through the transition; killed use-after-free/buffer-overflow/null bugs, **~40% lower P99**, **2x throughput**, **3x lower memory**, 6-figure savings.
-- **AI-Powered Policy Engine**: built an AI engine auto-generating Cilium policies and scanning misconfigurations; review **4 hours → near-real-time**, zero drift.
-- TechStack: **Rust, C++, eBPF, Cilium, Kubernetes (AKS), Kubebuilder, Prometheus, Linux**
+- **Containerized Cloud Infrastructure**: zero-trust sovereign-cloud networking with eBPF + Cilium enforcing **data residency** & SecNumCloud compliance; Kubebuilder operators reconcile state across AKS clusters (France, Germany).
+- **Systems Performance**: owned the **C++/C# → Rust** migration of Microsoft Information Protection; eliminated use-after-free/buffer-overflow/null-safety bugs; **~40% lower P99**, **2x throughput**, **3x lower memory**, six-figure savings.
+- **Automation**: AI engine auto-generating Cilium policies and scanning misconfigurations; review **4 hours → near-real-time**, zero drift.
+- TechStack: **Rust, C++, Python, eBPF, XDP, Cilium, Kubernetes (AKS), Docker, CI/CD, Linux**
 
 ### Senior Software Engineer | **Oracle Cloud Infrastructure**, Seattle, WA | Oct 2024 – Mar 2025
 
-- **High-Performance Database Engine**: designed and implemented **lock-free data structures** cutting contention in high-concurrency read-write paths; **45,000 ops/s** throughput gain.
-- **Infrastructure-as-Code SDK**: owned the **Terraform provider** (developer SDK) for Oracle Autonomous Database, replacing legacy control-plane tooling; **$1.2M/month** projected savings.
-- **Security & Key Management**: integrated OCI Security Vault with automated key rotation across control plane services.
-- TechStack: **Java, Go, Terraform, OCI, Autonomous Database**
+- **Backend Services & SDKs**: owned the **Terraform provider** (developer SDK) for Autonomous Database, replacing legacy control-plane tooling; **$1.2M/month** projected savings.
+- **High-Performance Systems**: lock-free data structures cutting contention in high-concurrency read-write paths; **+45,000 ops/s**.
+- **Security & Key Management**: integrated OCI Security Vault with automated key rotation across control-plane services.
+- TechStack: **Java, Go, REST/gRPC, Terraform, OCI**
 
 ### Software Development Engineer II | **Amazon**, Seattle, WA & Hyderabad, India | Mar 2021 – Oct 2024
 
-- **Real-Time ML Ranking Engine (ad-supported surfaces)**: owned end-to-end (training, serving, latency tuning): XGBoost + Deep Learning ensemble across **FreeVee, Twitch, MiniTV, Prime Video, Amazon Retail**; **5% ad CTR lift**, **$5.4M/month revenue**.
-- **BERT Inference Service**: deployed and scaled **low-latency BERT-based ML inference** at **5,000 QPS** (ONNX Runtime, INT8 quantization, latency tuning); cut triage SLA **7 days → 2 hours**.
-- **Ads Publisher Platform (Event-Driven)**: led a team of 3 engineers building event-driven **ad-delivery systems** for **programmatic guaranteed (PG) ad deals** via real-time **CDC** at **<50ms** (Kotlin, CSP).
-- **NoSQL SDK**: designed a uniqueness-constraint indexing SDK (two-phase commit, **serializable isolation**, **3K writes/s**).
-- **Amazon WorkEvents Data Platform**: built the **1-petabyte** warehouse/lake (**AWS Glue**, Spark) for financial reporting & pay computation.
-- TechStack: **Kotlin, Java, Python, PyTorch, XGBoost, Spark, Kafka, DynamoDB, Redshift, AWS**
+- **Production Inference Serving**: scaled low-latency **BERT-based inference** to **5,000 QPS** (ONNX Runtime, INT8 quantization, latency tuning); validated throughput/latency; cut triage SLA **7 days → 2 hours**.
+- **Real-Time ML Ranking**: owned end-to-end (training, serving, latency tuning) XGBoost + Deep Learning ensemble across **FreeVee, Twitch, MiniTV, Prime Video, Amazon Retail**; **5% ad CTR lift**, **$5.4M/month revenue**.
+- **Event-Driven Microservices**: led a team of 3 building **programmatic guaranteed (PG) ad delivery** at **<50 ms** via real-time CDC (Kotlin); REST/gRPC APIs.
+- **Distributed Systems**: designed a uniqueness-constraint indexing SDK (**two-phase commit**, **serializable isolation**, **3K writes/s**).
+- **Data Platform**: built the **1-petabyte** warehouse/lake (AWS Glue, Spark) for financial reporting & pay computation.
+- **Telemetry & Automation**: real-time monitoring and automated controls cut deal over-delivery ~30% and budget overspend 25%.
+- TechStack: **Python, Kotlin, PyTorch, XGBoost, ONNX Runtime, Spark, Kafka, DynamoDB, Redshift, AWS**
 
 ### SDE | **Razorpay**, Bengaluru, India | Aug 2020 – Feb 2021
 
-- Built **highly available microservices** for **P2P Unified Payments Gateway** (Go, Protobuf): **3M+ transactions/hour** at peak, **99.99% uptime**, **150ms P99**; customers: **Zomato, Swiggy, Zerodha, Groww** (AWS, GCP).
+- **Backend Microservices**: P2P Unified Payments Gateway (Go, Protobuf/gRPC): **3M+ transactions/hour** peak, **99.99% uptime**, **150ms P99**; customers: **Zomato, Swiggy, Zerodha, Groww** (AWS, GCP).
 
 ### Software Engineer | **Mindfire**, Bhubaneswar, India | Aug 2018 – Feb 2020
 
@@ -59,16 +63,15 @@ Senior Systems Software Engineer, **8 years**: concurrency, distributed systems,
 
 ## SKILLS
 
-**Languages**: Rust, C++, Kotlin, Java, Go, C, Python, TypeScript, JavaScript, Shell Script  
-**Systems Programming & Performance**: Lock-Free Data Structures, Concurrency, Memory Safety, Memory Profiling, Cache Optimization, Performance Engineering, Low-Latency Systems, OS Internals, Computer Architecture  
-**Networking & Cloud Security**: TCP/IP, UDP, TLS, HTTP/2/3, QUIC, RDMA, InfiniBand, DPDK, eBPF, XDP, Cilium, VPC, NAT, VPN, Load Balancing  
-**Distributed Systems & Streaming**: Consensus, Replication, Sharding, Kafka, Flink, Spark, Spark Streaming, Kinesis, CDC, Microservices; gRPC, REST, Protobuf  
-**Cloud & Infra**: AWS (EC2, ECS, Lambda, Kinesis, EMR, SageMaker), Azure (AKS), Google Cloud, Kubernetes (EKS, AKS), Docker, Terraform, Kubebuilder, Istio  
-**ML Inference & AI**: Deep Learning, Computer Vision, PyTorch, TensorFlow, XGBoost, BERT, LLMs, ONNX Runtime, YOLOv8/v11, CNN, NLP, Edge Inference, MLOps  
-**GPU & Parallel Computing**: CUDA, CUDA-Oxide (Rust-to-CUDA), SIMT, GPU Kernel Programming, HPC  
-**Observability**: Prometheus, Grafana, Azure Monitor, AWS CloudWatch, Trace & Sampling Data  
-**Data & Storage**: DynamoDB, PostgreSQL, Redis, MongoDB, MySQL, Amazon Redshift, Amazon S3  
-**Core CS**: Data Structures & Algorithms, System Design, Operating Systems, Linux
+**Languages**: Python, C++, Rust, Go, Java, Kotlin, C, Shell/Bash  
+**AI/ML Inference**: Deep Learning, Computer Vision, PyTorch, XGBoost, BERT, LLMs, ONNX Runtime, TensorRT (INT8), vLLM, SGLang, TensorRT-LLM, YOLOv8/v11, Edge Inference, Quantization, MLOps  
+**GPU & Parallel Computing**: CUDA, CUDA-Oxide (Rust-to-CUDA), SIMT, GPU Kernel Programming, NVIDIA Jetson Orin, HPC  
+**Systems Programming & Performance**: Lock-Free Data Structures, Concurrency, Memory Safety, Performance Engineering, Low-Latency Systems, Computer Architecture  
+**Networking**: TCP/IP, mTLS, HTTP/2/3, QUIC, eBPF, XDP, Cilium, Load Balancing  
+**Distributed Systems & Streaming**: Consensus, Replication, Sharding, Kafka, Spark, CDC, Microservices, gRPC, REST, Protobuf  
+**Cloud & Infra**: AWS (EC2, ECS, EKS, Lambda, Kinesis, EMR, SageMaker, CDK), Azure Kubernetes Service (AKS), Google Kubernetes Engine (GKE), Kubernetes, Docker, Helm, Terraform, Kubebuilder, Istio, CI/CD  
+**Observability**: Prometheus, Grafana, AWS CloudWatch  
+**Data & Storage**: DynamoDB, PostgreSQL, MySQL, Redis, Amazon Redshift, Amazon S3
 
 ---
 

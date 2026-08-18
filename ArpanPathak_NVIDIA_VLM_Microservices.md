@@ -21,7 +21,7 @@ Senior Software Engineer, **8 years**: **AI inference serving**, **backend micro
 - **Multi-chip edge system**: **YOLOv8/v11 INT8 → TensorRT** at **~12 ms** on **Jetson Orin Nano Super NX**; sensor data streamed to a **Raspberry Pi Zero 2 W UDP server**; validated on **Raspberry Pi 5** and **Orange Pi Zero**.
 - **Containerized VLM inference**: building edge VLM serving with **vLLM** and **TensorRT-LLM** in Docker containers on the Jetson.
 - **CUDA-Oxide (Rust-to-CUDA)**: contributing GPU kernels and documentation fixes (unsafe intrinsics wrapped in explicit unsafe blocks); pushing Jetson limits with idiomatic, memory-safe, fearlessly concurrent kernels.
-- **Research & safety standards**: paper on **Intersection Blockage Prediction** | [paper](https://arpanpathak.github.io/driving-civicsense-vision-model/); studying ISO 26262. Books: **Seeing Machines** · **CUDA Kernels** | [site](https://arpanpathak.github.io/)
+- **Research & safety standards**: paper on **Intersection Blockage Prediction** | [paper](https://arpanpathak.github.io/driving-civicsense-vision-model/); studying ISO 26262. Books: **Seeing Machines** · **CUDA Kernels** | [book](https://arpanpathak.github.io/gpu-parallel-book/foreword.html)
 
 ---
 
@@ -39,13 +39,13 @@ Senior Software Engineer, **8 years**: **AI inference serving**, **backend micro
 - **Backend Services & SDKs**: owned the **Terraform provider** (developer SDK) for Autonomous Database, replacing legacy control-plane tooling; **$1.2M/month** projected savings.
 - **High-Performance Systems**: lock-free data structures cutting contention in high-concurrency read-write paths; **+45,000 ops/s**.
 - **Security & Key Management**: integrated OCI Security Vault with automated key rotation across control-plane services.
-- TechStack: **Java, Go, Rust, REST/gRPC, Terraform, OCI**
+- TechStack: **Java, Go, REST/gRPC, Terraform, OCI**
 
 ### Software Development Engineer II | **Amazon**, Seattle, WA & Hyderabad, India | Mar 2021 – Oct 2024
 
 - **Production Inference Serving**: scaled low-latency **BERT-based inference** to **5,000 QPS** (ONNX Runtime, INT8 quantization, latency tuning); validated throughput/latency; cut triage SLA **7 days → 2 hours**.
 - **Real-Time ML Ranking**: owned end-to-end (training, serving, latency tuning) XGBoost + Deep Learning ensemble across **FreeVee, Twitch, MiniTV, Prime Video, Amazon Retail**; **5% ad CTR lift**, **$5.4M/month revenue**.
-- **Event-Driven Microservices**: led a team of 3 building ad-delivery microservices at **<50 ms** via real-time CDC (Kotlin); REST/gRPC APIs.
+- **Event-Driven Microservices**: led a team of 3 building **programmatic guaranteed (PG) ad delivery** at **<50 ms** via real-time CDC (Kotlin); REST/gRPC APIs.
 - **Distributed Systems**: designed a uniqueness-constraint indexing SDK (**two-phase commit**, **serializable isolation**, **3K writes/s**).
 - **Data Platform**: built the **1-petabyte** warehouse/lake (AWS Glue, Spark) for financial reporting & pay computation.
 - **Telemetry & Automation**: real-time monitoring and automated controls cut deal over-delivery ~30% and budget overspend 25%.
@@ -71,7 +71,7 @@ Senior Software Engineer, **8 years**: **AI inference serving**, **backend micro
 **Distributed Systems & Streaming**: Consensus, Replication, Sharding, Kafka, Spark, CDC, Microservices, gRPC, REST, Protobuf  
 **Cloud & Infra**: AWS (EC2, ECS, EKS, Lambda, Kinesis, EMR, SageMaker, CDK), Azure Kubernetes Service (AKS), Google Kubernetes Engine (GKE), Kubernetes, Docker, Helm, Terraform, Kubebuilder, Istio, CI/CD  
 **Observability**: Prometheus, Grafana, AWS CloudWatch  
-**Data & Storage**: DynamoDB, PostgreSQL, Redis, Amazon Redshift, Amazon S3
+**Data & Storage**: DynamoDB, PostgreSQL, MySQL, Redis, Amazon Redshift, Amazon S3
 
 ---
 
